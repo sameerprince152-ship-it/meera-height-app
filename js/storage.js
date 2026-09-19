@@ -466,6 +466,15 @@ class CloudSyncManager {
 
     static checkUrlForSyncConfig() {
         try {
+            // Check for #cloud-sync=active (default pre-configured pairing)
+            if (window.location.hash && window.location.hash.includes('cloud-sync=active')) {
+                this.setConfig(DEFAULT_FIREBASE_CONFIG);
+                this.setEnabled(true);
+                const cleanUrl = window.location.origin + window.location.pathname;
+                window.history.replaceState({}, document.title, cleanUrl);
+                return { autoConfigured: true, config: DEFAULT_FIREBASE_CONFIG };
+            }
+
             // Check hash for #sync=<base64>
             let encodedConfig = null;
             if (window.location.hash && window.location.hash.startsWith('#sync=')) {
@@ -729,9 +738,29 @@ class CloudSyncManager {
     static generatePairingUrl() {
         const config = this.getConfig();
         if (!config) return null;
-        const json = JSON.stringify(config);
-        const encoded = btoa(unescape(encodeURIComponent(json)));
-        const baseUrl = window.location.origin + window.location.pathname;
-        return `${baseUrl}#sync=${encoded}`;
+
+        let baseUrl;
+        const host = (typeof window !== 'undefined' && window.location) ? window.location.hostname : '';
+        const proto = (typeof window !== 'undefined' && window.location) ? window.location.protocol : '';
+        if (!host || host === 'localhost' || host === '127.0.0.1' || proto === 'file:') {
+            // Mobile devices cannot resolve localhost or local file paths.
+            // Direct them to the live hosted web application on GitHub Pages!
+            baseUrl = 'https://sameerprince152-ship-it.github.io/meera-height-app/';
+        } else {
+            baseUrl = window.location.origin + window.location.pathname;
+        }
+
+        const isDefault = config.apiKey === DEFAULT_FIREBASE_CONFIG.apiKey && config.projectId === DEFAULT_FIREBASE_CONFIG.projectId;
+        if (isDefault) {
+            return `${baseUrl.replace(/\/+$/, '')}/#cloud-sync=active`;
+        }
+
+        try {
+            const json = JSON.stringify(config);
+            const encoded = btoa(unescape(encodeURIComponent(json)));
+            return `${baseUrl.replace(/\/+$/, '')}/#sync=${encoded}`;
+        } catch (e) {
+            return `${baseUrl.replace(/\/+$/, '')}/#cloud-sync=active`;
+        }
     }
 }

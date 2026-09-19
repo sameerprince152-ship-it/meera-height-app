@@ -89,6 +89,138 @@ body {
     animation: subtle-pulse 2s infinite ease-in-out;
 }
 
+/* Expense workspace redesign */
+.category-export-btn {
+    min-height: 40px;
+    padding: 0.55rem 0.85rem;
+    border-radius: 0.75rem;
+    font-size: 0.72rem;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    transition: transform 160ms ease, box-shadow 160ms ease;
+}
+
+.category-export-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 14px rgba(15, 23, 42, 0.08);
+}
+
+.category-export-btn.excel {
+    background: #f0fdf4;
+    color: #15803d;
+    border: 1px solid #86efac;
+}
+
+.category-export-btn.csv {
+    background: #ffffff;
+    color: #047857;
+    border: 1px solid #a7f3d0;
+}
+
+.category-export-btn.pdf {
+    background: #fff1f2;
+    color: #be123c;
+    border: 1px solid #fecdd3;
+}
+
+.category-export-btn.period {
+    background: #f0fdfa;
+    color: #0d9488;
+    border: 1px solid #99f6e4;
+}
+
+.expense-calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 0.45rem;
+}
+
+.expense-calendar-grid.weekdays {
+    margin-bottom: 0.45rem;
+}
+
+.expense-calendar-grid.weekdays > div {
+    color: #94a3b8;
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-align: center;
+    text-transform: uppercase;
+    padding: 0.35rem 0;
+}
+
+.calendar-day {
+    min-height: 78px;
+    padding: 0.55rem;
+    border-radius: 0.9rem;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    color: #475569;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.calendar-day:hover,
+.calendar-day:focus-visible {
+    border-color: #6ee7b7;
+    background: #ecfdf5;
+    transform: translateY(-1px);
+    outline: none;
+}
+
+.calendar-day.has-expenses {
+    background: linear-gradient(145deg, #ecfdf5, #f0fdfa);
+    border-color: #a7f3d0;
+}
+
+.calendar-day.empty-day {
+    visibility: hidden;
+}
+
+.calendar-day-number {
+    font-size: 0.8rem;
+    font-weight: 900;
+    color: #0f172a;
+}
+
+.calendar-count,
+.calendar-empty-label {
+    font-size: 0.62rem;
+    color: #94a3b8;
+}
+
+.calendar-day.has-expenses .calendar-count {
+    color: #047857;
+    font-weight: 700;
+}
+
+.calendar-day strong {
+    margin-top: auto;
+    color: #0f766e;
+    font-size: 0.72rem;
+}
+
+.calendar-nav-btn {
+    width: 40px;
+    min-height: 40px;
+    border: 1px solid #dbe4ee;
+    border-radius: 0.75rem;
+    color: #475569;
+    background: #ffffff;
+}
+
+.calendar-nav-btn:hover {
+    color: #047857;
+    border-color: #6ee7b7;
+    background: #ecfdf5;
+}
+
 /* Mobile interaction hardening */
 html {
     -webkit-text-size-adjust: 100%;
@@ -151,6 +283,37 @@ label {
 
     .mobile-control {
         width: 100%;
+    }
+
+    #category-export-actions {
+        align-items: stretch;
+    }
+
+    #category-export-actions > div:last-child {
+        width: 100%;
+    }
+
+    #category-export-actions .category-export-btn {
+        flex: 1;
+    }
+
+    .expense-calendar-grid {
+        gap: 0.25rem;
+    }
+
+    .calendar-day {
+        min-height: 62px;
+        padding: 0.35rem;
+        border-radius: 0.7rem;
+    }
+
+    .calendar-count,
+    .calendar-empty-label {
+        font-size: 0.5rem;
+    }
+
+    .calendar-day strong {
+        font-size: 0.57rem;
     }
 
     .fixed.bottom-0 {

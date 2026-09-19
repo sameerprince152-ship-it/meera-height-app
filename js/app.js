@@ -35,6 +35,7 @@ const App = {
         rent: 'date-desc',
         wallet: 'date-desc'
     },
+    expenseCalendarMonth: new Date().toISOString().slice(0, 7),
     _isSavingBankTransfer: false,
     _isSavingWalletTransfer: false,
     editingTenantId: null,
@@ -292,19 +293,20 @@ const App = {
     },
 
     openCloudSyncModal() {
-        const textarea = document.getElementById('cloud-sync-config-input');
-        if (textarea && typeof CloudSyncManager !== 'undefined') {
-            const currentCfg = CloudSyncManager.getConfig();
-            if (currentCfg) {
+        try {
+            this.showModal('modal-cloud-sync-setup');
+            const textarea = document.getElementById('cloud-sync-config-input');
+            if (textarea && typeof CloudSyncManager !== 'undefined') {
+                const currentCfg = CloudSyncManager.getConfig() || DEFAULT_FIREBASE_CONFIG;
                 textarea.value = JSON.stringify(currentCfg, null, 2);
-            } else {
-                textarea.value = '';
             }
+            if (typeof CloudSyncManager !== 'undefined') {
+                this.updateCloudSyncUI(CloudSyncManager.syncStatus, CloudSyncManager.lastStatusDetail);
+            }
+        } catch (err) {
+            console.error('openCloudSyncModal error:', err);
+            this.showModal('modal-cloud-sync-setup');
         }
-        if (typeof CloudSyncManager !== 'undefined') {
-            this.updateCloudSyncUI(CloudSyncManager.syncStatus, CloudSyncManager.lastStatusDetail);
-        }
-        this.showModal('modal-cloud-sync-setup');
     },
 
     saveCloudSyncConfig() {
@@ -345,44 +347,38 @@ const App = {
     },
 
     openCloudPairQrModal() {
-        if (typeof CloudSyncManager === 'undefined' || !CloudSyncManager.getConfig() || !CloudSyncManager.isEnabled()) {
-            alert('Please configure and connect Cloud Sync on this computer first before pairing a mobile device.');
-            this.openCloudSyncModal();
-            return;
-        }
+        try {
+            this.showModal('modal-cloud-sync-qr');
 
-        const pairingUrl = CloudSyncManager.generatePairingUrl();
-        if (!pairingUrl) {
-            alert('Could not generate pairing URL. Please re-check your Cloud Sync configuration.');
-            return;
-        }
+            const pairingUrl = (typeof CloudSyncManager !== 'undefined' && CloudSyncManager.generatePairingUrl)
+                ? CloudSyncManager.generatePairingUrl()
+                : 'https://sameerprince152-ship-it.github.io/meera-height-app/#cloud-sync=active';
 
-        const urlInput = document.getElementById('cloud-pair-url-input');
-        if (urlInput) urlInput.value = pairingUrl;
+            const urlInput = document.getElementById('cloud-pair-url-input');
+            if (urlInput) urlInput.value = pairingUrl;
 
-        const qrContainer = document.getElementById('cloud-sync-qrcode');
-        if (qrContainer) {
-            qrContainer.innerHTML = '';
-            if (typeof QRCode !== 'undefined') {
-                try {
-                    new QRCode(qrContainer, {
-                        text: pairingUrl,
-                        width: 220,
-                        height: 220,
-                        colorDark: "#0f172a",
-                        colorLight: "#ffffff",
-                        correctLevel: QRCode.CorrectLevel.M
-                    });
-                } catch (err) {
-                    console.error('QRCode generation error:', err);
-                    qrContainer.innerHTML = '<p class="text-xs text-rose-500">QR code failed to render. Use the copy link below.</p>';
-                }
-            } else {
-                qrContainer.innerHTML = '<p class="text-xs text-slate-500">QRCode library loading... Use the copy link below.</p>';
+            const qrContainer = document.getElementById('cloud-sync-qrcode');
+            if (qrContainer) {
+                const encodedUrl = encodeURIComponent(pairingUrl);
+                qrContainer.innerHTML = `
+                    <div class="flex flex-col items-center justify-center">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=4&data=${encodedUrl}" 
+                             alt="Mobile Pairing QR Code" 
+                             class="w-48 h-48 sm:w-52 sm:h-52 rounded-2xl border border-slate-200 shadow-sm object-contain bg-white p-2"
+                             onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'p-4 text-xs text-slate-500\'>Scan via camera or copy link below.</div>';" />
+                    </div>
+                `;
             }
-        }
 
-        this.showModal('modal-cloud-sync-qr');
+            const waBtn = document.getElementById('btn-share-pair-whatsapp');
+            if (waBtn) {
+                const waText = `Open Meera Heights Building Management on your phone:\n${pairingUrl}`;
+                waBtn.href = `https://api.whatsapp.com/send?text=${encodeURIComponent(waText)}`;
+            }
+        } catch (err) {
+            console.error('openCloudPairQrModal error:', err);
+            this.showModal('modal-cloud-sync-qr');
+        }
     },
 
     copyCloudPairUrl() {
@@ -400,14 +396,45 @@ const App = {
         }
     },
 
-    forceSyncNow() {
-        if (typeof CloudSyncManager === 'undefined' || !CloudSyncManager.getConfig() || !CloudSyncManager.isEnabled()) {
-            this.showToast('Cloud Sync is not configured yet. Click Configure to set it up.', 'warning');
-            this.openCloudSyncModal();
+    async forceSyncNow() {
+        if (typeof CloudSyncManager === 'undefined') {
+            this.showToast('Cloud Sync manager not loaded.', 'error');
             return;
         }
-        this.showToast('Uploading latest data to cloud...', 'info');
-        CloudSyncManager.pushToCloud(this.data, true);
+
+        const btn = document.querySelector('button[onclick="App.forceSyncNow()"]');
+        const originalHtml = btn ? btn.innerHTML : 'Sync Now';
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-arrows-rotate animate-spin mr-1"></i> Syncing...';
+        }
+
+        try {
+            if (!CloudSyncManager.db && CloudSyncManager.getConfig()) {
+                CloudSyncManager.connect(CloudSyncManager.getConfig());
+            }
+
+            this.showToast('Connecting and uploading latest building records...', 'info');
+            await CloudSyncManager.pushToCloud(this.data, true);
+
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            CloudSyncManager.setLastSynced(now);
+
+            const lastTimeEl = document.getElementById('cloud-sync-last-time');
+            if (lastTimeEl) lastTimeEl.textContent = `${timeStr} (Just now)`;
+
+            this.updateCloudSyncUI('connected', 'Live Cloud Sync Connected');
+            this.showToast('✓ Cloud Sync complete! All records uploaded to cloud database.', 'success');
+        } catch (e) {
+            console.error('Manual sync error:', e);
+            this.showToast('Sync error: ' + (e.message || e), 'error');
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+            }
+        }
     },
 
     // -------------------------------------------------------------
@@ -1062,6 +1089,7 @@ const App = {
     // -------------------------------------------------------------
     openExportModal() {
         this.showModal('modal-export-sheets');
+        this.renderExportCategoryWorkbooksList();
     },
 
     downloadSingleSheet(sheetKey) {
@@ -1139,42 +1167,747 @@ const App = {
         });
     },
 
+    // -------------------------------------------------------------
+    // EXECUTIVE PDF REPORTING & EXPORT SUITE
+    // (Weekly, Monthly, Yearly, Custom Range & Individual Vouchers)
+    // -------------------------------------------------------------
+    pdfReportTypeState: 'statement',
+    pdfPeriodState: 'monthly',
+
+    openPDFExportModal(defaultType = 'statement', defaultCategory = 'all') {
+        this.pdfReportTypeState = defaultType;
+        this.pdfPeriodState = 'monthly';
+
+        // Populate Categories dropdown
+        const catSelect = document.getElementById('pdf-select-category');
+        if (catSelect) {
+            let catOptions = `<option value="all">All Categories (Combined)</option>`;
+            (this.data.categories || []).forEach(c => {
+                const count = (this.data.expenses || []).filter(e => e.categoryId === c.id).length;
+                catOptions += `<option value="${c.id}" ${c.id === defaultCategory ? 'selected' : ''}>${c.name} (${count} entries)</option>`;
+            });
+            catSelect.innerHTML = catOptions;
+            if (defaultCategory && defaultCategory !== 'all') catSelect.value = defaultCategory;
+        }
+
+        // Set default month & year inputs
+        const monthInput = document.getElementById('pdf-input-month');
+        if (monthInput) {
+            monthInput.value = (this.selectedMonthFilter && this.selectedMonthFilter !== 'all') 
+                ? this.selectedMonthFilter 
+                : this.getCurrentMonthKey();
+        }
+        const yearSelect = document.getElementById('pdf-select-year');
+        if (yearSelect) {
+            yearSelect.value = new Date().getFullYear().toString();
+        }
+
+        const today = new Date().toISOString().slice(0, 10);
+        const past7 = new Date();
+        past7.setDate(past7.getDate() - 7);
+        const startInput = document.getElementById('pdf-input-start-date');
+        const endInput = document.getElementById('pdf-input-end-date');
+        if (startInput) startInput.value = past7.toISOString().slice(0, 10);
+        if (endInput) endInput.value = today;
+
+        this.setPdfReportType(defaultType);
+        this.setPdfPeriod('monthly');
+        this.showModal('modal-export-pdf');
+    },
+
+    setPdfReportType(type) {
+        this.pdfReportTypeState = type;
+        const types = ['statement', 'expenses', 'rents', 'category'];
+        types.forEach(t => {
+            const btn = document.getElementById(`btn-pdf-type-${t}`);
+            if (btn) {
+                const active = (t === type);
+                btn.className = `pdf-type-btn p-2.5 rounded-xl border-2 text-xs font-bold text-center transition ${
+                    active ? 'border-emerald-500 bg-emerald-50 text-emerald-800' : 'border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700'
+                }`;
+            }
+        });
+
+        const catPicker = document.getElementById('pdf-category-picker-container');
+        if (catPicker) {
+            catPicker.classList.toggle('hidden', type !== 'category');
+        }
+    },
+
+    setPdfPeriod(period) {
+        this.pdfPeriodState = period;
+        const periods = ['weekly', 'monthly', 'yearly', 'custom'];
+        periods.forEach(p => {
+            const btn = document.getElementById(`btn-pdf-period-${p}`);
+            if (btn) {
+                const active = (p === period);
+                btn.className = `pdf-period-btn p-2 rounded-xl border text-xs font-semibold text-center transition ${
+                    active ? 'border-2 border-emerald-500 bg-emerald-50 text-emerald-800 font-bold' : 'border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700'
+                }`;
+            }
+        });
+
+        const monthBox = document.getElementById('pdf-period-monthly-container');
+        const yearBox = document.getElementById('pdf-period-yearly-container');
+        const customBox = document.getElementById('pdf-period-custom-container');
+
+        if (monthBox) monthBox.classList.toggle('hidden', period !== 'monthly');
+        if (yearBox) yearBox.classList.toggle('hidden', period !== 'yearly');
+        if (customBox) customBox.classList.toggle('hidden', period !== 'custom');
+    },
+
+    executePdfExport() {
+        const catSelect = document.getElementById('pdf-select-category');
+        const monthInput = document.getElementById('pdf-input-month');
+        const yearSelect = document.getElementById('pdf-select-year');
+        const startInput = document.getElementById('pdf-input-start-date');
+        const endInput = document.getElementById('pdf-input-end-date');
+
+        const options = {
+            reportType: this.pdfReportTypeState,
+            periodType: this.pdfPeriodState,
+            categoryId: catSelect ? catSelect.value : 'all',
+            month: monthInput ? monthInput.value : this.getCurrentMonthKey(),
+            year: yearSelect ? yearSelect.value : new Date().getFullYear().toString(),
+            startDate: startInput ? startInput.value : '',
+            endDate: endInput ? endInput.value : ''
+        };
+
+        this.generateAdvancedPDF(options);
+        this.hideModal('modal-export-pdf');
+    },
+
+    numberToIndianWords(num) {
+        num = Math.round(Number(num) || 0);
+        if (num === 0) return 'Zero Rupees';
+        const a = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+        const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+        const inWords = (n) => {
+            if (n < 20) return a[n];
+            if (n < 100) return b[Math.floor(n / 10)] + (n % 10 !== 0 ? ' ' + a[n % 10] : '');
+            if (n < 1000) return a[Math.floor(n / 100)] + ' Hundred' + (n % 100 !== 0 ? ' and ' + inWords(n % 100) : '');
+            if (n < 100000) return inWords(Math.floor(n / 1000)) + ' Thousand' + (n % 1000 !== 0 ? ' ' + inWords(n % 1000) : '');
+            if (n < 10000000) return inWords(Math.floor(n / 100000)) + ' Lakh' + (n % 100000 !== 0 ? ' ' + inWords(n % 100000) : '');
+            return inWords(Math.floor(n / 10000000)) + ' Crore' + (n % 10000000 !== 0 ? ' ' + inWords(n % 10000000) : '');
+        };
+        return inWords(num).trim() + ' Rupees Only';
+    },
+
     downloadMonthlyPDF(type = 'expense') {
+        this.generateAdvancedPDF({
+            reportType: type === 'rent' ? 'rents' : (type === 'all' ? 'statement' : 'expenses'),
+            periodType: 'monthly',
+            month: this.selectedMonthFilter || 'all'
+        });
+    },
+
+    downloadCategoryPDF(categoryId = 'all') {
+        this.generateAdvancedPDF({
+            reportType: 'category',
+            categoryId: categoryId,
+            periodType: 'all'
+        });
+    },
+
+    downloadCategoryExcel(categoryId = 'all') {
+        const cat = this.data.categories.find(c => c.id === categoryId);
+        const name = cat ? cat.name : 'Expenses';
+        const success = ExcelExporter.exportCategorySheet(categoryId, this);
+        if (success) {
+            this.showToast(`Excel (.xlsx) downloaded for "${name}".`, 'success');
+        }
+    },
+
+    async downloadAllCategoryExcels() {
+        this.showToast('Generating individual Excel sheets for all categories...', 'info');
+        const count = await ExcelExporter.exportAllCategoriesSeparately(this);
+        this.showToast(`✓ Completed! ${count} separate category workbooks downloaded.`, 'success');
+    },
+
+    renderExportCategoryWorkbooksList() {
+        const container = document.getElementById('export-modal-category-list');
+        if (!container) return;
+
+        let html = '';
+        (this.data.categories || []).forEach(cat => {
+            const items = (this.data.expenses || []).filter(e => e.categoryId === cat.id);
+            const total = items.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+            html += `
+                <div class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200 hover:border-emerald-300 transition">
+                    <div class="flex items-center gap-2 min-w-0">
+                        <div class="w-7 h-7 rounded-lg flex items-center justify-center text-white shrink-0 text-xs" style="background-color: ${cat.color || '#10B981'}">
+                            <i class="fa-solid ${cat.icon || 'fa-receipt'}"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="font-bold text-xs text-slate-800 truncate">${cat.name}</div>
+                            <div class="text-[10px] text-slate-400">${items.length} items • ₹${total.toLocaleString('en-IN')}</div>
+                        </div>
+                    </div>
+                    <button onclick="App.downloadCategoryExcel('${cat.id}')" class="px-2.5 py-1 bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-300 font-bold text-[11px] rounded-lg transition shrink-0 flex items-center gap-1 shadow-sm" title="Export this sheet (.xlsx)">
+                        <i class="fa-solid fa-file-excel"></i>
+                        <span>.xlsx</span>
+                    </button>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    },
+
+    // -------------------------------------------------------------
+    // EXECUTIVE PDF GENERATOR (jspdf + autotable)
+    // -------------------------------------------------------------
+    generateAdvancedPDF(options = {}) {
         if (!window.jspdf || !window.jspdf.jsPDF) {
-            this.showToast('PDF library is unavailable. Check your internet connection and try again.', 'error');
+            this.showToast('PDF library is loading. Please check internet connection.', 'error');
             return;
         }
-        const month = this.selectedMonthFilter || 'all';
-        const rents = (this.data.rentCollections || []).filter(r => month === 'all' || r.month === month || (r.paymentDate || '').startsWith(month));
-        const expenses = (this.data.expenses || []).filter(e => month === 'all' || (e.date || '').startsWith(month) || e.monthKey === month);
-        const rows = type === 'rent' ? rents : expenses;
-        const title = type === 'rent' ? 'Monthly Rent Collections Report' : 'Monthly Expenses Report';
-        const monthLabel = month === 'all' ? 'All Months' : month;
+
         const { jsPDF } = window.jspdf;
-        const doc = new jsPDF({ unit: 'mm', format: 'a4' });
-        let y = 18;
+        const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
         const pageWidth = doc.internal.pageSize.getWidth();
-        const total = rows.reduce((sum, row) => sum + (parseFloat(row.amount) || 0), 0);
-        doc.setFont('helvetica', 'bold'); doc.setFontSize(16); doc.text('Meera Heights', 14, y); y += 7;
-        doc.setFontSize(13); doc.text(title, 14, y); y += 6;
-        doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.text(`Period: ${monthLabel} | Generated: ${new Date().toLocaleString('en-IN')}`, 14, y); y += 8;
-        doc.setFont('helvetica', 'bold'); doc.text(`Records: ${rows.length}    Total: Rs. ${total.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, 14, y); y += 8;
-        doc.setDrawColor(190); doc.line(14, y, pageWidth - 14, y); y += 6;
-        rows.forEach((row, index) => {
-            const tenant = this.data.tenants.find(t => t.id === row.tenantId);
-            const category = this.data.categories.find(c => c.id === row.categoryId);
-            const heading = type === 'rent'
-                ? `${index + 1}. ${row.paymentDate || ''} | ${tenant?.name || row.tenantName || 'Tenant'} | Rs. ${Number(row.amount || 0).toLocaleString('en-IN')}`
-                : `${index + 1}. ${row.date || ''} | ${row.title || 'Expense'} | Rs. ${Number(row.amount || 0).toLocaleString('en-IN')}`;
-            const details = type === 'rent'
-                ? `Month: ${row.month || '-'} | Flat: ${tenant?.flat || row.flat || '-'} | Owner: ${row.ownerCredited || '-'} | Mode: ${row.paymentMode || row.mode || '-'}`
-                : `Category: ${category?.name || row.categoryName || '-'} | Sajida: Rs. ${Number(row.sajidaAmount || 0).toLocaleString('en-IN')} | Jeelani: Rs. ${Number(row.jeelaniAmount || 0).toLocaleString('en-IN')} | Wallet: ${row.debitedWallet || row.debitedSource || '-'}`;
-            doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.text(heading, 14, y); y += 5;
-            doc.setFont('helvetica', 'normal'); const wrapped = doc.splitTextToSize(details, pageWidth - 28); doc.text(wrapped, 14, y); y += wrapped.length * 4.5 + 4;
-            if (y > 275) { doc.addPage(); y = 18; }
+        const pageHeight = doc.internal.pageSize.getHeight();
+
+        const reportType = options.reportType || 'statement';
+        const periodType = options.periodType || 'monthly';
+        const selectedMonth = options.month || this.selectedMonthFilter || this.getCurrentMonthKey();
+        const selectedYear = options.year || new Date().getFullYear().toString();
+        const customStart = options.startDate || '';
+        const customEnd = options.endDate || '';
+        const categoryId = options.categoryId || 'all';
+
+        // Date Filter Helper
+        const isDateInPeriod = (dateStr) => {
+            if (!dateStr) return false;
+            if (periodType === 'all') return true;
+
+            if (periodType === 'weekly') {
+                const d = new Date(dateStr + 'T00:00:00');
+                const now = new Date();
+                const past7 = new Date();
+                past7.setDate(now.getDate() - 7);
+                return d >= past7 && d <= now;
+            } else if (periodType === 'monthly') {
+                if (selectedMonth === 'all') return true;
+                return dateStr.startsWith(selectedMonth);
+            } else if (periodType === 'yearly') {
+                return dateStr.startsWith(selectedYear);
+            } else if (periodType === 'custom') {
+                if (customStart && dateStr < customStart) return false;
+                if (customEnd && dateStr > customEnd) return false;
+                return true;
+            }
+            return true;
+        };
+
+        // Determine Period Label
+        let periodLabel = 'All Recorded Months';
+        if (periodType === 'weekly') {
+            const past7 = new Date();
+            past7.setDate(past7.getDate() - 7);
+            periodLabel = `Weekly Report: ${past7.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })} to ${new Date().toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+        } else if (periodType === 'monthly') {
+            periodLabel = selectedMonth === 'all' ? 'All Months' : `Monthly Statement: ${selectedMonth}`;
+        } else if (periodType === 'yearly') {
+            periodLabel = `Annual Statement: Calendar Year ${selectedYear}`;
+        } else if (periodType === 'custom') {
+            periodLabel = `Custom Range: ${customStart || 'Start'} to ${customEnd || 'Present'}`;
+        }
+
+        // Filter Data
+        let expenses = (this.data.expenses || []).filter(e => isDateInPeriod(e.date));
+        if (reportType === 'category' && categoryId !== 'all') {
+            expenses = expenses.filter(e => e.categoryId === categoryId);
+        }
+        expenses.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+
+        let rents = (this.data.rentCollections || []).filter(r => isDateInPeriod(r.paymentDate || r.month));
+        rents.sort((a, b) => new Date(b.paymentDate || 0) - new Date(a.paymentDate || 0));
+
+        const totalExpense = expenses.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+        const totalRent = rents.reduce((s, r) => s + (parseFloat(r.amount) || 0), 0);
+        const netSurplus = totalRent - totalExpense;
+
+        const sajidaExpenseShare = expenses.reduce((s, e) => s + (parseFloat(e.sajidaAmount) || 0), 0);
+        const jeelaniExpenseShare = expenses.reduce((s, e) => s + (parseFloat(e.jeelaniAmount) || 0), 0);
+
+        let reportTitle = 'CONSOLIDATED FINANCIAL STATEMENT';
+        let reportSubtitle = 'Income, Maintenance Outflows, Treasury Balance & Owner Shares';
+        let catObj = null;
+
+        if (reportType === 'expenses') {
+            reportTitle = 'BUILDING EXPENDITURE REGISTER';
+            reportSubtitle = 'Itemized Maintenance, Utility & Operational Expenses';
+        } else if (reportType === 'rents') {
+            reportTitle = 'RENT COLLECTIONS REGISTER';
+            reportSubtitle = 'Resident Tenant Rental Inflows & Credited Wallets';
+        } else if (reportType === 'category') {
+            catObj = this.data.categories.find(c => c.id === categoryId);
+            const catName = catObj ? catObj.name : 'All Categories';
+            reportTitle = `${catName.toUpperCase()} EXPENDITURE SHEET`;
+            reportSubtitle = `Dedicated Category Spending Breakdown & 60:40 Split Details`;
+        }
+
+        let y = 14;
+
+        // 1. BRAND HEADER BANNER (Deep Emerald)
+        doc.setFillColor(4, 120, 87); // #047857
+        doc.roundedRect(14, y, pageWidth - 28, 26, 3, 3, 'F');
+
+        doc.setTextColor(255, 255, 255);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(15);
+        doc.text('MEERA HEIGHTS RESIDENTIAL APARTMENTS', 20, y + 9);
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8.5);
+        doc.setTextColor(209, 250, 229);
+        doc.text('Property Management, Multi-Floor Expenditure Ledger & Split Settlement', 20, y + 16);
+        doc.text('Co-Owners: Sajida (1st & 2nd Floors • 40%)  |  Jeelani (3rd, 4th & 5th Floors • 60%)', 20, y + 21);
+
+        y += 30;
+
+        // 2. REPORT TITLE & METADATA BAR
+        doc.setFillColor(248, 250, 252);
+        doc.setDrawColor(226, 232, 240);
+        doc.roundedRect(14, y, pageWidth - 28, 14, 2, 2, 'FD');
+
+        doc.setTextColor(15, 23, 42);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10.5);
+        doc.text(reportTitle, 18, y + 6);
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        doc.setTextColor(100, 116, 139);
+        doc.text(reportSubtitle, 18, y + 10.5);
+
+        const metaRight = `Period: ${periodLabel}  |  Generated: ${new Date().toLocaleString('en-IN')}`;
+        doc.setFontSize(7.5);
+        doc.text(metaRight, pageWidth - 18, y + 8.5, { align: 'right' });
+
+        y += 18;
+
+        // 3. EXECUTIVE KPI SUMMARY BOXES (4-Card Grid)
+        const boxWidth = (pageWidth - 28 - 9) / 4;
+        const boxHeight = 16;
+        const cards = [
+            { label: 'TOTAL RENT INFLOW', val: `Rs. ${totalRent.toLocaleString('en-IN')}`, color: [5, 150, 105], bg: [236, 253, 245] },
+            { label: 'TOTAL MAINTENANCE', val: `Rs. ${totalExpense.toLocaleString('en-IN')}`, color: [225, 29, 72], bg: [255, 241, 242] },
+            { label: 'NET TREASURY SURPLUS', val: `Rs. ${netSurplus.toLocaleString('en-IN')}`, color: [2, 132, 199], bg: [240, 249, 255] },
+            { label: 'SAJIDA / JEELANI EXP', val: `Rs. ${sajidaExpenseShare.toLocaleString('en-IN')} / ${jeelaniExpenseShare.toLocaleString('en-IN')}`, color: [124, 58, 237], bg: [245, 243, 255] }
+        ];
+
+        cards.forEach((c, idx) => {
+            const bx = 14 + idx * (boxWidth + 3);
+            doc.setFillColor(c.bg[0], c.bg[1], c.bg[2]);
+            doc.setDrawColor(226, 232, 240);
+            doc.roundedRect(bx, y, boxWidth, boxHeight, 2, 2, 'FD');
+
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(6.5);
+            doc.setTextColor(100, 116, 139);
+            doc.text(c.label, bx + 3, y + 5);
+
+            doc.setFontSize(8.5);
+            doc.setTextColor(c.color[0], c.color[1], c.color[2]);
+            doc.text(c.val, bx + 3, y + 11.5);
         });
-        doc.save(`Meera_Heights_${type}_${month}.pdf`);
-        this.showToast('Monthly PDF report downloaded.', 'success');
+
+        y += boxHeight + 6;
+
+        // 4. DATA TABLE RENDERING
+        const hasAutoTable = typeof doc.autoTable === 'function';
+
+        if (reportType === 'statement' || reportType === 'expenses' || reportType === 'category') {
+            // Expenses Section Table
+            const expHeaders = ['#', 'Date', 'Expense Title / Purpose', 'Category', 'Total (Rs.)', 'Sajida (40%)', 'Jeelani (60%)', 'Debited Wallet', 'Notes'];
+            const expRows = expenses.map((e, idx) => {
+                const c = this.data.categories.find(x => x.id === e.categoryId);
+                return [
+                    idx + 1,
+                    e.date || '-',
+                    e.title || 'Expense',
+                    c?.name || 'General',
+                    Number(e.amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 }),
+                    Number(e.sajidaAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 }),
+                    Number(e.jeelaniAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 }),
+                    e.debitedWallet || e.debitedSource || 'both',
+                    e.notes || '-'
+                ];
+            });
+
+            if (reportType === 'statement') {
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(10);
+                doc.setTextColor(15, 23, 42);
+                doc.text(`Expenditure Breakdown (${expenses.length} Records)`, 14, y);
+                y += 3;
+            }
+
+            if (hasAutoTable) {
+                doc.autoTable({
+                    startY: y,
+                    head: [expHeaders],
+                    body: expRows,
+                    theme: 'striped',
+                    headStyles: { fillColor: [4, 120, 87], textColor: 255, fontSize: 7.5, fontStyle: 'bold', halign: 'left' },
+                    bodyStyles: { fontSize: 7, textColor: [15, 23, 42], cellPadding: 2 },
+                    alternateRowStyles: { fillColor: [248, 250, 252] },
+                    columnStyles: {
+                        0: { cellWidth: 8, halign: 'center' },
+                        1: { cellWidth: 18 },
+                        2: { cellWidth: 42 },
+                        3: { cellWidth: 26 },
+                        4: { cellWidth: 20, halign: 'right', fontStyle: 'bold' },
+                        5: { cellWidth: 18, halign: 'right' },
+                        6: { cellWidth: 18, halign: 'right' },
+                        7: { cellWidth: 18 },
+                        8: { cellWidth: 'auto' }
+                    },
+                    foot: [[
+                        'TOTAL', '', `${expenses.length} Entries`, '',
+                        `Rs. ${totalExpense.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
+                        `Rs. ${sajidaExpenseShare.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
+                        `Rs. ${jeelaniExpenseShare.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
+                        '', ''
+                    ]],
+                    footStyles: { fillColor: [241, 245, 249], textColor: [15, 23, 42], fontStyle: 'bold', fontSize: 7.5 },
+                    margin: { left: 14, right: 14 },
+                    didDrawPage: (data) => {
+                        // Footer on every page
+                        this.drawPdfPageFooter(doc, pageWidth, pageHeight);
+                    }
+                });
+                y = doc.lastAutoTable.finalY + 8;
+            } else {
+                // Fallback manual table rendering
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(8);
+                expenses.forEach((e, idx) => {
+                    if (y > pageHeight - 20) { doc.addPage(); y = 18; }
+                    doc.text(`${idx + 1}. ${e.date || ''} | ${e.title || ''} | Rs. ${Number(e.amount || 0).toLocaleString('en-IN')}`, 14, y);
+                    y += 5;
+                });
+                y += 6;
+            }
+        }
+
+        if (reportType === 'statement' || reportType === 'rents') {
+            // Rent Collections Section Table
+            if (reportType === 'statement') {
+                if (y > pageHeight - 45) { doc.addPage(); y = 18; }
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(10);
+                doc.setTextColor(15, 23, 42);
+                doc.text(`Rent Collections Ledger (${rents.length} Records)`, 14, y);
+                y += 3;
+            }
+
+            const rentHeaders = ['#', 'Date', 'Tenant Name', 'Flat', 'Floor', 'Month', 'Amount (Rs.)', 'Credited Owner', 'Mode'];
+            const rentRows = rents.map((r, idx) => {
+                const t = this.data.tenants.find(x => x.id === r.tenantId);
+                return [
+                    idx + 1,
+                    r.paymentDate || '-',
+                    t?.name || r.tenantName || 'Tenant',
+                    t?.flat || r.flat || '-',
+                    t?.floor ? `${t.floor} Fl` : (r.floor ? `${r.floor} Fl` : '-'),
+                    r.month || '-',
+                    Number(r.amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 }),
+                    r.ownerCredited || (r.floor <= 2 ? 'Sajida (Fl 1-2)' : 'Jeelani (Fl 3-5)'),
+                    r.paymentMode || r.mode || 'UPI'
+                ];
+            });
+
+            if (hasAutoTable) {
+                doc.autoTable({
+                    startY: y,
+                    head: [rentHeaders],
+                    body: rentRows,
+                    theme: 'striped',
+                    headStyles: { fillColor: [5, 150, 105], textColor: 255, fontSize: 7.5, fontStyle: 'bold', halign: 'left' },
+                    bodyStyles: { fontSize: 7, textColor: [15, 23, 42], cellPadding: 2 },
+                    alternateRowStyles: { fillColor: [248, 250, 252] },
+                    columnStyles: {
+                        0: { cellWidth: 8, halign: 'center' },
+                        1: { cellWidth: 20 },
+                        2: { cellWidth: 38 },
+                        3: { cellWidth: 16 },
+                        4: { cellWidth: 16 },
+                        5: { cellWidth: 18 },
+                        6: { cellWidth: 24, halign: 'right', fontStyle: 'bold' },
+                        7: { cellWidth: 24 },
+                        8: { cellWidth: 'auto' }
+                    },
+                    foot: [[
+                        'TOTAL', '', `${rents.length} Collections`, '', '', '',
+                        `Rs. ${totalRent.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`,
+                        '', ''
+                    ]],
+                    footStyles: { fillColor: [241, 245, 249], textColor: [15, 23, 42], fontStyle: 'bold', fontSize: 7.5 },
+                    margin: { left: 14, right: 14 },
+                    didDrawPage: (data) => {
+                        this.drawPdfPageFooter(doc, pageWidth, pageHeight);
+                    }
+                });
+                y = doc.lastAutoTable.finalY + 10;
+            }
+        }
+
+        // 5. SIGNATURE / VERIFICATION BLOCK
+        if (y > pageHeight - 35) { doc.addPage(); y = 20; }
+        
+        doc.setDrawColor(203, 213, 225);
+        doc.line(14, y, pageWidth - 14, y);
+        y += 6;
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8);
+        doc.setTextColor(15, 23, 42);
+        doc.text('VERIFICATION & SIGN-OFF', 14, y);
+
+        y += 12;
+
+        const sigWidth = 70;
+        // Sajida Signature Line
+        doc.setDrawColor(148, 163, 184);
+        doc.line(20, y, 20 + sigWidth, y);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7.5);
+        doc.setTextColor(71, 85, 105);
+        doc.text('Co-Owner: Sajida (1st & 2nd Floors)', 20, y + 4);
+        doc.text('Signature & Date', 20, y + 8);
+
+        // Jeelani Signature Line
+        const jX = pageWidth - 20 - sigWidth;
+        doc.line(jX, y, jX + sigWidth, y);
+        doc.text('Co-Owner: Jeelani (3rd, 4th & 5th Floors)', jX, y + 4);
+        doc.text('Signature & Date', jX, y + 8);
+
+        // Draw final page footer
+        this.drawPdfPageFooter(doc, pageWidth, pageHeight);
+
+        // Generate Filename & Download
+        const cleanTitle = reportTitle.replace(/[^a-zA-Z0-9]+/g, '_');
+        const cleanPeriod = periodLabel.slice(0, 20).replace(/[^a-zA-Z0-9]+/g, '_');
+        const fileName = `Meera_Heights_${cleanTitle}_${cleanPeriod}.pdf`;
+
+        doc.save(fileName);
+        this.showToast(`✓ PDF Report "${fileName}" downloaded successfully!`, 'success');
+    },
+
+    drawPdfPageFooter(doc, pageWidth, pageHeight) {
+        const pageCount = doc.internal.getNumberOfPages();
+        const currentPage = doc.internal.getCurrentPageInfo().pageNumber;
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7);
+        doc.setTextColor(148, 163, 184);
+        doc.text(
+            'Meera Heights Building Management System  •  Official & Confidential Record',
+            14,
+            pageHeight - 8
+        );
+        doc.text(
+            `Page ${currentPage} of ${pageCount}`,
+            pageWidth - 14,
+            pageHeight - 8,
+            { align: 'right' }
+        );
+    },
+
+    // Individual Expense Payment Voucher (PDF)
+    downloadExpenseVoucherPDF(expenseId) {
+        if (!window.jspdf || !window.jspdf.jsPDF) {
+            this.showToast('PDF library loading...', 'error');
+            return;
+        }
+
+        const exp = (this.data.expenses || []).find(e => e.id === expenseId);
+        if (!exp) {
+            this.showToast('Expense record not found.', 'error');
+            return;
+        }
+
+        const cat = this.data.categories.find(c => c.id === exp.categoryId) || { name: 'General Expenditure' };
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+        const pageWidth = doc.internal.pageSize.getWidth();
+
+        let y = 16;
+
+        // Header Band
+        doc.setFillColor(4, 120, 87);
+        doc.roundedRect(14, y, pageWidth - 28, 22, 3, 3, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(14);
+        doc.text('MEERA HEIGHTS RESIDENTIAL APARTMENTS', 20, y + 9);
+        doc.setFontSize(8.5);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(209, 250, 229);
+        doc.text('Co-owned by Sajida (Fl 1-2 • 40%) & Jeelani (Fl 3-5 • 60%)', 20, y + 16);
+
+        y += 28;
+
+        // Title box
+        doc.setFillColor(248, 250, 252);
+        doc.setDrawColor(203, 213, 225);
+        doc.roundedRect(14, y, pageWidth - 28, 12, 2, 2, 'FD');
+        doc.setTextColor(15, 23, 42);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
+        doc.text('PAYMENT & MAINTENANCE VOUCHER', 18, y + 7.5);
+        doc.setFontSize(8);
+        doc.setTextColor(100, 116, 139);
+        const voucherNo = `VOUCHER-${(exp.id || '').slice(-6).toUpperCase()}`;
+        doc.text(`Voucher No: ${voucherNo}  |  Date: ${exp.date || '-'}`, pageWidth - 18, y + 7.5, { align: 'right' });
+
+        y += 18;
+
+        // Voucher Body Table
+        const rows = [
+            ['Expense Purpose / Item:', exp.title || 'Building Expense'],
+            ['Expenditure Category:', cat.name],
+            ['Total Amount Debited:', `Rs. ${Number(exp.amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`],
+            ['Amount in Words:', this.numberToIndianWords(exp.amount)],
+            ['Debited Account / Wallet:', exp.debitedWallet || exp.debitedSource || 'Both Wallets'],
+            ['Sajida Co-Owner Share (40%):', `Rs. ${Number(exp.sajidaAmount || 0).toLocaleString('en-IN')}`],
+            ['Jeelani Co-Owner Share (60%):', `Rs. ${Number(exp.jeelaniAmount || 0).toLocaleString('en-IN')}`],
+            ['Recurring Automation?:', exp.isRecurring ? 'Yes (Monthly Automated Engine)' : 'One-Time Payment'],
+            ['Notes & Details:', exp.notes || 'None recorded']
+        ];
+
+        if (typeof doc.autoTable === 'function') {
+            doc.autoTable({
+                startY: y,
+                body: rows,
+                theme: 'plain',
+                styles: { fontSize: 8.5, cellPadding: 3, textColor: [15, 23, 42] },
+                columnStyles: {
+                    0: { fontStyle: 'bold', cellWidth: 55, textColor: [71, 85, 105] },
+                    1: { cellWidth: 'auto' }
+                },
+                margin: { left: 14, right: 14 }
+            });
+            y = doc.lastAutoTable.finalY + 18;
+        }
+
+        // Signatures
+        doc.setDrawColor(203, 213, 225);
+        doc.line(14, y, pageWidth - 14, y);
+        y += 14;
+
+        doc.line(20, y, 80, y);
+        doc.setFontSize(7.5);
+        doc.setTextColor(71, 85, 105);
+        doc.text('Prepared By / Caretaker', 20, y + 4);
+
+        doc.line(pageWidth - 80, y, pageWidth - 20, y);
+        doc.text('Authorized Signatory (Sajida / Jeelani)', pageWidth - 80, y + 4);
+
+        const cleanTitle = (exp.title || 'Expense').replace(/[^a-zA-Z0-9]+/g, '_');
+        doc.save(`Meera_Heights_Voucher_${exp.date || ''}_${cleanTitle}.pdf`);
+        this.showToast(`✓ Payment voucher for "${exp.title}" downloaded!`, 'success');
+    },
+
+    // Individual Tenant Rent Receipt (PDF)
+    downloadRentReceiptPDF(rentId) {
+        if (!window.jspdf || !window.jspdf.jsPDF) {
+            this.showToast('PDF library loading...', 'error');
+            return;
+        }
+
+        const rent = (this.data.rentCollections || []).find(r => r.id === rentId);
+        if (!rent) {
+            this.showToast('Rent collection record not found.', 'error');
+            return;
+        }
+
+        const tenant = (this.data.tenants || []).find(t => t.id === rent.tenantId) || {
+            name: rent.tenantName || 'Resident Tenant',
+            flat: rent.flat || 'Flat',
+            floor: rent.floor || 1
+        };
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+        const pageWidth = doc.internal.pageSize.getWidth();
+
+        let y = 16;
+
+        // Header Band
+        doc.setFillColor(4, 120, 87);
+        doc.roundedRect(14, y, pageWidth - 28, 22, 3, 3, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(14);
+        doc.text('MEERA HEIGHTS RESIDENTIAL APARTMENTS', 20, y + 9);
+        doc.setFontSize(8.5);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(209, 250, 229);
+        doc.text('Official Rental Acknowledgment & Money Receipt', 20, y + 16);
+
+        y += 28;
+
+        // Receipt title bar
+        doc.setFillColor(248, 250, 252);
+        doc.setDrawColor(203, 213, 225);
+        doc.roundedRect(14, y, pageWidth - 28, 12, 2, 2, 'FD');
+        doc.setTextColor(15, 23, 42);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
+        doc.text('OFFICIAL RENT RECEIPT', 18, y + 7.5);
+        doc.setFontSize(8);
+        doc.setTextColor(100, 116, 139);
+        const receiptNo = `RECEIPT-${(rent.id || '').slice(-6).toUpperCase()}`;
+        doc.text(`Receipt No: ${receiptNo}  |  Date: ${rent.paymentDate || '-'}`, pageWidth - 18, y + 7.5, { align: 'right' });
+
+        y += 18;
+
+        const floorName = tenant.floor ? `${tenant.floor}${tenant.floor == 1 ? 'st' : tenant.floor == 2 ? 'nd' : tenant.floor == 3 ? 'rd' : 'th'} Floor` : 'Residential Floor';
+        const floorOwner = rent.ownerCredited || (tenant.floor <= 2 ? 'Sajida (Floors 1 & 2)' : 'Jeelani (Floors 3, 4 & 5)');
+
+        const rows = [
+            ['Received With Thanks From:', tenant.name || rent.tenantName],
+            ['Apartment / Flat Number:', `Flat ${tenant.flat || rent.flat} (${floorName})`],
+            ['Rental Billing Period / Month:', rent.month || 'Current Month'],
+            ['Amount Received (in figures):', `Rs. ${Number(rent.amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`],
+            ['Amount Received (in words):', this.numberToIndianWords(rent.amount)],
+            ['Payment Mode / Channel:', rent.paymentMode || rent.mode || 'UPI / Online Transfer'],
+            ['Credited Floor Owner:', floorOwner],
+            ['Receipt Status:', 'Payment Cleared & Credited to Building Account']
+        ];
+
+        if (typeof doc.autoTable === 'function') {
+            doc.autoTable({
+                startY: y,
+                body: rows,
+                theme: 'plain',
+                styles: { fontSize: 8.5, cellPadding: 3, textColor: [15, 23, 42] },
+                columnStyles: {
+                    0: { fontStyle: 'bold', cellWidth: 55, textColor: [71, 85, 105] },
+                    1: { cellWidth: 'auto' }
+                },
+                margin: { left: 14, right: 14 }
+            });
+            y = doc.lastAutoTable.finalY + 18;
+        }
+
+        // Signature section
+        doc.setDrawColor(203, 213, 225);
+        doc.line(14, y, pageWidth - 14, y);
+        y += 14;
+
+        doc.line(pageWidth - 85, y, pageWidth - 20, y);
+        doc.setFontSize(7.5);
+        doc.setTextColor(71, 85, 105);
+        doc.text(`Authorized Receiver (${floorOwner})`, pageWidth - 85, y + 4);
+        doc.text('Meera Heights Management', pageWidth - 85, y + 8);
+
+        const cleanTenant = (tenant.name || 'Tenant').replace(/[^a-zA-Z0-9]+/g, '_');
+        doc.save(`Meera_Heights_Rent_Receipt_${cleanTenant}_${rent.month || ''}.pdf`);
+        this.showToast(`✓ Official rent receipt for "${tenant.name}" downloaded!`, 'success');
     },
 
     // -------------------------------------------------------------
@@ -1185,7 +1918,9 @@ const App = {
         this.renderStatsCards(stats);
         this.renderRecurringBanner();
         this.renderCategoryPills();
+        this.renderCategoryExportActions();
         this.renderExpenses();
+        this.renderExpenseCalendar();
         this.renderTenants();
         this.renderRentLedger();
         this.renderFloorBreakupPage();
@@ -1440,6 +2175,85 @@ const App = {
         this.expenseCategoryFilter = catId;
         this.renderCategoryPills();
         this.renderExpenses();
+        this.renderCategoryExportActions();
+        this.renderExpenseCalendar();
+    },
+
+    renderCategoryExportActions() {
+        const container = document.getElementById('category-export-actions');
+        if (!container) return;
+        const cat = this.data.categories.find(c => c.id === this.expenseCategoryFilter);
+        const label = cat ? cat.name : 'All Expense Categories';
+        const categoryArg = cat ? `'${cat.id}'` : "'all'";
+        container.innerHTML = `
+            <div class="flex items-center gap-2 min-w-0">
+                <div class="w-9 h-9 rounded-xl bg-white border border-emerald-200 text-emerald-700 flex items-center justify-center shrink-0"><i class="fa-solid ${cat?.icon || 'fa-layer-group'}"></i></div>
+                <div class="min-w-0"><p class="text-[10px] uppercase tracking-wide font-extrabold text-emerald-700">Selected sheet</p><p class="text-sm font-extrabold text-slate-900 truncate">${label}</p></div>
+            </div>
+            <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                <button onclick="App.downloadCategoryExcel(${categoryArg})" class="category-export-btn excel" title="Download formatted Excel workbook (.xlsx)"><i class="fa-solid fa-file-excel"></i> Excel (.xlsx)</button>
+                <button onclick="App.downloadCategoryPDF(${categoryArg})" class="category-export-btn pdf" title="Download Executive PDF"><i class="fa-solid fa-file-pdf"></i> PDF</button>
+                <button onclick="App.openPDFExportModal('category', ${categoryArg})" class="category-export-btn period" title="Custom Period PDF (Weekly, Monthly, Yearly)"><i class="fa-solid fa-calendar-days"></i> Period PDF</button>
+                <button onclick="App.downloadCategoryCSV(${categoryArg})" class="category-export-btn csv" title="Export CSV"><i class="fa-solid fa-file-csv"></i> CSV</button>
+            </div>`;
+    },
+
+    downloadCategoryCSV(categoryId = 'all') {
+        const rows = this.data.expenses.filter(e => categoryId === 'all' || e.categoryId === categoryId);
+        const category = this.data.categories.find(c => c.id === categoryId);
+        const name = category ? category.name : 'All_Categories';
+        const q = value => `"${String(value ?? '').replace(/"/g, '""')}"`;
+        const header = ['Date', 'Expense', 'Category', 'Amount', 'Sajida Share', 'Jeelani Share', 'Debited Wallet', 'Recurring', 'Notes'];
+        const body = rows.map(e => {
+            const c = this.data.categories.find(x => x.id === e.categoryId);
+            return [e.date, e.title, c?.name || '', e.amount, e.sajidaAmount || 0, e.jeelaniAmount || 0, e.debitedWallet || e.debitedSource || '', e.isRecurring ? 'Yes' : 'No', e.notes || ''];
+        });
+        const csv = [header, ...body].map(row => row.map(q).join(',')).join('\r\n');
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' }));
+        a.download = `Meera_Heights_${name.replace(/[^a-z0-9]+/gi, '-')}_Expenses.csv`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+        this.showToast(`${name} CSV downloaded.`, 'success');
+    },
+
+    shiftExpenseCalendar(delta) {
+        const current = new Date(`${this.expenseCalendarMonth}-01T00:00:00`);
+        current.setMonth(current.getMonth() + delta);
+        this.expenseCalendarMonth = current.toISOString().slice(0, 7);
+        this.renderExpenseCalendar();
+    },
+
+    renderExpenseCalendar() {
+        const container = document.getElementById('expense-calendar');
+        const monthInput = document.getElementById('expense-calendar-month');
+        if (!container || !monthInput) return;
+        monthInput.value = this.expenseCalendarMonth;
+        const [year, month] = this.expenseCalendarMonth.split('-').map(Number);
+        const first = new Date(year, month - 1, 1);
+        const days = new Date(year, month, 0).getDate();
+        const start = first.getDay();
+        const monthRows = this.data.expenses.filter(e => (e.date || '').startsWith(this.expenseCalendarMonth));
+        const byDay = {};
+        monthRows.forEach(e => { const day = Number((e.date || '').slice(8, 10)); (byDay[day] ||= []).push(e); });
+        const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        let html = `<div class="expense-calendar-grid weekdays">${weekdays.map(d => `<div>${d}</div>`).join('')}</div><div class="expense-calendar-grid">`;
+        for (let i = 0; i < start; i++) html += '<div class="calendar-day empty-day"></div>';
+        for (let day = 1; day <= days; day++) {
+            const items = byDay[day] || [];
+            const sum = items.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+            html += `<button class="calendar-day ${items.length ? 'has-expenses' : ''}" onclick="App.focusCalendarDay(${day})"><span class="calendar-day-number">${day}</span>${items.length ? `<span class="calendar-count">${items.length} item${items.length > 1 ? 's' : ''}</span><strong>₹${sum.toLocaleString('en-IN')}</strong>` : '<span class="calendar-empty-label">No bills</span>'}</button>`;
+        }
+        html += '</div>';
+        container.innerHTML = html;
+    },
+
+    focusCalendarDay(day) {
+        const date = `${this.expenseCalendarMonth}-${String(day).padStart(2, '0')}`;
+        const items = this.data.expenses.filter(e => e.date === date);
+        if (!items.length) return this.showToast(`No expenses recorded on ${date}.`, 'info');
+        const names = items.map(e => `${e.title || 'Expense'} (₹${Number(e.amount || 0).toLocaleString('en-IN')})`).join(' • ');
+        this.showToast(`${date}: ${names}`, 'info');
     },
 
     // -------------------------------------------------------------
@@ -1485,6 +2299,14 @@ const App = {
                 </div>
             `;
             return;
+        }
+
+        const expenseCalendarMonth = document.getElementById('expense-calendar-month');
+        if (expenseCalendarMonth) {
+            expenseCalendarMonth.addEventListener('change', e => {
+                this.expenseCalendarMonth = e.target.value || new Date().toISOString().slice(0, 7);
+                this.renderExpenseCalendar();
+            });
         }
 
         // 1. Desktop Table View (visible on md and above)
@@ -1557,6 +2379,9 @@ const App = {
                     <td class="px-4 py-3.5">${splitBadge}</td>
                     <td class="px-4 py-3.5 text-xs">${walletText}</td>
                     <td class="px-4 py-3.5 text-right whitespace-nowrap">
+                        <button onclick="App.downloadExpenseVoucherPDF('${exp.id}')" class="p-1.5 text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 transition" title="Download Payment Voucher (PDF)">
+                            <i class="fa-solid fa-file-invoice"></i>
+                        </button>
                         <button onclick="App.editExpense('${exp.id}')" class="p-1.5 text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 transition" title="Edit">
                             <i class="fa-solid fa-pen-to-square"></i>
                         </button>
@@ -1592,7 +2417,10 @@ const App = {
                             <div>${walletText}</div>
                             <div class="text-[10px] text-slate-400 mt-0.5">${splitSummaryText}</div>
                         </div>
-                        <div class="flex items-center gap-1 shrink-0">
+                        <div class="flex items-center gap-1.5 shrink-0">
+                            <button onclick="App.downloadExpenseVoucherPDF('${exp.id}')" class="w-8 h-8 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs transition" title="Download Voucher (PDF)">
+                                <i class="fa-solid fa-file-invoice"></i>
+                            </button>
                             <button onclick="App.editExpense('${exp.id}')" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center text-xs transition" title="Edit">
                                 <i class="fa-solid fa-pen-to-square"></i>
                             </button>
@@ -6098,6 +6926,8 @@ const App = {
             this.renderFloorBreakupPage();
         } else if (tabId === 'expenses') {
             this.renderExpenses();
+            this.renderCategoryExportActions();
+            this.renderExpenseCalendar();
         } else if (tabId === 'tenants') {
             this.renderRentLedger();
         } else if (tabId === 'settings') {
@@ -6114,6 +6944,7 @@ const App = {
             modal.classList.remove('hidden');
             modal.classList.add('flex');
             modal.style.display = 'flex';
+            modal.style.zIndex = '99999';
         }
     },
 

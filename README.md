@@ -131,6 +131,13 @@ You can also directly double-click `index.html` to open it in Chrome, Edge, Safa
 - The audit added a mobile-safe header/month selector, 42px touch targets, mobile-friendly sort controls, bottom-navigation safe-area spacing, full-width bottom-sheet modal behavior, and stronger overflow handling for dense ledgers.
 - The primary mobile risk was dense tables and large modal forms; those now remain usable through horizontal scrolling and constrained, touch-scrollable modal panels.
 
+### Expense workspace UI
+- The Expenses screen now has a mobile-first sheet header with selected-category context and direct CSV/PDF actions.
+- Select a category sheet, then use **CSV** or **PDF** to export only that category's expenses. Use **All Master Sheets** for the complete expense ledger.
+- The new Expense Calendar is available below the expense ledger. Select a month, use the previous/next buttons, and tap a day with expenses to see the recorded items and total.
+- Calendar behavior is local and reads the existing expense dates; it does not create or modify transactions.
+- The redesigned expense workspace remains compatible with the existing PWA and LAN/mobile access setup.
+
 ### Sorting controls
 - Expenses: date newest/oldest, amount high/low, description A-Z.
 - Floor breakup: date newest/oldest, amount high/low, description A-Z.
@@ -146,3 +153,24 @@ You can also directly double-click `index.html` to open it in Chrome, Edge, Safa
 - Backup exports the complete local data model, including tenants, rents, expenses, recurring rules, wallet adjustments, advance settlements, bank transactions, and wallet transfers.
 - Restore validates the JSON shape, normalizes missing collections, asks for overwrite confirmation, and refreshes the active application state.
 - Restore requires the current backup schema collections (`owners`, `categories`, `tenants`, `rentCollections`, and `expenses`).
+
+### Multi-Device Real-Time Cloud Sync (Firebase)
+- **Zero-Setup Mobile Pairing**: Pair any smartphone by clicking **Pair Mobile (QR)** on Desktop to scan the high-resolution QR code or share the direct link via WhatsApp.
+- **Bi-Directional Real-Time Sync**: Any changes made on Desktop, Android, or iOS reflect across all paired devices via Google Firebase Firestore listeners.
+- **Sync Now Tactile Feedback**: Tap **Sync Now** to instantly push and pull latest building data with clear visual spinning feedback and success notifications.
+- **Offline First**: All operations work completely offline with localStorage; changes automatically sync once internet connectivity resumes.
+
+### Executive-Grade PDF Generator & Individual Expense Vouchers
+- **Official Meera Heights Header**: Deep emerald brand banner (`#047857`) with co-owners Sajida & Jeelani ownership breakdown, timestamp, and report periods.
+- **Flexible Period Filtering**: Generate reports filtered by:
+  - **Weekly**: Last 7 Days rolling summary.
+  - **Monthly**: Select any historical or current month.
+  - **Yearly**: Complete annual financial statement.
+  - **Custom Range**: Pick exact Start Date and End Date.
+- **Individual Expense Payment Vouchers (PDF)**: Download official printable payment vouchers for any expense with 1 click from desktop rows and mobile cards, including amount in words (Indian numbering system) and co-owner signature blocks.
+- **Official Rent Receipts (PDF)**: Generate downloadable printable rent receipts with tenant name, flat number, amount in words, and payment mode.
+
+### Individual Category Excel (.xlsx) Workbooks
+- **Separate Workbooks per Expense Category**: Export individual `.xlsx` spreadsheets for each category (e.g. *Electricity Bills*, *Watchman Salary*, *Caretaker*, *Water Tax*, *Solar Maintenance*, etc.) directly from the Expenses header and the Export Center.
+- **Download All Categories as Separate Files**: 1-click sequential download of all category workbooks as separate `.xlsx` files.
+- **Custom Formatted**: Every sheet includes official Meera Heights banner, co-owner shares, alternating row zebra styling, and bold grand totals.

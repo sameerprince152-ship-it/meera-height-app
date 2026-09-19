@@ -881,6 +881,102 @@ class ExcelExporter {
         return rows;
     }
 
+    // Export a dedicated standalone Excel workbook for an individual category
+    static exportCategorySheet(categoryId, appState) {
+        try {
+            if (typeof XLSX === 'undefined') {
+                if (typeof alert !== 'undefined') alert('Excel export library is loading. Please try again.');
+                return false;
+            }
+
+            const cat = appState.data.categories.find(c => c.id === categoryId);
+            const catName = cat ? cat.name : 'Expenses';
+            const cleanName = catName.replace(/[^a-zA-Z0-9]+/g, '_');
+
+            const expenses = (appState.data.expenses || []).filter(e => categoryId === 'all' || e.categoryId === categoryId);
+            expenses.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+
+            const totalAmount = expenses.reduce((s, e) => s + (parseFloat(e.amount) || 0), 0);
+            const totalSajida = expenses.reduce((s, e) => s + (parseFloat(e.sajidaAmount) || 0), 0);
+            const totalJeelani = expenses.reduce((s, e) => s + (parseFloat(e.jeelaniAmount) || 0), 0);
+
+            const data = [
+                ["MEERA HEIGHTS - RESIDENTIAL APARTMENTS", "", "", "", "", "", "", "", "", ""],
+                [`EXPENDITURE REGISTER: ${catName.toUpperCase()}`, "", "", "", "", "", "", "", "", ""],
+                ["Floor Ownership: Sajida (1st & 2nd Floors - 40%) | Jeelani (3rd, 4th & 5th Floors - 60%)", "", "", "", "", "", "", "", "", ""],
+                [`Generated: ${new Date().toLocaleString('en-IN')}`, `Total Entries: ${expenses.length}`, `Total Spent: Rs. ${totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`, `Sajida (40%): Rs. ${totalSajida.toLocaleString('en-IN')}`, `Jeelani (60%): Rs. ${totalJeelani.toLocaleString('en-IN')}`, "", "", "", "", ""],
+                ["", "", "", "", "", "", "", "", "", ""],
+                [
+                    "#", "Date", "Expense Title / Purpose", "Category", 
+                    "Total Amount (Rs.)", "Sajida Share (40%)", "Jeelani Share (60%)", 
+                    "Debited Wallet / Source", "Recurring Schedule?", "Notes & Details"
+                ]
+            ];
+
+            expenses.forEach((e, idx) => {
+                const c = appState.data.categories.find(x => x.id === e.categoryId);
+                data.push([
+                    idx + 1,
+                    e.date || '',
+                    e.title || 'Expense',
+                    c?.name || catName,
+                    parseFloat(e.amount) || 0,
+                    parseFloat(e.sajidaAmount) || 0,
+                    parseFloat(e.jeelaniAmount) || 0,
+                    e.debitedWallet || e.debitedSource || 'both',
+                    e.isRecurring ? 'Yes (Automated)' : 'One-time',
+                    e.notes || ''
+                ]);
+            });
+
+            data.push([
+                "GRAND TOTAL", "", "", "",
+                totalAmount, totalSajida, totalJeelani,
+                "", "", ""
+            ]);
+
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            ws['!cols'] = [
+                { wch: 6 }, { wch: 14 }, { wch: 34 }, { wch: 22 },
+                { wch: 18 }, { wch: 18 }, { wch: 18 },
+                { wch: 24 }, { wch: 18 }, { wch: 35 }
+            ];
+
+            const sheetTabName = (catName.length > 28 ? catName.slice(0, 28) + '...' : catName);
+            XLSX.utils.book_append_sheet(wb, ws, sheetTabName);
+
+            const timestamp = new Date().toISOString().slice(0, 10);
+            const fileName = `Meera_Heights_${cleanName}_Expenses_${timestamp}.xlsx`;
+            this.downloadWorkbook(wb, fileName);
+            return true;
+        } catch (err) {
+            console.error('Error exporting category sheet:', err);
+            if (typeof alert !== 'undefined') alert('Error exporting sheet: ' + err.message);
+            return false;
+        }
+    }
+
+    // Export each category as its own separate Excel file sequentially
+    static async exportAllCategoriesSeparately(appState) {
+        if (!appState?.data?.categories) return;
+        const categories = appState.data.categories;
+        let count = 0;
+
+        for (let i = 0; i < categories.length; i++) {
+            const cat = categories[i];
+            const hasItems = (appState.data.expenses || []).some(e => e.categoryId === cat.id);
+            // Export categories that have items, or at least default categories
+            if (hasItems || cat.isDefault) {
+                this.exportCategorySheet(cat.id, appState);
+                count++;
+                // Small delay to allow browser download thread to catch up
+                await new Promise(res => setTimeout(res, 400));
+            }
+        }
+        return count;
+    }
+
     // CSV Fallback Export
     static exportCSV(appState) {
         try {

@@ -18,18 +18,94 @@ const FLOOR_OWNERSHIP = {
     5: { floorName: '5th Floor', ownerId: 'jeelani', ownerName: 'Jeelani' }
 };
 
+// Pre-configured dynamic subcategories mapped to categories
+const DEFAULT_CATEGORY_SUBCATEGORIES = {
+    cat_maintenance: [
+        'Plumbing & Water Pipes',
+        'Electrical Repairs & Wiring',
+        'Lift / Elevator AMC & Repairs',
+        'Painting & Plastering',
+        'Carpentry, Doors & Locks',
+        'Overhead Tank Cleaning',
+        'CCTV & Gate Automation',
+        'Pest Control & Sanitization',
+        'Civil Masonry & Tiles',
+        'General Maintenance'
+    ],
+    cat_current_bills: [
+        'Common Area Lighting',
+        'Borewell / Water Pump Motor',
+        'Lift Electricity Meter',
+        'Stilt & Parking Lights',
+        'Sub-Meter Adjustment',
+        'Electricity Meter Testing',
+        'Electricity Bill Late Fine'
+    ],
+    cat_watchman: [
+        'Monthly Salary',
+        'Overtime / Extra Duty',
+        'Festival Bonus / Tip',
+        'Uniform & Security Equipment',
+        'Salary Advance Deduction'
+    ],
+    cat_caretaker: [
+        'Monthly Honorarium / Salary',
+        'Building Supervision Fee',
+        'Emergency Callout Charge',
+        'Festival Bonus'
+    ],
+    cat_water_tax: [
+        'Municipal Water Supply Tax',
+        'Private Water Tanker Delivery',
+        'Borewell Servicing / Flushing',
+        'Water Pump Motor Capacitor',
+        'Float Valve & Sensor Repair'
+    ],
+    cat_property_tax: [
+        'Municipal Tax (Floors 1-2 • Sajida)',
+        'Municipal Tax (Floors 3-5 • Jeelani)',
+        'Commercial / Stilt Area Tax',
+        'Drainage & Sewerage Cess'
+    ],
+    cat_solar_maint: [
+        'Rooftop Panel Cleaning & Washing',
+        'Solar Inverter Servicing',
+        'Wiring & Breaker Replacement',
+        'Annual Maintenance Contract (AMC)'
+    ],
+    cat_internet_bills: [
+        'CCTV Broadband Connection',
+        'Security Wi-Fi Router Plan',
+        'Static IP / Cloud Backup',
+        'Router / Cable Replacement'
+    ],
+    cat_expenditure: [
+        'Cleaning Supplies, Brooms & Phenyl',
+        'Garbage Disposal / Waste Collection',
+        'Bulb & Tube Replacements',
+        'Hardware, Screws & Adhesives',
+        'Tools & Consumables'
+    ],
+    cat_miscellaneous: [
+        'Festival Tips (Eid / Diwali / Ramzan)',
+        'Government / Legal Documentation',
+        'Printing, Accounts & Stationery',
+        'Unforeseen Sundry Expenses'
+    ]
+};
+
 // Default dynamic categories
 const DEFAULT_CATEGORIES = [
-    { id: 'cat_maintenance', name: 'Maintenance', icon: 'fa-wrench', color: '#3B82F6', desc: 'General building repairs & civil maintenance', isDefault: true },
-    { id: 'cat_expenditure', name: 'General Expenditure', icon: 'fa-receipt', color: '#6B7280', desc: 'Day-to-day general building expenses', isDefault: true },
-    { id: 'cat_watchman', name: 'Watchman Salary', icon: 'fa-user-shield', color: '#10B981', desc: 'Monthly security guard / watchman compensation', isDefault: true },
-    { id: 'cat_caretaker', name: 'Property Caretaker Salary', icon: 'fa-user-tie', color: '#8B5CF6', desc: 'Building manager & property caretaker wages', isDefault: true },
-    { id: 'cat_current_bills', name: 'Current Bills (Electricity)', icon: 'fa-bolt', color: '#F59E0B', desc: 'Common area electricity, motor, lighting & meter charges', isDefault: true },
-    { id: 'cat_water_tax', name: 'Water Tax / Water Charges', icon: 'fa-faucet-drip', color: '#06B6D4', desc: 'Municipal water supply tax, borewell & tanker charges', isDefault: true },
-    { id: 'cat_property_tax', name: 'Property Tax', icon: 'fa-landmark', color: '#EF4444', desc: 'Municipal municipal council / corporation property taxes', isDefault: true },
-    { id: 'cat_solar_maint', name: 'Solar Maintenance', icon: 'fa-solar-panel', color: '#EC4899', desc: 'Rooftop solar panel cleaning, inverter AMC & servicing', isDefault: true },
-    { id: 'cat_internet_bills', name: 'Internet Bills', icon: 'fa-wifi', color: '#6366F1', desc: 'CCTV broadband, security Wi-Fi and smart meter connections', isDefault: true },
-    { id: 'cat_miscellaneous', name: 'Miscellaneous', icon: 'fa-boxes-packing', color: '#64748B', desc: 'Unforeseen expenses, festival tips, cleaning supplies', isDefault: true }
+    { id: 'cat_maintenance', name: 'Maintenance', icon: 'fa-wrench', color: '#3B82F6', desc: 'General building repairs & civil maintenance', isDefault: true, subcategories: DEFAULT_CATEGORY_SUBCATEGORIES.cat_maintenance },
+    { id: 'cat_expenditure', name: 'General Expenditure', icon: 'fa-receipt', color: '#6B7280', desc: 'Day-to-day general building expenses', isDefault: true, subcategories: DEFAULT_CATEGORY_SUBCATEGORIES.cat_expenditure },
+    { id: 'cat_watchman', name: 'Watchman Salary', icon: 'fa-user-shield', color: '#10B981', desc: 'Monthly security guard / watchman compensation', isDefault: true, subcategories: DEFAULT_CATEGORY_SUBCATEGORIES.cat_watchman },
+    { id: 'cat_caretaker', name: 'Property Caretaker Salary', icon: 'fa-user-tie', color: '#8B5CF6', desc: 'Building manager & property caretaker wages', isDefault: true, subcategories: DEFAULT_CATEGORY_SUBCATEGORIES.cat_caretaker },
+    { id: 'cat_current_bills', name: 'Current Bills (Electricity)', icon: 'fa-bolt', color: '#F59E0B', desc: 'Common area electricity, motor, lighting & meter charges', isDefault: true, subcategories: DEFAULT_CATEGORY_SUBCATEGORIES.cat_current_bills },
+    { id: 'cat_water_tax', name: 'Water Tax / Water Charges', icon: 'fa-faucet-drip', color: '#06B6D4', desc: 'Municipal water supply tax, borewell & tanker charges', isDefault: true, subcategories: DEFAULT_CATEGORY_SUBCATEGORIES.cat_water_tax },
+    { id: 'cat_property_tax', name: 'Property Tax', icon: 'fa-landmark', color: '#EF4444', desc: 'Municipal municipal council / corporation property taxes', isDefault: true, subcategories: DEFAULT_CATEGORY_SUBCATEGORIES.cat_property_tax },
+    { id: 'cat_solar_maint', name: 'Solar Maintenance', icon: 'fa-solar-panel', color: '#EC4899', desc: 'Rooftop solar panel cleaning, inverter AMC & servicing', isDefault: true, subcategories: DEFAULT_CATEGORY_SUBCATEGORIES.cat_solar_maint },
+    { id: 'cat_internet_bills', name: 'Internet Bills', icon: 'fa-wifi', color: '#6366F1', desc: 'CCTV broadband, security Wi-Fi and smart meter connections', isDefault: true, subcategories: DEFAULT_CATEGORY_SUBCATEGORIES.cat_internet_bills },
+    { id: 'cat_miscellaneous', name: 'Miscellaneous', icon: 'fa-boxes-packing', color: '#64748B', desc: 'Unforeseen expenses, festival tips, cleaning supplies', isDefault: true, subcategories: DEFAULT_CATEGORY_SUBCATEGORIES.cat_miscellaneous }
 ];
 
 // Pre-configured recurring expenses templates
@@ -217,6 +293,13 @@ class StorageManager {
             // Ensure default categories exist
             if (!parsed.categories || parsed.categories.length === 0) {
                 parsed.categories = DEFAULT_CATEGORIES;
+            } else {
+                // Ensure all existing categories have subcategories array
+                parsed.categories.forEach(cat => {
+                    if (!cat.subcategories || !Array.isArray(cat.subcategories) || cat.subcategories.length === 0) {
+                        cat.subcategories = (DEFAULT_CATEGORY_SUBCATEGORIES[cat.id] || ['General Maintenance', 'General Expense']).slice();
+                    }
+                });
             }
             
             // Ensure recurring templates exist

@@ -26,6 +26,22 @@ const App = {
     tenantSearchQuery: '',
     expenseSearchQuery: '',
     selectedMonthFilter: 'all',
+    expenseFilters: {
+        search: '',
+        dateMode: 'all',          // 'all', 'specific', 'range', 'year'
+        dateSpecific: '',
+        dateStart: '',
+        dateEnd: '',
+        dateYear: '',
+        categoryId: 'all',
+        subCategory: 'all',
+        minAmount: null,
+        maxAmount: null,
+        splitType: 'all',         // 'all', 'ratio', 'sajida_only', 'jeelani_only', 'custom'
+        wallet: 'all',            // 'all', 'both', 'sajida', 'jeelani'
+        quickPreset: 'all'
+    },
+    isExpenseFilterDrawerOpen: false,
     activeFloorFilter: 'all',     // 'all', '1', '2', '3', '4', '5'
     floorMonthFilter: 'all',
     floorSearchQuery: '',
@@ -55,6 +71,7 @@ const App = {
         this.data = StorageManager.getData();
         this.setupEventListeners();
         this.populateMonthFilter();
+        this.populateExpenseFilterDropdowns();
         
         // Auto-post recurring expenses if enabled
         this.checkAndAutoPostRecurring();
@@ -64,6 +81,16 @@ const App = {
 
         this.renderAll();
         console.log('Meera Heights App Initialized with Floor Ownership & Advance Management.');
+    },
+
+    escapeHtml(str) {
+        if (!str && str !== 0) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
     },
 
     // -------------------------------------------------------------
@@ -1917,6 +1944,7 @@ const App = {
         const stats = this.getStats();
         this.renderStatsCards(stats);
         this.renderRecurringBanner();
+        this.populateExpenseFilterDropdowns();
         this.renderCategoryPills();
         this.renderCategoryExportActions();
         this.renderExpenses();
@@ -2173,6 +2201,11 @@ const App = {
 
     setExpenseCategory(catId) {
         this.expenseCategoryFilter = catId;
+        this.expenseFilters.categoryId = catId;
+        this.expenseFilters.subCategory = 'all';
+        const catSelect = document.getElementById('filter-exp-category');
+        if (catSelect) catSelect.value = catId;
+        this.populateFilterSubcategoriesDropdown(catId);
         this.renderCategoryPills();
         this.renderExpenses();
         this.renderCategoryExportActions();
@@ -2259,43 +2292,522 @@ const App = {
     // -------------------------------------------------------------
     // EXPENSES LISTING
     // -------------------------------------------------------------
+    toggleExpenseAdvancedFilters() {
+        const drawer = document.getElementById('expense-advanced-filters-drawer');
+        const btn = document.getElementById('btn-toggle-expense-filters');
+        if (!drawer) return;
+        this.isExpenseFilterDrawerOpen = !this.isExpenseFilterDrawerOpen;
+        drawer.classList.toggle('hidden', !this.isExpenseFilterDrawerOpen);
+        if (btn) {
+            btn.classList.toggle('bg-slate-200', this.isExpenseFilterDrawerOpen);
+            btn.classList.toggle('border-emerald-500', this.isExpenseFilterDrawerOpen);
+        }
+    },
+
+    onExpenseSearchInput(val) {
+        this.expenseFilters.search = (val || '').trim();
+        this.expenseSearchQuery = this.expenseFilters.search;
+        const clearBtn = document.getElementById('btn-clear-search-text');
+        if (clearBtn) {
+            clearBtn.classList.toggle('hidden', !this.expenseFilters.search);
+        }
+        this.renderExpenses();
+    },
+
+    clearExpenseSearchText() {
+        const searchInput = document.getElementById('expense-search-input');
+        if (searchInput) searchInput.value = '';
+        this.onExpenseSearchInput('');
+    },
+
+    onExpenseSortChange(val) {
+        this.sortState.expenses = val;
+        this.renderExpenses();
+    },
+
+    setExpenseDateMode(mode) {
+        this.expenseFilters.dateMode = mode;
+        const modes = ['all', 'specific', 'range', 'year'];
+        modes.forEach(m => {
+            const btn = document.getElementById(`btn-date-mode-${m}`);
+            if (btn) btn.classList.toggle('active', m === mode);
+        });
+
+        const specBox = document.getElementById('filter-date-specific-box');
+        const rangeBox = document.getElementById('filter-date-range-box');
+        const yearBox = document.getElementById('filter-date-year-box');
+
+        if (specBox) specBox.classList.toggle('hidden', mode !== 'specific');
+        if (rangeBox) rangeBox.classList.toggle('hidden', mode !== 'range');
+        if (yearBox) yearBox.classList.toggle('hidden', mode !== 'year');
+
+        if (mode === 'all') {
+            this.expenseFilters.dateSpecific = '';
+            this.expenseFilters.dateStart = '';
+            this.expenseFilters.dateEnd = '';
+            this.expenseFilters.dateYear = '';
+            const ds = document.getElementById('filter-exp-date-specific');
+            const dstart = document.getElementById('filter-exp-date-start');
+            const dend = document.getElementById('filter-exp-date-end');
+            if (ds) ds.value = '';
+            if (dstart) dstart.value = '';
+            if (dend) dend.value = '';
+        } else if (mode === 'specific') {
+            const ds = document.getElementById('filter-exp-date-specific');
+            if (ds && !ds.value) {
+                ds.value = new Date().toISOString().slice(0, 10);
+                this.expenseFilters.dateSpecific = ds.value;
+            }
+        } else if (mode === 'year') {
+            const ySelect = document.getElementById('filter-exp-year');
+            if (ySelect && !this.expenseFilters.dateYear) {
+                this.expenseFilters.dateYear = ySelect.value || new Date().getFullYear().toString();
+                ySelect.value = this.expenseFilters.dateYear;
+            }
+        }
+
+        this.renderExpenses();
+    },
+
+    onFilterCategoryChanged(categoryId) {
+        this.expenseCategoryFilter = categoryId;
+        this.expenseFilters.categoryId = categoryId;
+        this.expenseFilters.subCategory = 'all';
+        this.populateFilterSubcategoriesDropdown(categoryId);
+        this.renderCategoryPills();
+        this.renderCategoryExportActions();
+        this.renderExpenses();
+        this.renderExpenseCalendar();
+    },
+
+    populateFilterSubcategoriesDropdown(categoryId) {
+        const select = document.getElementById('filter-exp-subcategory');
+        if (!select) return;
+
+        let optionsHtml = '<option value="all">All Subcategories</option>';
+        let subSet = new Set();
+
+        if (categoryId === 'all') {
+            this.data.categories.forEach(c => {
+                if (Array.isArray(c.subcategories)) {
+                    c.subcategories.forEach(s => subSet.add(s));
+                } else if (typeof DEFAULT_CATEGORY_SUBCATEGORIES !== 'undefined' && DEFAULT_CATEGORY_SUBCATEGORIES[c.id]) {
+                    DEFAULT_CATEGORY_SUBCATEGORIES[c.id].forEach(s => subSet.add(s));
+                }
+            });
+            this.data.expenses.forEach(e => {
+                if (e.subCategory) subSet.add(e.subCategory);
+            });
+        } else {
+            const cat = this.data.categories.find(c => c.id === categoryId);
+            if (cat && Array.isArray(cat.subcategories)) {
+                cat.subcategories.forEach(s => subSet.add(s));
+            } else if (typeof DEFAULT_CATEGORY_SUBCATEGORIES !== 'undefined' && DEFAULT_CATEGORY_SUBCATEGORIES[categoryId]) {
+                DEFAULT_CATEGORY_SUBCATEGORIES[categoryId].forEach(s => subSet.add(s));
+            }
+            this.data.expenses.filter(e => e.categoryId === categoryId).forEach(e => {
+                if (e.subCategory) subSet.add(e.subCategory);
+            });
+        }
+
+        Array.from(subSet).sort().forEach(sub => {
+            optionsHtml += `<option value="${this.escapeHtml(sub)}">${this.escapeHtml(sub)}</option>`;
+        });
+
+        select.innerHTML = optionsHtml;
+        select.value = this.expenseFilters.subCategory || 'all';
+    },
+
+    populateExpenseFilterDropdowns() {
+        const catSelect = document.getElementById('filter-exp-category');
+        if (catSelect) {
+            let catHtml = '<option value="all">All Categories</option>';
+            this.data.categories.forEach(cat => {
+                catHtml += `<option value="${cat.id}">${this.escapeHtml(cat.name)}</option>`;
+            });
+            catSelect.innerHTML = catHtml;
+            catSelect.value = this.expenseFilters.categoryId || 'all';
+        }
+
+        const yearSelect = document.getElementById('filter-exp-year');
+        if (yearSelect) {
+            const curYear = new Date().getFullYear();
+            const yearsSet = new Set([curYear, curYear - 1]);
+            this.data.expenses.forEach(e => {
+                if (e.date && e.date.length >= 4) {
+                    const y = parseInt(e.date.slice(0, 4));
+                    if (!isNaN(y)) yearsSet.add(y);
+                }
+            });
+            const sortedYears = Array.from(yearsSet).sort((a, b) => b - a);
+            let yHtml = '';
+            sortedYears.forEach(y => {
+                yHtml += `<option value="${y}">${y}</option>`;
+            });
+            yearSelect.innerHTML = yHtml;
+            if (!this.expenseFilters.dateYear) {
+                this.expenseFilters.dateYear = curYear.toString();
+            }
+            yearSelect.value = this.expenseFilters.dateYear;
+        }
+
+        this.populateFilterSubcategoriesDropdown(this.expenseFilters.categoryId || 'all');
+    },
+
+    onExpenseFilterFieldChanged() {
+        this.expenseFilters.dateSpecific = document.getElementById('filter-exp-date-specific')?.value || '';
+        this.expenseFilters.dateStart = document.getElementById('filter-exp-date-start')?.value || '';
+        this.expenseFilters.dateEnd = document.getElementById('filter-exp-date-end')?.value || '';
+        this.expenseFilters.dateYear = document.getElementById('filter-exp-year')?.value || '';
+        this.expenseFilters.subCategory = document.getElementById('filter-exp-subcategory')?.value || 'all';
+        
+        const minVal = parseFloat(document.getElementById('filter-exp-min-amount')?.value);
+        this.expenseFilters.minAmount = isNaN(minVal) ? null : minVal;
+        
+        const maxVal = parseFloat(document.getElementById('filter-exp-max-amount')?.value);
+        this.expenseFilters.maxAmount = isNaN(maxVal) ? null : maxVal;
+        
+        this.expenseFilters.splitType = document.getElementById('filter-exp-split')?.value || 'all';
+        this.expenseFilters.wallet = document.getElementById('filter-exp-wallet')?.value || 'all';
+
+        document.querySelectorAll('.expense-preset-chip').forEach(btn => btn.classList.remove('active'));
+
+        this.renderExpenses();
+    },
+
+    applyExpenseQuickPreset(preset) {
+        document.querySelectorAll('.expense-preset-chip').forEach(btn => {
+            btn.classList.toggle('active', btn.getAttribute('data-preset') === preset);
+        });
+        this.expenseFilters.quickPreset = preset;
+
+        const today = new Date();
+        const y = today.getFullYear();
+        const m = String(today.getMonth() + 1).padStart(2, '0');
+        const d = String(today.getDate()).padStart(2, '0');
+        const todayStr = `${y}-${m}-${d}`;
+
+        if (preset === 'all') {
+            this.clearAllExpenseFilters();
+            return;
+        } else if (preset === 'this_month') {
+            this.setExpenseDateMode('range');
+            const startMonth = `${y}-${m}-01`;
+            const lastDay = new Date(y, today.getMonth() + 1, 0).getDate();
+            const endMonth = `${y}-${m}-${String(lastDay).padStart(2, '0')}`;
+            const startInp = document.getElementById('filter-exp-date-start');
+            const endInp = document.getElementById('filter-exp-date-end');
+            if (startInp) startInp.value = startMonth;
+            if (endInp) endInp.value = endMonth;
+            this.expenseFilters.dateStart = startMonth;
+            this.expenseFilters.dateEnd = endMonth;
+        } else if (preset === 'last_7_days') {
+            this.setExpenseDateMode('range');
+            const d7 = new Date();
+            d7.setDate(d7.getDate() - 7);
+            const start7 = `${d7.getFullYear()}-${String(d7.getMonth() + 1).padStart(2, '0')}-${String(d7.getDate()).padStart(2, '0')}`;
+            const startInp = document.getElementById('filter-exp-date-start');
+            const endInp = document.getElementById('filter-exp-date-end');
+            if (startInp) startInp.value = start7;
+            if (endInp) endInp.value = todayStr;
+            this.expenseFilters.dateStart = start7;
+            this.expenseFilters.dateEnd = todayStr;
+        } else if (preset === 'this_year') {
+            this.setExpenseDateMode('year');
+            const ySelect = document.getElementById('filter-exp-year');
+            if (ySelect) ySelect.value = y.toString();
+            this.expenseFilters.dateYear = y.toString();
+        } else if (preset === 'high_value') {
+            const minInp = document.getElementById('filter-exp-min-amount');
+            if (minInp) minInp.value = '10000';
+            this.expenseFilters.minAmount = 10000;
+        } else if (preset === 'maintenance') {
+            const maintCat = this.data.categories.find(c => c.id === 'cat_maintenance' || c.name.toLowerCase().includes('maintenance'));
+            const maintId = maintCat ? maintCat.id : 'cat_maintenance';
+            this.onFilterCategoryChanged(maintId);
+            const catSelect = document.getElementById('filter-exp-category');
+            if (catSelect) catSelect.value = maintId;
+        }
+
+        this.renderExpenses();
+    },
+
+    clearAllExpenseFilters() {
+        this.expenseFilters = {
+            search: '',
+            dateMode: 'all',
+            dateSpecific: '',
+            dateStart: '',
+            dateEnd: '',
+            dateYear: '',
+            categoryId: 'all',
+            subCategory: 'all',
+            minAmount: null,
+            maxAmount: null,
+            splitType: 'all',
+            wallet: 'all',
+            quickPreset: 'all'
+        };
+        this.expenseSearchQuery = '';
+        this.expenseCategoryFilter = 'all';
+
+        const searchInput = document.getElementById('expense-search-input');
+        if (searchInput) searchInput.value = '';
+        const clearBtn = document.getElementById('btn-clear-search-text');
+        if (clearBtn) clearBtn.classList.add('hidden');
+
+        const catSelect = document.getElementById('filter-exp-category');
+        if (catSelect) catSelect.value = 'all';
+
+        const subSelect = document.getElementById('filter-exp-subcategory');
+        if (subSelect) subSelect.value = 'all';
+
+        const minInp = document.getElementById('filter-exp-min-amount');
+        if (minInp) minInp.value = '';
+
+        const maxInp = document.getElementById('filter-exp-max-amount');
+        if (maxInp) maxInp.value = '';
+
+        const splitSelect = document.getElementById('filter-exp-split');
+        if (splitSelect) splitSelect.value = 'all';
+
+        const walletSelect = document.getElementById('filter-exp-wallet');
+        if (walletSelect) walletSelect.value = 'all';
+
+        const ds = document.getElementById('filter-exp-date-specific');
+        if (ds) ds.value = '';
+        const dstart = document.getElementById('filter-exp-date-start');
+        if (dstart) dstart.value = '';
+        const dend = document.getElementById('filter-exp-date-end');
+        if (dend) dend.value = '';
+
+        this.setExpenseDateMode('all');
+
+        document.querySelectorAll('.expense-preset-chip').forEach(btn => {
+            btn.classList.toggle('active', btn.getAttribute('data-preset') === 'all');
+        });
+
+        this.populateFilterSubcategoriesDropdown('all');
+        this.renderCategoryPills();
+        this.renderCategoryExportActions();
+        this.renderExpenses();
+        this.renderExpenseCalendar();
+    },
+
+    removeExpenseFilterTag(tagKey) {
+        if (tagKey === 'search') {
+            this.clearExpenseSearchText();
+        } else if (tagKey === 'date') {
+            this.setExpenseDateMode('all');
+        } else if (tagKey === 'category') {
+            this.onFilterCategoryChanged('all');
+            const catSelect = document.getElementById('filter-exp-category');
+            if (catSelect) catSelect.value = 'all';
+        } else if (tagKey === 'subCategory') {
+            this.expenseFilters.subCategory = 'all';
+            const subSelect = document.getElementById('filter-exp-subcategory');
+            if (subSelect) subSelect.value = 'all';
+            this.renderExpenses();
+        } else if (tagKey === 'minAmount') {
+            this.expenseFilters.minAmount = null;
+            const inp = document.getElementById('filter-exp-min-amount');
+            if (inp) inp.value = '';
+            this.renderExpenses();
+        } else if (tagKey === 'maxAmount') {
+            this.expenseFilters.maxAmount = null;
+            const inp = document.getElementById('filter-exp-max-amount');
+            if (inp) inp.value = '';
+            this.renderExpenses();
+        } else if (tagKey === 'splitType') {
+            this.expenseFilters.splitType = 'all';
+            const sel = document.getElementById('filter-exp-split');
+            if (sel) sel.value = 'all';
+            this.renderExpenses();
+        } else if (tagKey === 'wallet') {
+            this.expenseFilters.wallet = 'all';
+            const sel = document.getElementById('filter-exp-wallet');
+            if (sel) sel.value = 'all';
+            this.renderExpenses();
+        }
+    },
+
     renderExpenses() {
         const container = document.getElementById('expenses-list-container');
         if (!container) return;
 
+        // Build active filter tags
+        const activeTags = [];
+        if (this.expenseFilters.search) {
+            activeTags.push({ key: 'search', label: `Search: "${this.expenseFilters.search}"` });
+        }
+        if (this.expenseFilters.dateMode === 'specific' && this.expenseFilters.dateSpecific) {
+            activeTags.push({ key: 'date', label: `Date: ${this.expenseFilters.dateSpecific}` });
+        } else if (this.expenseFilters.dateMode === 'range') {
+            if (this.expenseFilters.dateStart && this.expenseFilters.dateEnd) {
+                activeTags.push({ key: 'date', label: `${this.expenseFilters.dateStart} to ${this.expenseFilters.dateEnd}` });
+            } else if (this.expenseFilters.dateStart) {
+                activeTags.push({ key: 'date', label: `From: ${this.expenseFilters.dateStart}` });
+            } else if (this.expenseFilters.dateEnd) {
+                activeTags.push({ key: 'date', label: `Up to: ${this.expenseFilters.dateEnd}` });
+            }
+        } else if (this.expenseFilters.dateMode === 'year' && this.expenseFilters.dateYear) {
+            activeTags.push({ key: 'date', label: `Year: ${this.expenseFilters.dateYear}` });
+        }
+        if (this.expenseFilters.categoryId && this.expenseFilters.categoryId !== 'all') {
+            const catObj = this.data.categories.find(c => c.id === this.expenseFilters.categoryId);
+            activeTags.push({ key: 'category', label: `Sheet: ${catObj ? catObj.name : this.expenseFilters.categoryId}` });
+        }
+        if (this.expenseFilters.subCategory && this.expenseFilters.subCategory !== 'all') {
+            activeTags.push({ key: 'subCategory', label: `Sub: ${this.expenseFilters.subCategory}` });
+        }
+        if (this.expenseFilters.minAmount !== null && !isNaN(this.expenseFilters.minAmount)) {
+            activeTags.push({ key: 'minAmount', label: `Min ₹${this.expenseFilters.minAmount.toLocaleString('en-IN')}` });
+        }
+        if (this.expenseFilters.maxAmount !== null && !isNaN(this.expenseFilters.maxAmount)) {
+            activeTags.push({ key: 'maxAmount', label: `Max ₹${this.expenseFilters.maxAmount.toLocaleString('en-IN')}` });
+        }
+        if (this.expenseFilters.splitType && this.expenseFilters.splitType !== 'all') {
+            const splitLabels = {
+                ratio: '60:40 Ratio',
+                sajida_only: '100% Sajida',
+                jeelani_only: '100% Jeelani',
+                custom: 'Custom Split'
+            };
+            activeTags.push({ key: 'splitType', label: splitLabels[this.expenseFilters.splitType] || this.expenseFilters.splitType });
+        }
+        if (this.expenseFilters.wallet && this.expenseFilters.wallet !== 'all') {
+            const walletLabels = {
+                both: 'Both Wallets',
+                sajida: "Sajida's Wallet",
+                jeelani: "Jeelani's Wallet"
+            };
+            activeTags.push({ key: 'wallet', label: walletLabels[this.expenseFilters.wallet] || this.expenseFilters.wallet });
+        }
+
+        const activeCount = activeTags.length;
+        const badge = document.getElementById('expense-active-filter-badge');
+        if (badge) {
+            badge.textContent = activeCount;
+            badge.classList.toggle('hidden', activeCount === 0);
+        }
+        const resetBtn = document.getElementById('btn-clear-all-expense-filters');
+        if (resetBtn) {
+            resetBtn.classList.toggle('hidden', activeCount === 0);
+        }
+        const activeBar = document.getElementById('expense-active-filters-bar');
+        if (activeBar) {
+            activeBar.classList.toggle('hidden', activeCount === 0);
+        }
+        const chipsContainer = document.getElementById('expense-active-chips-container');
+        if (chipsContainer) {
+            let chipsHtml = '';
+            activeTags.forEach(t => {
+                chipsHtml += `
+                    <span class="expense-filter-chip">
+                        <span>${this.escapeHtml(t.label)}</span>
+                        <button type="button" onclick="App.removeExpenseFilterTag('${t.key}')" title="Remove filter">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </span>
+                `;
+            });
+            chipsContainer.innerHTML = chipsHtml;
+        }
+
+        // Multi-criteria filter pipeline
         let filtered = [...this.data.expenses];
 
-        if (this.expenseCategoryFilter !== 'all') {
-            filtered = filtered.filter(e => e.categoryId === this.expenseCategoryFilter);
+        // 1. Text Search (description, notes, subCategory, category name)
+        if (this.expenseFilters.search) {
+            const q = this.expenseFilters.search.toLowerCase();
+            filtered = filtered.filter(e => {
+                const cat = this.data.categories.find(c => c.id === e.categoryId);
+                const catName = cat ? cat.name.toLowerCase() : '';
+                const title = (e.title || '').toLowerCase();
+                const notes = (e.notes || '').toLowerCase();
+                const sub = (e.subCategory || '').toLowerCase();
+                return title.includes(q) || notes.includes(q) || sub.includes(q) || catName.includes(q);
+            });
         }
 
-        if (this.expenseSearchQuery.trim()) {
-            const q = this.expenseSearchQuery.toLowerCase();
-            filtered = filtered.filter(e => 
-                (e.title && e.title.toLowerCase().includes(q)) ||
-                (e.notes && e.notes.toLowerCase().includes(q))
-            );
+        // 2. Category
+        if (this.expenseFilters.categoryId !== 'all') {
+            filtered = filtered.filter(e => e.categoryId === this.expenseFilters.categoryId);
         }
 
-        if (this.selectedMonthFilter !== 'all') {
+        // 3. Subcategory
+        if (this.expenseFilters.subCategory !== 'all') {
+            filtered = filtered.filter(e => (e.subCategory || '').toLowerCase() === this.expenseFilters.subCategory.toLowerCase());
+        }
+
+        // 4. Date Search Modes
+        if (this.expenseFilters.dateMode === 'specific' && this.expenseFilters.dateSpecific) {
+            filtered = filtered.filter(e => e.date === this.expenseFilters.dateSpecific);
+        } else if (this.expenseFilters.dateMode === 'range') {
+            if (this.expenseFilters.dateStart) {
+                filtered = filtered.filter(e => e.date && e.date >= this.expenseFilters.dateStart);
+            }
+            if (this.expenseFilters.dateEnd) {
+                filtered = filtered.filter(e => e.date && e.date <= this.expenseFilters.dateEnd);
+            }
+        } else if (this.expenseFilters.dateMode === 'year' && this.expenseFilters.dateYear) {
+            filtered = filtered.filter(e => e.date && e.date.startsWith(this.expenseFilters.dateYear));
+        }
+
+        // Backward compatibility for selectedMonthFilter if active
+        if (this.selectedMonthFilter !== 'all' && this.expenseFilters.dateMode === 'all') {
             filtered = filtered.filter(e => e.date && e.date.startsWith(this.selectedMonthFilter));
         }
 
+        // 5. Min / Max Amount
+        if (this.expenseFilters.minAmount !== null) {
+            filtered = filtered.filter(e => (parseFloat(e.amount) || 0) >= this.expenseFilters.minAmount);
+        }
+        if (this.expenseFilters.maxAmount !== null) {
+            filtered = filtered.filter(e => (parseFloat(e.amount) || 0) <= this.expenseFilters.maxAmount);
+        }
+
+        // 6. Split Type
+        if (this.expenseFilters.splitType !== 'all') {
+            filtered = filtered.filter(e => e.splitType === this.expenseFilters.splitType);
+        }
+
+        // 7. Debited Wallet
+        if (this.expenseFilters.wallet !== 'all') {
+            filtered = filtered.filter(e => e.debitedWallet === this.expenseFilters.wallet);
+        }
+
+        // Update count label
+        const countLabel = document.getElementById('expense-filtered-count-label');
+        if (countLabel) {
+            countLabel.textContent = `Showing ${filtered.length} of ${this.data.expenses.length} expenses`;
+        }
+
+        // Sorting
         filtered = this.sortRecords(filtered, this.sortState.expenses, 'title');
         const expenseSort = document.getElementById('expense-sort');
         if (expenseSort) expenseSort.value = this.sortState.expenses;
 
         if (filtered.length === 0) {
+            const hasActiveFilters = activeCount > 0;
             container.innerHTML = `
                 <div class="text-center py-12 bg-white dark:bg-slate-800 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 p-8">
                     <div class="w-16 h-16 bg-slate-100 dark:bg-slate-700 rounded-full flex items-center justify-center mx-auto mb-3 text-slate-400">
-                        <i class="fa-solid fa-receipt text-2xl"></i>
+                        <i class="fa-solid fa-filter-circle-xmark text-2xl"></i>
                     </div>
-                    <h3 class="text-base font-semibold text-slate-800 dark:text-slate-200">No Expenses Recorded</h3>
-                    <p class="text-sm text-slate-500 mt-1 max-w-sm mx-auto">No expenses match your active filter. Tap the button below to add building maintenance or bill payment.</p>
-                    <button onclick="App.openExpenseModal()" class="mt-4 px-4 py-2 bg-emerald-600 text-white rounded-xl text-sm font-medium hover:bg-emerald-700 transition">
-                        <i class="fa-solid fa-plus mr-1.5"></i> Add New Expense
-                    </button>
+                    <h3 class="text-base font-bold text-slate-800 dark:text-slate-200">${hasActiveFilters ? 'No Matching Expenses' : 'No Expenses Recorded'}</h3>
+                    <p class="text-xs text-slate-500 mt-1 max-w-sm mx-auto">${hasActiveFilters ? 'No expense matches your active filters. Try clearing some filters or searching for another keyword.' : 'Tap the button below to add building maintenance or bill payment.'}</p>
+                    <div class="mt-4 flex items-center justify-center gap-2">
+                        ${hasActiveFilters ? `
+                            <button onclick="App.clearAllExpenseFilters()" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
+                                <i class="fa-solid fa-rotate-left"></i> Reset All Filters
+                            </button>
+                        ` : `
+                            <button onclick="App.openExpenseModal()" class="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-700 transition flex items-center gap-1.5 shadow-sm">
+                                <i class="fa-solid fa-plus"></i> Add New Expense
+                            </button>
+                        `}
+                    </div>
                 </div>
             `;
             return;
@@ -2316,7 +2828,7 @@ const App = {
                     <thead class="bg-slate-50 dark:bg-slate-700/60 text-xs uppercase font-semibold text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
                         <tr>
                             <th class="px-4 py-3.5">Date & Item</th>
-                            <th class="px-4 py-3.5">Category Sheet</th>
+                            <th class="px-4 py-3.5">Category & Subcategory</th>
                             <th class="px-4 py-3.5">Amount</th>
                             <th class="px-4 py-3.5">Split Allocation</th>
                             <th class="px-4 py-3.5">Debited Wallet</th>
@@ -2359,19 +2871,27 @@ const App = {
                 <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-700/30 transition">
                     <td class="px-4 py-3.5">
                         <div class="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                            <span>${exp.title}</span>
+                            <span>${this.escapeHtml(exp.title)}</span>
                             ${exp.isRecurring ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200"><i class="fa-solid fa-arrows-rotate text-[8px]"></i> Auto-Recurring</span>` : ''}
                         </div>
                         <div class="text-xs text-slate-400 flex items-center gap-1.5 mt-0.5">
                             <i class="fa-regular fa-calendar"></i> ${exp.date || 'N/A'}
-                            ${exp.notes ? `<span class="text-slate-300 dark:text-slate-600">•</span> <span class="truncate max-w-xs">${exp.notes}</span>` : ''}
+                            ${exp.notes ? `<span class="text-slate-300 dark:text-slate-600">•</span> <span class="truncate max-w-xs">${this.escapeHtml(exp.notes)}</span>` : ''}
                         </div>
                     </td>
                     <td class="px-4 py-3.5">
-                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200">
-                            <i class="fa-solid ${cat.icon}" style="color: ${cat.color}"></i>
-                            ${cat.name}
-                        </span>
+                        <div class="flex flex-col gap-1 items-start">
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200">
+                                <i class="fa-solid ${cat.icon}" style="color: ${cat.color}"></i>
+                                <span>${this.escapeHtml(cat.name)}</span>
+                            </span>
+                            ${exp.subCategory ? `
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200/80">
+                                    <i class="fa-solid fa-tag text-[9px] text-emerald-600"></i>
+                                    <span>${this.escapeHtml(exp.subCategory)}</span>
+                                </span>
+                            ` : ''}
+                        </div>
                     </td>
                     <td class="px-4 py-3.5">
                         <div class="font-bold text-slate-900 dark:text-white text-base">₹${parseFloat(exp.amount).toLocaleString('en-IN')}</div>
@@ -2379,52 +2899,60 @@ const App = {
                     <td class="px-4 py-3.5">${splitBadge}</td>
                     <td class="px-4 py-3.5 text-xs">${walletText}</td>
                     <td class="px-4 py-3.5 text-right whitespace-nowrap">
-                        <button onclick="App.downloadExpenseVoucherPDF('${exp.id}')" class="p-1.5 text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 transition" title="Download Payment Voucher (PDF)">
+                        <button onclick="App.downloadExpenseVoucherPDF('${exp.id}')" class="p-1.5 text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 transition cursor-pointer" title="Download Payment Voucher (PDF)">
                             <i class="fa-solid fa-file-invoice"></i>
                         </button>
-                        <button onclick="App.editExpense('${exp.id}')" class="p-1.5 text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 transition" title="Edit">
+                        <button onclick="App.editExpense('${exp.id}')" class="p-1.5 text-slate-500 hover:text-emerald-600 dark:text-slate-400 dark:hover:text-emerald-400 transition cursor-pointer" title="Edit">
                             <i class="fa-solid fa-pen-to-square"></i>
                         </button>
-                        <button onclick="App.deleteExpense('${exp.id}')" class="p-1.5 text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400 transition ml-1" title="Delete">
+                        <button onclick="App.deleteExpense('${exp.id}')" class="p-1.5 text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400 transition ml-1 cursor-pointer" title="Delete">
                             <i class="fa-solid fa-trash-can"></i>
                         </button>
                     </td>
                 </tr>
             `;
 
-            // Mobile Card
+            // Mobile Card (touch targets >= 42px, zero horizontal overflow)
             mobileHtml += `
                 <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm space-y-3">
-                    <div class="flex items-center justify-between gap-2">
-                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-700">
-                            <i class="fa-solid ${cat.icon}" style="color: ${cat.color}"></i>
-                            <span>${cat.name}</span>
-                        </span>
-                        <div class="text-right">
+                    <div class="flex items-center justify-between gap-2 flex-wrap">
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-700">
+                                <i class="fa-solid ${cat.icon}" style="color: ${cat.color}"></i>
+                                <span>${this.escapeHtml(cat.name)}</span>
+                            </span>
+                            ${exp.subCategory ? `
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200/80">
+                                    <i class="fa-solid fa-tag text-[8px] text-emerald-600"></i>
+                                    <span>${this.escapeHtml(exp.subCategory)}</span>
+                                </span>
+                            ` : ''}
+                        </div>
+                        <div class="text-right shrink-0">
                             <div class="text-base font-black text-slate-900">₹${parseFloat(exp.amount).toLocaleString('en-IN')}</div>
                             <span class="text-[10px] text-slate-400 font-medium">${exp.date || 'N/A'}</span>
                         </div>
                     </div>
                     <div>
                         <h4 class="text-sm font-extrabold text-slate-900 flex items-center gap-1.5 flex-wrap">
-                            <span>${exp.title}</span>
+                            <span>${this.escapeHtml(exp.title)}</span>
                             ${exp.isRecurring ? `<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800"><i class="fa-solid fa-arrows-rotate text-[8px]"></i> Auto</span>` : ''}
                         </h4>
-                        ${exp.notes ? `<p class="text-xs text-slate-500 mt-1">${exp.notes}</p>` : ''}
+                        ${exp.notes ? `<p class="text-xs text-slate-500 mt-1">${this.escapeHtml(exp.notes)}</p>` : ''}
                     </div>
                     <div class="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
-                        <div class="text-[11px] leading-tight">
+                        <div class="text-[11px] leading-tight min-w-0">
                             <div>${walletText}</div>
                             <div class="text-[10px] text-slate-400 mt-0.5">${splitSummaryText}</div>
                         </div>
                         <div class="flex items-center gap-1.5 shrink-0">
-                            <button onclick="App.downloadExpenseVoucherPDF('${exp.id}')" class="w-8 h-8 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs transition" title="Download Voucher (PDF)">
+                            <button onclick="App.downloadExpenseVoucherPDF('${exp.id}')" class="w-9 h-9 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs transition cursor-pointer" title="Download Voucher (PDF)">
                                 <i class="fa-solid fa-file-invoice"></i>
                             </button>
-                            <button onclick="App.editExpense('${exp.id}')" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center text-xs transition" title="Edit">
+                            <button onclick="App.editExpense('${exp.id}')" class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center text-xs transition cursor-pointer" title="Edit">
                                 <i class="fa-solid fa-pen-to-square"></i>
                             </button>
-                            <button onclick="App.deleteExpense('${exp.id}')" class="w-8 h-8 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 flex items-center justify-center text-xs transition" title="Delete">
+                            <button onclick="App.deleteExpense('${exp.id}')" class="w-9 h-9 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 flex items-center justify-center text-xs transition cursor-pointer" title="Delete">
                                 <i class="fa-solid fa-trash-can"></i>
                             </button>
                         </div>
@@ -5821,6 +6349,7 @@ const App = {
                 document.getElementById('exp-title').value = exp.title;
                 document.getElementById('exp-amount').value = exp.amount;
                 document.getElementById('exp-category').value = exp.categoryId;
+                this.onExpenseCategoryChanged(exp.categoryId, exp.subCategory);
                 document.getElementById('exp-date').value = exp.date;
                 document.getElementById('exp-notes').value = exp.notes || '';
                 if (floorSelect) floorSelect.value = exp.targetFloor || 'all';
@@ -5839,6 +6368,10 @@ const App = {
             document.getElementById('exp-title').value = '';
             document.getElementById('exp-amount').value = '';
             document.getElementById('exp-notes').value = '';
+            const defCat = this.data.categories[0]?.id || 'cat_maintenance';
+            const catSelect = document.getElementById('exp-category');
+            if (catSelect) catSelect.value = defCat;
+            this.onExpenseCategoryChanged(defCat);
             document.getElementById('exp-sajida-pct').value = 40;
             document.getElementById('exp-jeelani-pct').value = 60;
             if (floorSelect) floorSelect.value = 'all';
@@ -5859,9 +6392,71 @@ const App = {
 
         let html = '';
         this.data.categories.forEach(cat => {
-            html += `<option value="${cat.id}">${cat.name}</option>`;
+            html += `<option value="${cat.id}">${this.escapeHtml(cat.name)}</option>`;
         });
         select.innerHTML = html;
+    },
+
+    onExpenseCategoryChanged(categoryId, preselectedSub = null) {
+        const subSelect = document.getElementById('exp-subcategory');
+        if (!subSelect) return;
+
+        const cat = this.data.categories.find(c => c.id === categoryId);
+        let subcategories = [];
+        if (cat && Array.isArray(cat.subcategories) && cat.subcategories.length > 0) {
+            subcategories = [...cat.subcategories];
+        } else if (typeof DEFAULT_CATEGORY_SUBCATEGORIES !== 'undefined' && DEFAULT_CATEGORY_SUBCATEGORIES[categoryId]) {
+            subcategories = [...DEFAULT_CATEGORY_SUBCATEGORIES[categoryId]];
+        } else {
+            subcategories = ['General Maintenance', 'Service Repairs', 'Consumables & Parts', 'Emergency Fixes'];
+        }
+
+        let html = '';
+        subcategories.forEach(sub => {
+            html += `<option value="${this.escapeHtml(sub)}">${this.escapeHtml(sub)}</option>`;
+        });
+        html += `<option value="__custom__">+ Add Custom Subcategory...</option>`;
+        subSelect.innerHTML = html;
+
+        const customBox = document.getElementById('exp-custom-subcategory-box');
+        const customInput = document.getElementById('exp-custom-subcategory');
+
+        if (preselectedSub) {
+            const exists = subcategories.includes(preselectedSub);
+            if (exists) {
+                subSelect.value = preselectedSub;
+                if (customBox) customBox.classList.add('hidden');
+                if (customInput) customInput.value = '';
+            } else {
+                subSelect.value = '__custom__';
+                if (customBox) customBox.classList.remove('hidden');
+                if (customInput) customInput.value = preselectedSub;
+            }
+        } else {
+            if (subcategories.length > 0) {
+                subSelect.value = subcategories[0];
+            }
+            if (customBox) customBox.classList.add('hidden');
+            if (customInput) customInput.value = '';
+        }
+    },
+
+    onExpenseSubcategoryChanged(val) {
+        const customBox = document.getElementById('exp-custom-subcategory-box');
+        const customInput = document.getElementById('exp-custom-subcategory');
+        if (val === '__custom__') {
+            if (customBox) customBox.classList.remove('hidden');
+            if (customInput) {
+                customInput.focus();
+                customInput.required = true;
+            }
+        } else {
+            if (customBox) customBox.classList.add('hidden');
+            if (customInput) {
+                customInput.required = false;
+                customInput.value = '';
+            }
+        }
     },
 
     onExpenseTargetFloorChanged(val) {
@@ -5925,6 +6520,31 @@ const App = {
         const splitType = document.querySelector('input[name="exp-split-type"]:checked').value;
         const targetFloor = document.getElementById('exp-target-floor')?.value || 'all';
 
+        const subCategoryVal = document.getElementById('exp-subcategory')?.value || '';
+        let finalSubCategory = subCategoryVal;
+        if (subCategoryVal === '__custom__') {
+            const customInputVal = document.getElementById('exp-custom-subcategory')?.value.trim();
+            if (!customInputVal) {
+                alert('Please enter a name for the custom subcategory.');
+                return;
+            }
+            finalSubCategory = customInputVal;
+
+            // Dynamically register custom subcategory into category object
+            const catObj = this.data.categories.find(c => c.id === categoryId);
+            if (catObj) {
+                if (!Array.isArray(catObj.subcategories)) {
+                    catObj.subcategories = (typeof DEFAULT_CATEGORY_SUBCATEGORIES !== 'undefined' && DEFAULT_CATEGORY_SUBCATEGORIES[categoryId])
+                        ? [...DEFAULT_CATEGORY_SUBCATEGORIES[categoryId]]
+                        : [];
+                }
+                if (!catObj.subcategories.includes(finalSubCategory)) {
+                    catObj.subcategories.push(finalSubCategory);
+                }
+            }
+        }
+        if (!finalSubCategory) finalSubCategory = 'General';
+
         if (!title || isNaN(amount) || amount <= 0) {
             alert('Please enter a valid expense title and amount.');
             return;
@@ -5969,6 +6589,7 @@ const App = {
                     ...this.data.expenses[idx],
                     title,
                     categoryId,
+                    subCategory: finalSubCategory,
                     amount,
                     date,
                     monthKey: mKey,
@@ -5989,6 +6610,7 @@ const App = {
                 id: 'exp_' + Date.now(),
                 title,
                 categoryId,
+                subCategory: finalSubCategory,
                 amount,
                 date,
                 monthKey: mKey,
@@ -6079,6 +6701,8 @@ const App = {
         StorageManager.saveData(this.data);
         if (this.expenseCategoryFilter === id) {
             this.expenseCategoryFilter = 'all';
+            this.expenseFilters.categoryId = 'all';
+            this.expenseFilters.subCategory = 'all';
         }
         this.renderAll();
         this.showToast(`Category "${cat.name}" deleted.`);
@@ -7282,8 +7906,7 @@ const App = {
         const expenseSearch = document.getElementById('expense-search-input');
         if (expenseSearch) {
             expenseSearch.addEventListener('input', e => {
-                this.expenseSearchQuery = e.target.value;
-                this.renderExpenses();
+                this.onExpenseSearchInput(e.target.value);
             });
         }
 

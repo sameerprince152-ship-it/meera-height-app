@@ -678,14 +678,145 @@
                 <!-- Populated dynamically for the selected category -->
             </div>
 
-            <!-- Search & Filters -->
-                <div class="flex flex-col sm:flex-row sm:items-center gap-2 bg-white rounded-2xl p-2 border border-slate-200 shadow-sm">
-                    <i class="fa-solid fa-magnifying-glass text-slate-400 ml-2"></i>
-                    <input type="text" id="expense-search-input" placeholder="Search expense description, bill, notes..." class="w-full bg-transparent text-xs font-medium text-slate-800 placeholder-slate-400 outline-none px-2 py-1">
-                    <select id="expense-sort" class="mobile-control bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 text-xs font-semibold text-slate-700 outline-none" aria-label="Sort expenses">
-                        <option value="date-desc">Newest expense</option><option value="date-asc">Oldest expense</option><option value="amount-desc">Highest amount</option><option value="amount-asc">Lowest amount</option><option value="title-asc">Description A-Z</option>
-                    </select>
+            <!-- Advanced Dynamic Search & Multi-Criteria Filter Suite -->
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-3 space-y-3">
+                <!-- Row 1: Real-Time Search Bar + Advanced Filters Toggle + Clear + Sort -->
+                <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+                    <div class="relative flex-1 flex items-center bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 focus-within:ring-2 focus-within:ring-emerald-500 focus-within:border-emerald-500 transition">
+                        <i class="fa-solid fa-magnifying-glass text-slate-400 mr-2 text-xs"></i>
+                        <input type="text" id="expense-search-input" oninput="App.onExpenseSearchInput(this.value)" placeholder="Search description, subcategory, bill, notes..." class="w-full bg-transparent text-xs font-semibold text-slate-800 placeholder-slate-400 outline-none">
+                        <button id="btn-clear-search-text" onclick="App.clearExpenseSearchText()" class="hidden text-slate-400 hover:text-slate-600 ml-1.5 text-xs" title="Clear search text">
+                            <i class="fa-solid fa-circle-xmark"></i>
+                        </button>
+                    </div>
+
+                    <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                        <!-- Toggle Advanced Filter Drawer -->
+                        <button id="btn-toggle-expense-filters" onclick="App.toggleExpenseAdvancedFilters()" class="px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer">
+                            <i class="fa-solid fa-sliders text-emerald-600"></i>
+                            <span>Filters</span>
+                            <span id="expense-active-filter-badge" class="hidden px-1.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-600 text-white">0</span>
+                        </button>
+
+                        <!-- Clear All Filters (hidden when no filters active) -->
+                        <button id="btn-clear-all-expense-filters" onclick="App.clearAllExpenseFilters()" class="hidden px-2.5 py-2 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold transition flex items-center gap-1 cursor-pointer">
+                            <i class="fa-solid fa-rotate-left"></i>
+                            <span class="hidden sm:inline">Reset</span>
+                        </button>
+
+                        <!-- Sort Dropdown -->
+                        <select id="expense-sort" onchange="App.onExpenseSortChange(this.value)" class="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 text-xs font-bold text-slate-700 outline-none cursor-pointer" aria-label="Sort expenses">
+                            <option value="date-desc">Newest Date</option>
+                            <option value="date-asc">Oldest Date</option>
+                            <option value="amount-desc">Highest ₹ Amount</option>
+                            <option value="amount-asc">Lowest ₹ Amount</option>
+                            <option value="title-asc">Description A-Z</option>
+                        </select>
+                    </div>
                 </div>
+
+                <!-- Collapsible Advanced Filters Drawer -->
+                <div id="expense-advanced-filters-drawer" class="hidden pt-3 border-t border-slate-100 space-y-3">
+                    <!-- Quick Presets Chips -->
+                    <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+                        <span class="text-[11px] font-extrabold uppercase text-slate-400 shrink-0 mr-1">Quick:</span>
+                        <button type="button" onclick="App.applyExpenseQuickPreset('all')" class="expense-preset-chip active" data-preset="all">All</button>
+                        <button type="button" onclick="App.applyExpenseQuickPreset('this_month')" class="expense-preset-chip" data-preset="this_month">This Month</button>
+                        <button type="button" onclick="App.applyExpenseQuickPreset('last_7_days')" class="expense-preset-chip" data-preset="last_7_days">Last 7 Days</button>
+                        <button type="button" onclick="App.applyExpenseQuickPreset('this_year')" class="expense-preset-chip" data-preset="this_year">This Year</button>
+                        <button type="button" onclick="App.applyExpenseQuickPreset('high_value')" class="expense-preset-chip" data-preset="high_value">₹10k+ High Value</button>
+                        <button type="button" onclick="App.applyExpenseQuickPreset('maintenance')" class="expense-preset-chip" data-preset="maintenance">Maintenance Only</button>
+                    </div>
+
+                    <!-- Filter Controls Grid -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                        <!-- 1. Dedicated Date Search -->
+                        <div class="space-y-1.5 p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                            <label class="text-[10px] font-black uppercase tracking-wider text-slate-500 block">1. Date Search</label>
+                            <div class="grid grid-cols-4 gap-1 text-[10px] font-bold text-center">
+                                <button type="button" onclick="App.setExpenseDateMode('all')" id="btn-date-mode-all" class="date-mode-btn active py-1 rounded-lg border">Any</button>
+                                <button type="button" onclick="App.setExpenseDateMode('specific')" id="btn-date-mode-specific" class="date-mode-btn py-1 rounded-lg border">Date</button>
+                                <button type="button" onclick="App.setExpenseDateMode('range')" id="btn-date-mode-range" class="date-mode-btn py-1 rounded-lg border">Range</button>
+                                <button type="button" onclick="App.setExpenseDateMode('year')" id="btn-date-mode-year" class="date-mode-btn py-1 rounded-lg border">Year</button>
+                            </div>
+
+                            <!-- Specific Date Input -->
+                            <div id="filter-date-specific-box" class="hidden pt-1">
+                                <input type="date" id="filter-exp-date-specific" onchange="App.onExpenseFilterFieldChanged()" class="w-full bg-white border border-slate-300 rounded-lg px-2 py-1 text-xs font-semibold text-slate-800 outline-none">
+                            </div>
+
+                            <!-- Date Range Inputs (Start & End) -->
+                            <div id="filter-date-range-box" class="hidden pt-1 space-y-1">
+                                <div class="flex items-center gap-1">
+                                    <span class="text-[10px] text-slate-400 w-8">From:</span>
+                                    <input type="date" id="filter-exp-date-start" onchange="App.onExpenseFilterFieldChanged()" class="w-full bg-white border border-slate-300 rounded-lg px-2 py-1 text-[11px] font-semibold text-slate-800 outline-none">
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <span class="text-[10px] text-slate-400 w-8">To:</span>
+                                    <input type="date" id="filter-exp-date-end" onchange="App.onExpenseFilterFieldChanged()" class="w-full bg-white border border-slate-300 rounded-lg px-2 py-1 text-[11px] font-semibold text-slate-800 outline-none">
+                                </div>
+                            </div>
+
+                            <!-- Year Selector -->
+                            <div id="filter-date-year-box" class="hidden pt-1">
+                                <select id="filter-exp-year" onchange="App.onExpenseFilterFieldChanged()" class="w-full bg-white border border-slate-300 rounded-lg px-2 py-1 text-xs font-semibold text-slate-800 outline-none">
+                                    <!-- Populated dynamically -->
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- 2. Category & Subcategory -->
+                        <div class="space-y-1.5 p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                            <label class="text-[10px] font-black uppercase tracking-wider text-slate-500 block">2. Category & Subcategory</label>
+                            <select id="filter-exp-category" onchange="App.onFilterCategoryChanged(this.value)" class="w-full bg-white border border-slate-300 rounded-lg px-2 py-1 text-xs font-semibold text-slate-800 outline-none">
+                                <option value="all">All Categories</option>
+                            </select>
+                            <select id="filter-exp-subcategory" onchange="App.onExpenseFilterFieldChanged()" class="w-full bg-white border border-slate-300 rounded-lg px-2 py-1 text-xs font-semibold text-slate-800 outline-none">
+                                <option value="all">All Subcategories</option>
+                            </select>
+                        </div>
+
+                        <!-- 3. Amount Range (Min & Max) -->
+                        <div class="space-y-1.5 p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                            <label class="text-[10px] font-black uppercase tracking-wider text-slate-500 block">3. Amount Range (₹)</label>
+                            <div class="flex items-center gap-1.5">
+                                <input type="number" id="filter-exp-min-amount" oninput="App.onExpenseFilterFieldChanged()" placeholder="Min ₹" class="w-1/2 bg-white border border-slate-300 rounded-lg px-2 py-1 text-xs font-semibold text-slate-800 outline-none">
+                                <span class="text-slate-400 text-xs">-</span>
+                                <input type="number" id="filter-exp-max-amount" oninput="App.onExpenseFilterFieldChanged()" placeholder="Max ₹" class="w-1/2 bg-white border border-slate-300 rounded-lg px-2 py-1 text-xs font-semibold text-slate-800 outline-none">
+                            </div>
+                        </div>
+
+                        <!-- 4. Allocation & Wallet -->
+                        <div class="space-y-1.5 p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                            <label class="text-[10px] font-black uppercase tracking-wider text-slate-500 block">4. Allocation & Wallet</label>
+                            <select id="filter-exp-split" onchange="App.onExpenseFilterFieldChanged()" class="w-full bg-white border border-slate-300 rounded-lg px-2 py-1 text-xs font-semibold text-slate-800 outline-none">
+                                <option value="all">All Allocations</option>
+                                <option value="ratio">60:40 Floor Ratio</option>
+                                <option value="sajida_only">100% Sajida (Fl 1-2)</option>
+                                <option value="jeelani_only">100% Jeelani (Fl 3-5)</option>
+                                <option value="custom">Custom Ratio %</option>
+                            </select>
+                            <select id="filter-exp-wallet" onchange="App.onExpenseFilterFieldChanged()" class="w-full bg-white border border-slate-300 rounded-lg px-2 py-1 text-xs font-semibold text-slate-800 outline-none">
+                                <option value="all">All Debited Wallets</option>
+                                <option value="both">Both Advance Wallets</option>
+                                <option value="sajida">Sajida's Advance Wallet</option>
+                                <option value="jeelani">Jeelani's Advance Wallet</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Active Filter Tags & Results Counter Bar -->
+                <div id="expense-active-filters-bar" class="hidden pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
+                    <div class="flex items-center gap-1.5 flex-wrap text-xs">
+                        <span id="expense-filtered-count-label" class="font-extrabold text-slate-800 mr-1">Showing 0 expenses</span>
+                        <div id="expense-active-chips-container" class="flex items-center gap-1 flex-wrap"></div>
+                    </div>
+                    <button type="button" onclick="App.clearAllExpenseFilters()" class="text-xs font-bold text-rose-600 hover:text-rose-800 transition cursor-pointer">
+                        <i class="fa-solid fa-xmark mr-1"></i> Clear All
+                    </button>
+                </div>
+            </div>
 
             <!-- Expenses Table/List Container -->
             <div id="expenses-list-container">
@@ -1664,22 +1795,40 @@
                     <input type="text" id="exp-title" required placeholder="e.g. Watchman Salary, Solar Panel Maintenance..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-emerald-500">
                 </div>
 
-                <div class="grid grid-cols-2 gap-3">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Amount (₹) *</label>
                         <input type="number" id="exp-amount" required placeholder="₹ Amount" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-base font-extrabold text-slate-900 outline-none focus:ring-2 focus:ring-emerald-500">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Category / Sheet *</label>
-                        <select id="exp-category" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-emerald-500">
+                        <select id="exp-category" onchange="App.onExpenseCategoryChanged(this.value)" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-emerald-500">
                             <!-- Populated dynamically -->
                         </select>
                     </div>
                 </div>
 
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Expense Date</label>
-                    <input type="date" id="exp-date" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 outline-none">
+                <!-- Dynamic Subcategory Selection -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-1 flex items-center justify-between">
+                            <span>Subcategory *</span>
+                            <span class="text-[10px] text-emerald-600 font-bold lowercase">auto-loads</span>
+                        </label>
+                        <select id="exp-subcategory" onchange="App.onExpenseSubcategoryChanged(this.value)" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-emerald-500">
+                            <!-- Populated dynamically based on category -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Expense Date *</label>
+                        <input type="date" id="exp-date" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-emerald-500">
+                    </div>
+                </div>
+
+                <!-- Custom Subcategory input box (hidden by default) -->
+                <div id="exp-custom-subcategory-box" class="hidden p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl">
+                    <label class="block text-[11px] font-bold text-emerald-900 mb-1">Enter Custom Subcategory Name:</label>
+                    <input type="text" id="exp-custom-subcategory" placeholder="e.g. Roof Waterproofing, Inverter Fuse..." class="w-full bg-white border border-emerald-300 rounded-lg px-3 py-2 text-xs font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-emerald-500">
                 </div>
 
                 <!-- Applicable Floor / Scope -->

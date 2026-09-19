@@ -1,0 +1,220 @@
+/* styles.css - Custom styling for Meera Heights Building Expenditure App */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+body {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+}
+
+/* Safe area for mobile iPhones & notch devices */
+.safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 16px);
+}
+
+/* Modal animation */
+.modal-enter {
+    animation: modalFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.96) translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* Print Receipt Styles */
+@media print {
+    body * {
+        visibility: hidden;
+    }
+    #printable-receipt-card, #printable-receipt-card * {
+        visibility: visible;
+    }
+    #printable-receipt-card {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0;
+        padding: 20px;
+        box-shadow: none !important;
+        border: 1px solid #ddd !important;
+    }
+    .no-print {
+        display: none !important;
+    }
+}
+
+/* Category pill horizontal scroll container */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* Pulse animation for pending badges */
+@keyframes subtle-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+.animate-subtle-pulse {
+    animation: subtle-pulse 2s infinite ease-in-out;
+}
+
+/* Mobile interaction hardening */
+html {
+    -webkit-text-size-adjust: 100%;
+}
+
+button,
+select,
+input[type="date"],
+input[type="month"],
+input[type="number"] {
+    min-height: 42px;
+}
+
+button,
+a,
+label {
+    touch-action: manipulation;
+}
+
+.mobile-control {
+    min-width: 150px;
+}
+
+.overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+}
+
+@media (max-width: 767px) {
+    body {
+        overflow-x: hidden;
+        padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+    }
+
+    header.sticky {
+        padding-top: max(0.75rem, env(safe-area-inset-top, 0px));
+    }
+
+    header.sticky > div,
+    main {
+        min-width: 0;
+    }
+
+    header.sticky .flex.items-center.justify-between {
+        align-items: flex-start;
+        gap: 0.6rem;
+    }
+
+    header.sticky .flex.items-center.justify-between > div:first-child {
+        min-width: 0;
+    }
+
+    header.sticky h1 {
+        font-size: 0.95rem;
+    }
+
+    header.sticky .bg-emerald-50 {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+
+    header.sticky #btn-download-excel {
+        min-width: 42px;
+        padding-left: 0.65rem;
+        padding-right: 0.65rem;
+    }
+
+    .modal-enter,
+    [id^="modal-"] > div:last-child {
+        max-height: calc(100dvh - 1rem);
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    [id^="modal-"] {
+        align-items: flex-end;
+        padding: 0.5rem;
+    }
+
+    [id^="modal-"] > div:last-child {
+        width: 100%;
+        border-radius: 1.25rem 1.25rem 0 0;
+        padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+    }
+
+    table {
+        min-width: 680px;
+    }
+
+    .mobile-control {
+        width: 100%;
+    }
+
+    .fixed.bottom-0 {
+        padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
+    }
+
+    .grid-cols-2,
+    .grid-cols-3,
+    .grid-cols-4,
+    .grid-cols-5 {
+        grid-template-columns: minmax(0, 1fr) !important;
+    }
+
+    .whitespace-nowrap {
+        white-space: normal;
+    }
+}
+
+@media (max-width: 420px) {
+    main {
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+    }
+
+    .text-xl {
+        font-size: 1.1rem;
+    }
+
+    .text-2xl {
+        font-size: 1.35rem;
+    }
+
+    .fixed.bottom-0 button {
+        min-width: 56px;
+        padding-left: 0.25rem;
+        padding-right: 0.25rem;
+    }
+}

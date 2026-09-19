@@ -69,7 +69,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="css/styles.css?v=5.0.0">
+    <link rel="stylesheet" href="css/styles.css?v=5.1.0">
 </head>
 <body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 min-h-screen pb-28 sm:pb-32 md:pb-8 antialiased selection:bg-emerald-100 selection:text-emerald-900 transition-colors duration-200">
 
@@ -97,7 +97,7 @@
             </div>
 
             <!-- VIEW 0: CLOUD CREDENTIALS CHECK (Shown while verifying credentials with cloud database) -->
-            <div id="auth-view-checking" class="space-y-4 text-center py-6 hidden">
+            <div id="auth-view-checking" class="space-y-4 text-center py-6">
                 <div class="w-12 h-12 rounded-2xl bg-emerald-100 dark:bg-emerald-950/70 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xl mx-auto animate-pulse">
                     <i class="fa-solid fa-shield-halved"></i>
                 </div>
@@ -108,7 +108,7 @@
             </div>
 
             <!-- VIEW 1: FIRST-TIME SETUP (Shown when no password has been created) -->
-            <div id="auth-view-setup" class="space-y-4">
+            <div id="auth-view-setup" class="space-y-4 hidden">
                 <div class="text-left">
                     <div class="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-950/70 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-lg mb-2">
                         <i class="fa-solid fa-user-shield"></i>
@@ -4480,9 +4480,9 @@
     <div id="app-floating-toast" class="fixed top-5 right-5 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl shadow-2xl text-xs font-bold transition-all transform duration-300 pointer-events-none opacity-0 translate-y-[-10px]"></div>
 
     <!-- Application JavaScript Scripts -->
-    <script src="js/storage.js?v=5.0.0"></script>
-    <script src="js/excel-export.js?v=5.0.0"></script>
-    <script src="js/app.js?v=5.0.0"></script>
+    <script src="js/storage.js?v=5.1.0"></script>
+    <script src="js/excel-export.js?v=5.1.0"></script>
+    <script src="js/app.js?v=5.1.0"></script>
 
     <!-- Register Service Worker for PWA Offline Functionality -->
     <script>

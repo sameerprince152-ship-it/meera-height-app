@@ -1546,15 +1546,33 @@ class CloudSyncManager {
         return this.pushToCloud(data, immediate);
     }
 
-    static async pushAuthSecurity(creds) {
-        if (!creds || !creds.hash) return false;
-        try {
-            if (!this.db) {
-                const config = this.getConfig();
-                if (config) this.connect(config);
+    static async ensureDb(timeoutMs = 6000) {
+        if (this.db) return this.db;
+        const config = this.getConfig();
+        if (!config || !config.apiKey || !config.projectId) return null;
+
+        const startTime = Date.now();
+        while (Date.now() - startTime < timeoutMs) {
+            if (typeof firebase !== 'undefined' && firebase.initializeApp && firebase.firestore) {
+                try {
+                    let app = (firebase.apps && firebase.apps.length > 0) ? firebase.apps[0] : firebase.initializeApp(config);
+                    this.db = firebase.firestore(app);
+                    return this.db;
+                } catch (e) {
+                    console.warn('Firebase ensureDb init warning:', e);
+                }
             }
-            if (this.db) {
-                const docRef = this.db.collection('buildings').doc('meera_heights');
+            await new Promise(r => setTimeout(r, 150));
+        }
+        return this.db || null;
+    }
+
+    static async pushAuthSecurity(creds) {
+        if (!creds || !creds.hash || !creds.salt) return false;
+        try {
+            const db = await this.ensureDb(5000);
+            if (db) {
+                const docRef = db.collection('buildings').doc('meera_heights');
                 const myDevId = this.getDeviceId();
                 await docRef.set({
                     authSecurity: creds,
@@ -1576,22 +1594,17 @@ class CloudSyncManager {
 
     static async fetchRemoteAuthSecurity() {
         try {
-            if (!this.db) {
-                const config = this.getConfig();
-                if (config && typeof firebase !== 'undefined' && firebase.initializeApp) {
-                    let app = (firebase.apps && firebase.apps.length > 0) ? firebase.apps[0] : firebase.initializeApp(config);
-                    this.db = firebase.firestore(app);
-                }
-            }
-            if (this.db) {
-                const docRef = this.db.collection('buildings').doc('meera_heights');
+            const db = await this.ensureDb(6000);
+            if (db) {
+                const docRef = db.collection('buildings').doc('meera_heights');
                 const fetchPromise = docRef.get();
-                const timeoutPromise = new Promise(resolve => setTimeout(() => resolve(null), 2500));
+                const timeoutPromise = new Promise(resolve => setTimeout(() => resolve(null), 5000));
                 const doc = await Promise.race([fetchPromise, timeoutPromise]);
                 if (doc && doc.exists) {
                     const cloudData = doc.data();
                     if (cloudData && cloudData.authSecurity && cloudData.authSecurity.hash && cloudData.authSecurity.salt) {
                         StorageManager.setAuthCredentials(cloudData.authSecurity);
+                        console.log('Successfully fetched remote authSecurity from Firestore.');
                         return cloudData.authSecurity;
                     }
                 }
@@ -1623,7 +1636,6 @@ class CloudSyncManager {
 
                 const payload = {
                     ...data,
-                    authSecurity: authCreds || null,
                     activityLogs: activityLogs,
                     _cloudMeta: {
                         senderDeviceId: myDevId,
@@ -1632,6 +1644,12 @@ class CloudSyncManager {
                         clientPlatform: navigator.platform || 'web'
                     }
                 };
+
+                // CRITICAL: Only include authSecurity if local credentials exist and are valid.
+                // NEVER write authSecurity: null, which would erase the cloud master password across devices.
+                if (authCreds && authCreds.hash && authCreds.salt) {
+                    payload.authSecurity = authCreds;
+                }
 
                 await docRef.set(payload, { merge: true });
                 this.setLastSynced(new Date());

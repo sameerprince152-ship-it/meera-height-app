@@ -8659,6 +8659,13 @@ const App = {
 
         if (AuthManager.isPasswordConfigured()) {
             this.showAuthLoginView();
+            // Self-healing sync: asynchronously ensure Firestore cloud has credentials
+            if (navigator.onLine && typeof CloudSyncManager !== 'undefined') {
+                const creds = StorageManager.getAuthCredentials();
+                if (creds && creds.hash && creds.salt) {
+                    CloudSyncManager.pushAuthSecurity(creds).catch(() => {});
+                }
+            }
             return;
         }
 

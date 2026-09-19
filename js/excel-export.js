@@ -1186,3 +1186,7 @@ class ExcelExporter {
         }
     }
 }
+
+if (typeof window !== 'undefined') {
+    window.ExcelExporter = ExcelExporter;
+}

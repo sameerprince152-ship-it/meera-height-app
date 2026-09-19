@@ -317,6 +317,23 @@ const App = {
 
     handleCloudDataUpdated(newData, meta) {
         if (!newData) return;
+        // Anti-wipe safeguard: Never replace populated local state with empty tenants
+        if ((!newData.tenants || newData.tenants.length === 0) && (this.data && this.data.tenants && this.data.tenants.length > 0)) {
+            console.warn('Ignored cloud update with empty tenants array.');
+            return;
+        }
+        if (!newData.tenants || newData.tenants.length === 0) {
+            newData.tenants = JSON.parse(JSON.stringify(INITIAL_DATA.tenants));
+        }
+        if (!newData.rentCollections || newData.rentCollections.length === 0) {
+            newData.rentCollections = JSON.parse(JSON.stringify(INITIAL_DATA.rentCollections));
+        }
+        if (!newData.expenses || newData.expenses.length === 0) {
+            newData.expenses = JSON.parse(JSON.stringify(INITIAL_DATA.expenses));
+        }
+        if (!newData.bankTransactions || newData.bankTransactions.length === 0) {
+            newData.bankTransactions = JSON.parse(JSON.stringify(INITIAL_DATA.bankTransactions));
+        }
         this.data = newData;
         this.renderAll();
 
@@ -7945,7 +7962,6 @@ const App = {
     // -------------------------------------------------------------
     switchTab(tabId) {
         this.activeTab = tabId;
-        this.setOwnerLayoutVisible(true);
 
         document.querySelectorAll('.app-view').forEach(view => {
             view.classList.add('hidden');
@@ -7973,7 +7989,7 @@ const App = {
         window.scrollTo({ top: 0, behavior: 'smooth' });
 
         if (tabId === 'dashboard') {
-            setTimeout(() => this.renderCharts(), 50);
+            this.updateDashboard();
         } else if (tabId === 'floors') {
             this.renderFloorBreakupPage();
         } else if (tabId === 'expenses') {
@@ -7981,7 +7997,10 @@ const App = {
             this.renderCategoryExportActions();
             this.renderExpenseCalendar();
         } else if (tabId === 'tenants') {
+            this.renderTenants();
             this.renderRentLedger();
+        } else if (tabId === 'wallets') {
+            this.renderWalletPage(this.getStats());
         } else if (tabId === 'settings') {
             this.renderSettingsPage();
         }
@@ -8051,6 +8070,13 @@ const App = {
         this.renderRentLedger();
         this.updateDashboard();
         if (this.activeTab === 'floors') this.renderFloorBreakupPage();
+    },
+
+    updateDashboard() {
+        const stats = this.getStats();
+        this.renderStatsCards(stats);
+        this.renderRecurringBanner();
+        setTimeout(() => this.renderCharts(), 50);
     },
 
     renderSettingsPage() {
@@ -8936,10 +8962,15 @@ const App = {
 };
 
 // Global helper access
+window.App = App;
 window.openCloudSyncModal = () => App.openCloudSyncModal();
 window.openCloudPairQrModal = () => App.openCloudPairQrModal();
 
-// Bootstrap app on DOM Ready
-document.addEventListener('DOMContentLoaded', () => {
+// Bootstrap app safely on DOM ready or immediately if already loaded
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        App.init();
+    });
+} else {
     App.init();
-});
+}

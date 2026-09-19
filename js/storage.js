@@ -626,16 +626,29 @@ class StorageManager {
             if (!parsed.bankTransactions) parsed.bankTransactions = [];
             if (!parsed.walletTransfers) parsed.walletTransfers = [];
 
-            // Auto-heal / Restore authentic dataset if empty or corrupted
-            if ((!parsed.tenants || parsed.tenants.length === 0) && (!parsed.expenses || parsed.expenses.length === 0)) {
-                console.log('Restoring authentic building dataset into local storage...');
+            // Auto-heal / Restore authentic dataset if any core table is empty or missing
+            let dataHealed = false;
+            if (!parsed.tenants || parsed.tenants.length === 0) {
+                console.log('Restoring authentic tenants into local storage...');
                 parsed.tenants = JSON.parse(JSON.stringify(INITIAL_DATA.tenants));
+                dataHealed = true;
+            }
+            if (!parsed.rentCollections || parsed.rentCollections.length === 0) {
+                console.log('Restoring authentic rent collections into local storage...');
                 parsed.rentCollections = JSON.parse(JSON.stringify(INITIAL_DATA.rentCollections));
+                dataHealed = true;
+            }
+            if (!parsed.expenses || parsed.expenses.length === 0) {
+                console.log('Restoring authentic expenses into local storage...');
                 parsed.expenses = JSON.parse(JSON.stringify(INITIAL_DATA.expenses));
+                dataHealed = true;
+            }
+            if (!parsed.bankTransactions || parsed.bankTransactions.length === 0) {
+                console.log('Restoring authentic bank transactions into local storage...');
                 parsed.bankTransactions = JSON.parse(JSON.stringify(INITIAL_DATA.bankTransactions));
-                parsed.walletAdjustments = JSON.parse(JSON.stringify(INITIAL_DATA.walletAdjustments || []));
-                parsed.advanceSettlements = JSON.parse(JSON.stringify(INITIAL_DATA.advanceSettlements || []));
-                parsed.walletTransfers = JSON.parse(JSON.stringify(INITIAL_DATA.walletTransfers || []));
+                dataHealed = true;
+            }
+            if (dataHealed) {
                 this.saveDataLocallyOnly(parsed, true);
                 if (typeof CloudSyncManager !== 'undefined' && CloudSyncManager.isEnabled()) {
                     CloudSyncManager.pushToCloud(parsed, true);
@@ -791,6 +804,28 @@ class StorageManager {
             return false;
         }
     }
+
+    static getTheme() {
+        try {
+            return localStorage.getItem(STORAGE_KEYS.THEME) || 'light';
+        } catch (e) {
+            return 'light';
+        }
+    }
+
+    static saveTheme(theme) {
+        try {
+            localStorage.setItem(STORAGE_KEYS.THEME, theme || 'light');
+            return true;
+        } catch (e) {
+            console.error('Error saving theme to localStorage:', e);
+            return false;
+        }
+    }
+}
+
+if (typeof window !== 'undefined') {
+    window.StorageManager = StorageManager;
 }
 
 // -------------------------------------------------------------
@@ -1072,13 +1107,13 @@ class CloudSyncManager {
             }
 
             // CRITICAL ANTI-WIPE GUARD:
-            // If cloud snapshot has 0 tenants while local data has tenants, do NOT wipe local data!
-            // Seed cloud with localData immediately so all paired devices (Android, iOS) receive real data!
+            // If cloud snapshot has 0 tenants, do NOT wipe local data!
+            // Seed cloud with healthy localData immediately so all paired devices (Android, iOS) receive real data!
             const cloudTenants = Array.isArray(cloudPayload.tenants) ? cloudPayload.tenants : [];
-            const localTenants = Array.isArray(localData.tenants) ? localData.tenants : [];
-            if (cloudTenants.length === 0 && localTenants.length > 0) {
-                console.warn('Cloud database document has 0 tenants while local device has', localTenants.length, 'tenants. Protecting local data and repairing cloud...');
-                this.pushToCloud(localData, true);
+            if (cloudTenants.length === 0) {
+                console.warn('Cloud database document has 0 tenants. Protecting local data and repairing cloud with authentic dataset...');
+                const healthyData = StorageManager.getData();
+                this.pushToCloud(healthyData, true);
                 return;
             }
 
@@ -1087,6 +1122,20 @@ class CloudSyncManager {
             try {
                 const cleaned = { ...cloudPayload };
                 delete cleaned._cloudMeta;
+
+                // Ensure core collections are never null or empty
+                if (!cleaned.tenants || cleaned.tenants.length === 0) {
+                    cleaned.tenants = JSON.parse(JSON.stringify(INITIAL_DATA.tenants));
+                }
+                if (!cleaned.rentCollections || cleaned.rentCollections.length === 0) {
+                    cleaned.rentCollections = JSON.parse(JSON.stringify(INITIAL_DATA.rentCollections));
+                }
+                if (!cleaned.expenses || cleaned.expenses.length === 0) {
+                    cleaned.expenses = JSON.parse(JSON.stringify(INITIAL_DATA.expenses));
+                }
+                if (!cleaned.bankTransactions || cleaned.bankTransactions.length === 0) {
+                    cleaned.bankTransactions = JSON.parse(JSON.stringify(INITIAL_DATA.bankTransactions));
+                }
 
                 // Validate and save locally without re-triggering cloud upload
                 StorageManager.saveDataLocallyOnly(cleaned);
@@ -1222,4 +1271,8 @@ class CloudSyncManager {
             return `${baseUrl.replace(/\/+$/, '')}/#cloud-sync=active`;
         }
     }
+}
+
+if (typeof window !== 'undefined') {
+    window.CloudSyncManager = CloudSyncManager;
 }

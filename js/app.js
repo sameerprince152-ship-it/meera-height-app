@@ -85,9 +85,6 @@ const App = {
 
         this.renderAll();
 
-        // Check URL hash route (e.g. #tenant-portal)
-        this.checkHashRoute();
-
         console.log('Meera Heights App Initialized with Floor Ownership & Advance Management.');
     },
 
@@ -4187,10 +4184,6 @@ const App = {
                                 <i class="fa-solid fa-phone text-slate-400"></i>
                                 <a href="tel:${tenant.phone}" class="hover:underline text-slate-700 dark:text-slate-300 font-medium">${tenant.phone}</a>
                             </div>
-                            <div class="flex items-center gap-1 text-[11px] font-mono font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700/60 px-2 py-0.5 rounded-md" title="Tenant Portal Sign-In PIN">
-                                <i class="fa-solid fa-key text-[9px] text-amber-500"></i>
-                                <span>PIN: ${tenant.portalPin || (tenant.phone ? tenant.phone.slice(-4) : '1234')}</span>
-                            </div>
                         </div>
                         <div class="mt-1 text-[10px] text-slate-400">
                             Move-in: ${tenant.moveInDate || 'N/A'}
@@ -4221,10 +4214,6 @@ const App = {
                            title="${paidThisMonth ? 'Send WhatsApp Receipt' : 'Send WhatsApp Reminder'}">
                             <i class="fa-brands fa-whatsapp text-base"></i>
                         </a>
-
-                        <button onclick="App.shareTenantPortalInvite('${tenant.id}')" class="p-2 bg-sky-50 dark:bg-sky-950/50 text-sky-600 dark:text-sky-400 hover:bg-sky-100 rounded-xl text-xs font-semibold transition flex items-center justify-center" title="Send Tenant Portal Link & PIN via WhatsApp">
-                            <i class="fa-solid fa-key text-base"></i>
-                        </button>
 
                         <button onclick="App.editTenant('${tenant.id}')" class="p-2 text-slate-400 hover:text-slate-600 transition" title="Edit Tenant">
                             <i class="fa-solid fa-pen"></i>
@@ -6143,8 +6132,6 @@ const App = {
                 document.getElementById('t-rent').value = t.monthlyRent || '';
                 document.getElementById('t-date').value = t.moveInDate || '';
                 document.getElementById('t-notes').value = t.notes || '';
-                const pinInput = document.getElementById('t-pin');
-                if (pinInput) pinInput.value = t.portalPin || (t.phone ? t.phone.slice(-4) : '1234');
                 
                 if (adjustSection) {
                     adjustSection.classList.remove('hidden');
@@ -6168,8 +6155,6 @@ const App = {
             document.getElementById('t-rent').value = '';
             document.getElementById('t-date').value = new Date().toISOString().slice(0, 10);
             document.getElementById('t-notes').value = '';
-            const pinInput = document.getElementById('t-pin');
-            if (pinInput) pinInput.value = '1234';
 
             if (adjustSection) {
                 adjustSection.classList.add('hidden');
@@ -6216,8 +6201,6 @@ const App = {
         const monthlyRent = parseFloat(document.getElementById('t-rent').value) || 0;
         const moveInDate = document.getElementById('t-date').value;
         const notes = document.getElementById('t-notes').value.trim();
-        const rawPin = document.getElementById('t-pin') ? document.getElementById('t-pin').value.trim() : '';
-        const portalPin = rawPin.replace(/\D/g, '').slice(0, 4) || (phone ? phone.slice(-4) : '1234');
 
         if (!name || !flat) {
             alert('Please enter tenant name and flat number.');
@@ -6244,8 +6227,7 @@ const App = {
                     advanceRefunded,
                     monthlyRent,
                     moveInDate,
-                    notes,
-                    portalPin
+                    notes
                 };
             }
         } else {
@@ -6264,8 +6246,7 @@ const App = {
                 status: 'active',
                 monthlyRent,
                 moveInDate,
-                notes,
-                portalPin
+                notes
             };
             this.data.tenants.push(newT);
         }
@@ -8519,239 +8500,6 @@ const App = {
     },
 
     // =============================================================
-    // TENANT SELF-SERVICE PORTAL (Lightweight Guest View)
-    // =============================================================
-    checkHashRoute() {
-        if (window.location.hash === '#tenant-portal') {
-            this.openTenantPortal();
-        }
-    },
-
-    setOwnerLayoutVisible(visible) {
-        const header = document.querySelector('header');
-        const desktopNav = document.querySelector('nav.hidden.md\\:block');
-        const mobileNav = document.querySelector('nav.md\\:hidden');
-        if (header) header.style.display = visible ? '' : 'none';
-        if (desktopNav) desktopNav.style.display = visible ? '' : 'none';
-        if (mobileNav) mobileNav.style.display = visible ? '' : 'none';
-        const banner = document.getElementById('scheduled-backup-banner');
-        if (banner && !visible) banner.classList.add('hidden');
-    },
-
-    openTenantPortal() {
-        this.setOwnerLayoutVisible(false);
-        document.querySelectorAll('.app-view').forEach(view => view.classList.add('hidden'));
-        const portalView = document.getElementById('view-tenant-portal');
-        if (portalView) portalView.classList.remove('hidden');
-
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-
-        const sessionTenantId = sessionStorage.getItem('meera_tenant_session');
-        if (sessionTenantId && (this.data.tenants || []).some(t => t.id === sessionTenantId)) {
-            this.renderTenantPortalDashboard(sessionTenantId);
-        } else {
-            const loginCard = document.getElementById('tenant-portal-login-card');
-            const authDashboard = document.getElementById('tenant-portal-auth-dashboard');
-            if (loginCard) loginCard.classList.remove('hidden');
-            if (authDashboard) authDashboard.classList.add('hidden');
-        }
-    },
-
-    exitTenantPortal() {
-        this.setOwnerLayoutVisible(true);
-        if (window.location.hash === '#tenant-portal') {
-            history.pushState("", document.title, window.location.pathname + window.location.search);
-        }
-        this.switchTab('dashboard');
-    },
-
-    handleTenantPortalLogin(e) {
-        e.preventDefault();
-        const flatInput = (document.getElementById('tenant-portal-flat-input')?.value || '').trim();
-        const pinInput = (document.getElementById('tenant-portal-pin-input')?.value || '').trim();
-        const errorEl = document.getElementById('tenant-portal-login-error');
-
-        if (!flatInput || !pinInput) {
-            if (errorEl) {
-                errorEl.textContent = 'Please enter both your Flat number and 4-digit PIN.';
-                errorEl.classList.remove('hidden');
-            }
-            return;
-        }
-
-        const cleanFlatQuery = flatInput.toLowerCase().replace(/^(flat|unit|flt|apt)\s*/i, '').trim();
-
-        const tenant = (this.data.tenants || []).find(t => {
-            const tFlatClean = (t.flat || '').toLowerCase().replace(/^(flat|unit|flt|apt)\s*/i, '').trim();
-            const flatMatches = (tFlatClean === cleanFlatQuery || 
-                                 (t.flat || '').toLowerCase() === flatInput.toLowerCase() ||
-                                 (t.flat || '').toLowerCase().includes(cleanFlatQuery));
-            const expectedPin = t.portalPin || (t.phone ? t.phone.slice(-4) : '1234');
-            return flatMatches && expectedPin === pinInput;
-        });
-
-        if (tenant) {
-            if (errorEl) errorEl.classList.add('hidden');
-            sessionStorage.setItem('meera_tenant_session', tenant.id);
-            this.renderTenantPortalDashboard(tenant.id);
-            this.showToast(`Welcome, ${tenant.name}!`, 'success');
-        } else {
-            if (errorEl) {
-                errorEl.textContent = 'Invalid Flat Number or PIN. Please verify or contact building owners.';
-                errorEl.classList.remove('hidden');
-            }
-        }
-    },
-
-    logoutTenantPortal() {
-        sessionStorage.removeItem('meera_tenant_session');
-        const loginCard = document.getElementById('tenant-portal-login-card');
-        const authDashboard = document.getElementById('tenant-portal-auth-dashboard');
-        if (loginCard) loginCard.classList.remove('hidden');
-        if (authDashboard) authDashboard.classList.add('hidden');
-        const pinInput = document.getElementById('tenant-portal-pin-input');
-        if (pinInput) pinInput.value = '';
-        this.showToast('Signed out of resident portal.', 'info');
-    },
-
-    renderTenantPortalDashboard(tenantId) {
-        const tenant = (this.data.tenants || []).find(t => t.id === tenantId);
-        if (!tenant) {
-            this.logoutTenantPortal();
-            return;
-        }
-
-        const loginCard = document.getElementById('tenant-portal-login-card');
-        const authDashboard = document.getElementById('tenant-portal-auth-dashboard');
-        if (loginCard) loginCard.classList.add('hidden');
-        if (authDashboard) authDashboard.classList.remove('hidden');
-
-        const floor = parseInt(tenant.floor) || this.detectFloorFromFlat(tenant.flat);
-        const ownerInfo = this.getFloorOwner(floor);
-
-        const depositPaid = parseFloat(tenant.advanceDeposit) || 0;
-        const depositRefunded = parseFloat(tenant.advanceRefunded) || 0;
-        const depositDeductions = parseFloat(tenant.advanceDeductions) || 0;
-        const activeHeld = Math.max(0, depositPaid - depositRefunded - depositDeductions);
-
-        const currentMonth = this.getCurrentMonthKey();
-        const billingMonths = this.getTenantBillingMonths(tenant);
-        const unpaidMonths = billingMonths.filter(b => !b.isPaid);
-        const isPaidUp = unpaidMonths.length === 0;
-
-        // Profile fields
-        const nameEl = document.getElementById('tp-resident-name');
-        if (nameEl) nameEl.textContent = tenant.name;
-        const flatBadgeEl = document.getElementById('tp-flat-badge');
-        if (flatBadgeEl) flatBadgeEl.textContent = `Flat ${tenant.flat}`;
-        const subinfoEl = document.getElementById('tp-resident-subinfo');
-        if (subinfoEl) subinfoEl.textContent = `Floor ${floor} • Phone: ${tenant.phone || 'N/A'} • Move-in: ${tenant.moveInDate || 'N/A'}`;
-
-        // Monthly rent
-        const rentEl = document.getElementById('tp-monthly-rent');
-        if (rentEl) rentEl.textContent = `₹${(parseFloat(tenant.monthlyRent) || 0).toLocaleString('en-IN')}`;
-
-        // Rent status pill
-        const rentStatusPill = document.getElementById('tp-rent-status-pill');
-        if (rentStatusPill) {
-            if (isPaidUp) {
-                rentStatusPill.className = 'inline-block mt-2 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-100 text-emerald-800';
-                rentStatusPill.textContent = 'Paid Up (No Dues)';
-            } else if (unpaidMonths.length === 1 && unpaidMonths[0].month === currentMonth) {
-                rentStatusPill.className = 'inline-block mt-2 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-amber-100 text-amber-800';
-                rentStatusPill.textContent = 'Current Month Due';
-            } else {
-                rentStatusPill.className = 'inline-block mt-2 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-rose-100 text-rose-800';
-                rentStatusPill.textContent = `${unpaidMonths.length} Months Due`;
-            }
-        }
-
-        // Deposit held
-        const depEl = document.getElementById('tp-deposit-held');
-        if (depEl) depEl.textContent = `₹${activeHeld.toLocaleString('en-IN')}`;
-
-        // Floor owner info & WhatsApp links
-        const ownerEl = document.getElementById('tp-owner-name');
-        if (ownerEl) ownerEl.textContent = `${ownerInfo.name} (${ownerInfo.floors})`;
-
-        const ownerPhone = '9986347895'; // Management phone
-        const ownerWaLink = document.getElementById('tp-owner-wa-link');
-        if (ownerWaLink) {
-            const queryMsg = encodeURIComponent(`Hello ${ownerInfo.name},\nI am ${tenant.name} from Flat ${tenant.flat} (Meera Heights). I have a query regarding my tenancy.`);
-            ownerWaLink.href = `https://wa.me/91${ownerPhone}?text=${queryMsg}`;
-        }
-
-        // Maintenance WhatsApp button
-        const maintBtn = document.getElementById('tp-maintenance-wa-btn');
-        if (maintBtn) {
-            const maintMsg = encodeURIComponent(`Hello ${ownerInfo.name},\n*Maintenance Request*\nTenant: ${tenant.name}\nFlat: ${tenant.flat} (Floor ${floor})\nIssue Description: `);
-            maintBtn.href = `https://wa.me/91${ownerPhone}?text=${maintMsg}`;
-        }
-
-        // Past Rent Collections & Receipts
-        const paymentsContainer = document.getElementById('tp-payments-list-container');
-        if (paymentsContainer) {
-            const tenantPayments = (this.data.rentCollections || [])
-                .filter(r => r.tenantId === tenant.id)
-                .sort((a, b) => (b.paymentDate || '').localeCompare(a.paymentDate || ''));
-
-            if (tenantPayments.length === 0) {
-                paymentsContainer.innerHTML = `
-                    <div class="p-6 text-center text-slate-400 bg-slate-50 dark:bg-slate-700/30 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
-                        <i class="fa-solid fa-receipt text-2xl mb-1.5 opacity-50"></i>
-                        <p class="text-xs">No payment records found yet for this flat.</p>
-                    </div>
-                `;
-            } else {
-                paymentsContainer.innerHTML = tenantPayments.map(r => `
-                    <div class="flex items-center justify-between p-3.5 bg-slate-50 dark:bg-slate-700/40 rounded-2xl border border-slate-100 dark:border-slate-700 hover:border-sky-300 dark:hover:border-sky-700 transition">
-                        <div class="flex items-center gap-3">
-                            <div class="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 flex items-center justify-center font-bold text-xs shrink-0">
-                                <i class="fa-solid fa-check"></i>
-                            </div>
-                            <div>
-                                <div class="flex items-center gap-2">
-                                    <strong class="text-sm font-bold text-slate-900 dark:text-white">₹${(parseFloat(r.amount) || 0).toLocaleString('en-IN')}</strong>
-                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-200">${r.month || 'Rent'}</span>
-                                </div>
-                                <span class="text-[11px] text-slate-500 dark:text-slate-400 block mt-0.5">
-                                    Paid on ${r.paymentDate || '-'} • Mode: ${r.paymentMode || r.mode || 'UPI / Cash'}
-                                </span>
-                            </div>
-                        </div>
-                        <button onclick="App.downloadRentReceiptPDF('${r.id}')" class="px-3 py-1.5 bg-rose-50 dark:bg-rose-950/50 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-700 dark:text-rose-300 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 border border-rose-200 dark:border-rose-800/60 cursor-pointer shadow-sm" title="Download Official PDF Receipt">
-                            <i class="fa-solid fa-file-pdf"></i>
-                            <span class="hidden sm:inline">Receipt PDF</span>
-                        </button>
-                    </div>
-                `).join('');
-            }
-        }
-    },
-
-    shareTenantPortalInvite(tenantId) {
-        const tenant = (this.data.tenants || []).find(t => t.id === tenantId);
-        if (!tenant) return;
-
-        const pin = tenant.portalPin || (tenant.phone ? tenant.phone.slice(-4) : '1234');
-        const portalUrl = `${window.location.origin}${window.location.pathname}#tenant-portal`;
-
-        const msg = encodeURIComponent(
-            `Hello ${tenant.name},\n\nYou can now view your rent payment receipts, payment ledger, and active security deposit balance anytime on the *Meera Heights Tenant Portal*:\n\n🔗 ${portalUrl}\n\n*Your Login Details:*\n🏢 Flat Number: *${tenant.flat}*\n🔑 4-Digit PIN: *${pin}*\n\nWarm regards,\nManagement, Meera Heights`
-        );
-
-        if (tenant.phone) {
-            window.open(`https://wa.me/91${tenant.phone}?text=${msg}`, '_blank');
-        } else {
-            navigator.clipboard.writeText(decodeURIComponent(msg)).then(() => {
-                this.showToast('Tenant portal invite copied to clipboard!', 'success');
-            }).catch(() => {
-                prompt('Copy Tenant Portal Invite:', decodeURIComponent(msg));
-            });
-        }
-    },
-
-    // =============================================================
     // AUTOMATED GOOGLE DRIVE & EMAIL BACKUP ENGINE
     // =============================================================
     initBackupScheduler() {
@@ -9011,20 +8759,24 @@ const App = {
             this.updateBackupSettingsUI(settings);
 
             // Attempt Native Web Share API if supported
-            if (navigator.canShare) {
-                const file = new File([blob], filename, { type: blob.type });
-                if (navigator.canShare({ files: [file] })) {
-                    await navigator.share({
-                        files: [file],
-                        title: 'Meera Heights Database Backup',
-                        text: `Automated building backup (${isEncrypted ? 'AES Encrypted' : 'JSON'}). Save directly to Google Drive or iCloud.`
-                    });
-                    this.showToast('Backup shared successfully!', 'success');
-                    return;
+            if (navigator.canShare && navigator.share) {
+                try {
+                    const file = new File([blob], filename, { type: blob.type });
+                    if (navigator.canShare({ files: [file] })) {
+                        await navigator.share({
+                            files: [file],
+                            title: 'Meera Heights Database Backup',
+                            text: `Meera Heights automated backup (${isEncrypted ? 'AES Encrypted' : 'JSON'}). Save directly to Google Drive or files.`
+                        });
+                        this.showToast('Backup shared successfully!', 'success');
+                        return;
+                    }
+                } catch (shareErr) {
+                    console.warn('Share sheet dismissed or unsupported file share:', shareErr);
                 }
             }
 
-            // Standard browser download + Direct Google Drive prompt
+            // Standard browser download
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
@@ -9032,16 +8784,12 @@ const App = {
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            setTimeout(() => URL.revokeObjectURL(url), 1500);
 
-            this.showToast(`Backup downloaded: ${filename}`, 'success');
+            this.showToast(`Backup downloaded: ${filename}. Opening Google Drive...`, 'success');
 
-            // Open Google Drive upload page
-            setTimeout(() => {
-                if (confirm('Backup file downloaded! Would you like to open Google Drive now to upload it?')) {
-                    window.open('https://drive.google.com/drive/u/0/my-drive', '_blank');
-                }
-            }, 500);
+            // Open Google Drive upload page directly in new tab
+            window.open('https://drive.google.com/drive/u/0/my-drive', '_blank');
         } catch (err) {
             console.error('Drive backup failed:', err);
             this.showToast('Backup failed: ' + err.message, 'error');
@@ -9066,33 +8814,36 @@ const App = {
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            setTimeout(() => URL.revokeObjectURL(url), 1500);
 
-            // Compose email
-            const recipients = (settings.recipients && settings.recipients.length > 0)
-                ? settings.recipients.join(',')
-                : 'sajida@meeraheights.com,jeelani@meeraheights.com';
+            // Compose email after small delay so download is not aborted
+            setTimeout(() => {
+                const recipients = (settings.recipients && settings.recipients.length > 0)
+                    ? settings.recipients.join(',')
+                    : 'sajida@meeraheights.com,jeelani@meeraheights.com';
 
-            const stats = this.getStats();
-            const dateStr = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
-            const subject = encodeURIComponent(`[Meera Heights] Database Backup & Financial Summary - ${dateStr}`);
-            const body = encodeURIComponent(
-                `Hello Sajida & Jeelani,\n\nPlease find the latest automated database backup for Meera Heights Residential Apartments attached.\n\n` +
-                `📊 Executive Financial Summary:\n` +
-                `• Treasury Balance: ₹${stats.treasuryBalance.toLocaleString('en-IN')}\n` +
-                `• Sajida Advance Wallet: ₹${stats.sajidaAdvanceBalance.toLocaleString('en-IN')}\n` +
-                `• Sajida Rent Wallet: ₹${stats.sajidaRentBalance.toLocaleString('en-IN')}\n` +
-                `• Jeelani Advance Wallet: ₹${stats.jeelaniAdvanceBalance.toLocaleString('en-IN')}\n` +
-                `• Jeelani Rent Wallet: ₹${stats.jeelaniRentBalance.toLocaleString('en-IN')}\n` +
-                `• Active Tenants: ${this.data.tenants.filter(t => t.status !== 'vacated').length}\n` +
-                `• Total Expenses Recorded: ${this.data.expenses.length}\n\n` +
-                `📁 Backup File: ${filename} (${isEncrypted ? 'AES Password-Protected' : 'Standard JSON'})\n\n` +
-                `Please attach the downloaded file "${filename}" to this email for your records.\n\n` +
-                `Best regards,\nMeera Heights Building Management App`
-            );
+                const stats = this.getStats();
+                const dateStr = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+                const subject = encodeURIComponent(`[Meera Heights] Database Backup & Financial Summary - ${dateStr}`);
+                const body = encodeURIComponent(
+                    `Hello Sajida & Jeelani,\n\nPlease find the latest automated database backup for Meera Heights Residential Apartments attached.\n\n` +
+                    `📊 Executive Financial Summary:\n` +
+                    `• Treasury Balance: ₹${stats.treasuryBalance.toLocaleString('en-IN')}\n` +
+                    `• Sajida Advance Wallet: ₹${stats.sajidaAdvanceBalance.toLocaleString('en-IN')}\n` +
+                    `• Sajida Rent Wallet: ₹${stats.sajidaRentBalance.toLocaleString('en-IN')}\n` +
+                    `• Jeelani Advance Wallet: ₹${stats.jeelaniAdvanceBalance.toLocaleString('en-IN')}\n` +
+                    `• Jeelani Rent Wallet: ₹${stats.jeelaniRentBalance.toLocaleString('en-IN')}\n` +
+                    `• Active Tenants: ${this.data.tenants.filter(t => t.status !== 'vacated').length}\n` +
+                    `• Total Expenses Recorded: ${this.data.expenses.length}\n\n` +
+                    `📁 Backup File: ${filename} (${isEncrypted ? 'AES Password-Protected' : 'Standard JSON'})\n\n` +
+                    `Please attach the downloaded file "${filename}" to this email for your records.\n\n` +
+                    `Best regards,\nMeera Heights Building Management App`
+                );
 
-            window.location.href = `mailto:${recipients}?subject=${subject}&body=${body}`;
-            this.showToast('Backup file downloaded & email composer opened!', 'success');
+                window.location.href = `mailto:${recipients}?subject=${subject}&body=${body}`;
+            }, 350);
+
+            this.showToast('Backup file downloaded & email composer opening...', 'success');
         } catch (err) {
             console.error('Email backup failed:', err);
             this.showToast('Email backup failed: ' + err.message, 'error');

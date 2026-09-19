@@ -245,7 +245,7 @@ const WALLET_DEFINITIONS = {
     }
 };
 
-// Clean initial data for Meera Heights
+// Clean initial data for Meera Heights - Fully restored with authentic building records
 const INITIAL_DATA = {
     buildingName: 'Meera Heights',
     autoPostRecurring: false,
@@ -273,13 +273,318 @@ const INITIAL_DATA = {
     ],
     categories: DEFAULT_CATEGORIES,
     recurringExpenses: DEFAULT_RECURRING_EXPENSES,
-    tenants: [],            // Clean slate: ready for real tenants
-    rentCollections: [],    // Clean slate: ready for real rent payments
-    expenses: [],           // Clean slate: ready for real expenses
-    walletAdjustments: [],  // Clean slate: ready for owner capital
-    advanceSettlements: [], // Clean slate: tracks security deposits, deductions, and refunds
-    bankTransactions: [],   // Tracks Wallet ⇄ Bank interactions (deposits & withdrawals)
-    walletTransfers: []     // Tracks Advance Wallet ⇄ Rent Wallet interactions
+    tenants: [
+        {
+            id: "t_1789667717579",
+            name: "Shanmukha Rao",
+            floor: 3,
+            flat: "3",
+            ownerId: "jeelani",
+            phone: "",
+            occupation: "Judge",
+            advanceDeposit: 58000,
+            advancePaidDate: "2026-05-25",
+            advanceRefunded: 0,
+            advanceDeductions: 0,
+            status: "active",
+            monthlyRent: 29000,
+            moveInDate: "2026-05-25",
+            notes: "Advance details: 2nd May,2026: 29000; 1st June,2026: 29000; UPI"
+        },
+        {
+            id: "t_1789670609489",
+            name: "Barla Surendra",
+            floor: 4,
+            flat: "4",
+            ownerId: "jeelani",
+            phone: "",
+            occupation: "Business",
+            advanceDeposit: 62000,
+            advancePaidDate: "2026-09-17",
+            advanceRefunded: 0,
+            advanceDeductions: 0,
+            status: "active",
+            monthlyRent: 31000,
+            moveInDate: "2026-08-12",
+            notes: "Advance Deposit: 10th August,2026: IMPS 31,000; Cash: 31,000"
+        },
+        {
+            id: "t_1789671230505",
+            name: "ABDUL HAK SAHEB",
+            floor: 2,
+            flat: "2",
+            ownerId: "sajida",
+            phone: "9849699911",
+            occupation: "Business Man",
+            advanceDeposit: 30000,
+            advancePaidDate: "2026-09-01",
+            advanceRefunded: 0,
+            advanceDeductions: 0,
+            status: "active",
+            monthlyRent: 0,
+            moveInDate: "2026-09-01",
+            notes: ""
+        }
+    ],
+    rentCollections: [
+        {
+            id: "rent_1789667939941",
+            tenantId: "t_1789667717579",
+            tenantName: "Shanmukha Rao",
+            flat: "3",
+            floor: 3,
+            phone: "",
+            amount: 29000,
+            month: "2026-05",
+            paymentDate: "2026-06-01",
+            ownerCredited: "jeelani",
+            paymentMode: "UPI / GPay",
+            creditDestination: "wallet",
+            bankName: "",
+            bankReference: "",
+            notes: ""
+        },
+        {
+            id: "rent_1789669931601",
+            tenantId: "t_1789667717579",
+            tenantName: "Shanmukha Rao",
+            flat: "3",
+            floor: 3,
+            phone: "",
+            amount: 29000,
+            month: "2026-06",
+            paymentDate: "2026-07-03",
+            ownerCredited: "jeelani",
+            paymentMode: "UPI / GPay",
+            creditDestination: "wallet",
+            bankName: "",
+            bankReference: "",
+            notes: ""
+        },
+        {
+            id: "rent_1789669985608",
+            tenantId: "t_1789667717579",
+            tenantName: "Shanmukha Rao",
+            flat: "3",
+            floor: 3,
+            phone: "",
+            amount: 29000,
+            month: "2026-07",
+            paymentDate: "2026-08-01",
+            ownerCredited: "jeelani",
+            paymentMode: "UPI / GPay",
+            creditDestination: "wallet",
+            bankName: "",
+            bankReference: "",
+            notes: ""
+        },
+        {
+            id: "rent_1789670016783",
+            tenantId: "t_1789667717579",
+            tenantName: "Shanmukha Rao",
+            flat: "3",
+            floor: 3,
+            phone: "",
+            amount: 29000,
+            month: "2026-08",
+            paymentDate: "2026-09-01",
+            ownerCredited: "jeelani",
+            paymentMode: "UPI / GPay",
+            creditDestination: "wallet",
+            bankName: "",
+            bankReference: "",
+            notes: ""
+        },
+        {
+            id: "rent_1789670698674",
+            tenantId: "t_1789670609489",
+            tenantName: "Barla Surendra",
+            flat: "4",
+            floor: 4,
+            phone: "",
+            amount: 31000,
+            month: "2026-08",
+            paymentDate: "2026-09-10",
+            ownerCredited: "jeelani",
+            paymentMode: "Bank Transfer",
+            creditDestination: "wallet",
+            bankName: "",
+            bankReference: "",
+            notes: "IMPS"
+        }
+    ],
+    expenses: [
+        {
+            id: "exp_1789671117709",
+            title: "Tata RAO salary",
+            categoryId: "cat_watchman",
+            amount: 10000,
+            date: "2026-05-01",
+            monthKey: "2026-05",
+            targetFloor: "all",
+            splitType: "ratio",
+            sajidaRatio: 40,
+            jeelaniRatio: 60,
+            sajidaAmount: 4000,
+            jeelaniAmount: 6000,
+            debitedWallet: "both",
+            debitedSource: "advance",
+            paidBy: "Wallet Split (60:40 Floor Ratio)",
+            notes: "UPI (5,000) + CASH (5,000)"
+        },
+        {
+            id: "exp_1789671349229",
+            title: "Tata RAO salary",
+            categoryId: "cat_watchman",
+            amount: 10000,
+            date: "2026-06-01",
+            monthKey: "2026-06",
+            targetFloor: "all",
+            splitType: "ratio",
+            sajidaRatio: 40,
+            jeelaniRatio: 60,
+            sajidaAmount: 4000,
+            jeelaniAmount: 6000,
+            debitedWallet: "both",
+            debitedSource: "advance",
+            paidBy: "Wallet Split (60:40 Floor Ratio)",
+            notes: "UPI (5,000) + CASH (5,000)"
+        },
+        {
+            id: "exp_1789671454224",
+            title: "Tata RAO salary",
+            categoryId: "cat_watchman",
+            amount: 10000,
+            date: "2026-07-01",
+            monthKey: "2026-07",
+            targetFloor: "all",
+            splitType: "ratio",
+            sajidaRatio: 40,
+            jeelaniRatio: 60,
+            sajidaAmount: 4000,
+            jeelaniAmount: 6000,
+            debitedWallet: "both",
+            debitedSource: "advance",
+            paidBy: "Wallet Split (60:40 Floor Ratio)",
+            notes: "UPI (5,000) + CASH (5,000)"
+        },
+        {
+            id: "exp_1789671535932",
+            title: "Tata RAO Salary",
+            categoryId: "cat_watchman",
+            amount: 10000,
+            date: "2026-08-01",
+            monthKey: "2026-08",
+            targetFloor: "all",
+            splitType: "ratio",
+            sajidaRatio: 40,
+            jeelaniRatio: 60,
+            sajidaAmount: 4000,
+            jeelaniAmount: 6000,
+            debitedWallet: "both",
+            debitedSource: "advance",
+            paidBy: "Wallet Split (60:40 Floor Ratio)",
+            notes: "UPI (5,000) + CASH (5,000)"
+        },
+        {
+            id: "exp_1789671606153",
+            title: "Tata RAO salary",
+            categoryId: "cat_watchman",
+            amount: 10000,
+            date: "2026-09-01",
+            monthKey: "2026-09",
+            targetFloor: "all",
+            splitType: "ratio",
+            sajidaRatio: 40,
+            jeelaniRatio: 60,
+            sajidaAmount: 4000,
+            jeelaniAmount: 6000,
+            debitedWallet: "both",
+            debitedSource: "advance",
+            paidBy: "Wallet Split (60:40 Floor Ratio)",
+            notes: "UPI (5,000) + CASH (5,000)"
+        }
+    ],
+    walletAdjustments: [],
+    advanceSettlements: [],
+    bankTransactions: [
+        {
+            id: "btx_1789668039592",
+            type: "wallet_to_bank",
+            walletId: "jeelani_rent",
+            walletName: "Jeelani Rent Wallet",
+            ownerId: "jeelani",
+            date: "2026-06-10",
+            amount: 29000,
+            floor: "Floor 3",
+            floorCode: "3",
+            bankName: "HDFC Bank",
+            transferMode: "UPI / GPay / PhonePe",
+            reference: "NRO",
+            notes: "with maintenance"
+        },
+        {
+            id: "btx_1789670135996",
+            type: "wallet_to_bank",
+            walletId: "jeelani_rent",
+            walletName: "Jeelani Rent Wallet",
+            ownerId: "jeelani",
+            date: "2026-07-05",
+            amount: 29000,
+            floor: "Floor 3",
+            floorCode: "3",
+            bankName: "HDFC Bank",
+            transferMode: "UPI / GPay / PhonePe",
+            reference: "NRO",
+            notes: "with maintenance"
+        },
+        {
+            id: "btx_1789670268530",
+            type: "wallet_to_bank",
+            walletId: "jeelani_rent",
+            walletName: "Jeelani Rent Wallet",
+            ownerId: "jeelani",
+            date: "2026-08-06",
+            amount: 29000,
+            floor: "Floor 3",
+            floorCode: "3",
+            bankName: "HDFC Bank",
+            transferMode: "UPI / GPay / PhonePe",
+            reference: "NRO",
+            notes: "with maintenance"
+        },
+        {
+            id: "btx_1789670364087",
+            type: "wallet_to_bank",
+            walletId: "jeelani_rent",
+            walletName: "Jeelani Rent Wallet",
+            ownerId: "jeelani",
+            date: "2026-09-02",
+            amount: 29000,
+            floor: "Floor 3",
+            floorCode: "3",
+            bankName: "HDFC Bank",
+            transferMode: "UPI / GPay / PhonePe",
+            reference: "NRO",
+            notes: "with maintenance"
+        },
+        {
+            id: "btx_1789670915042",
+            type: "wallet_to_bank",
+            walletId: "jeelani_rent",
+            walletName: "Jeelani Rent Wallet",
+            ownerId: "jeelani",
+            date: "2026-09-10",
+            amount: 31000,
+            floor: "Floor 4",
+            floorCode: "4",
+            bankName: "HDFC Bank",
+            transferMode: "UPI / GPay / PhonePe",
+            reference: "NRO",
+            notes: "Transferred from Sajida HDFC bank; with maintenance"
+        }
+    ],
+    walletTransfers: []
 };
 
 class StorageManager {
@@ -321,6 +626,22 @@ class StorageManager {
             if (!parsed.bankTransactions) parsed.bankTransactions = [];
             if (!parsed.walletTransfers) parsed.walletTransfers = [];
 
+            // Auto-heal / Restore authentic dataset if empty or corrupted
+            if ((!parsed.tenants || parsed.tenants.length === 0) && (!parsed.expenses || parsed.expenses.length === 0)) {
+                console.log('Restoring authentic building dataset into local storage...');
+                parsed.tenants = JSON.parse(JSON.stringify(INITIAL_DATA.tenants));
+                parsed.rentCollections = JSON.parse(JSON.stringify(INITIAL_DATA.rentCollections));
+                parsed.expenses = JSON.parse(JSON.stringify(INITIAL_DATA.expenses));
+                parsed.bankTransactions = JSON.parse(JSON.stringify(INITIAL_DATA.bankTransactions));
+                parsed.walletAdjustments = JSON.parse(JSON.stringify(INITIAL_DATA.walletAdjustments || []));
+                parsed.advanceSettlements = JSON.parse(JSON.stringify(INITIAL_DATA.advanceSettlements || []));
+                parsed.walletTransfers = JSON.parse(JSON.stringify(INITIAL_DATA.walletTransfers || []));
+                this.saveDataLocallyOnly(parsed, true);
+                if (typeof CloudSyncManager !== 'undefined' && CloudSyncManager.isEnabled()) {
+                    CloudSyncManager.pushToCloud(parsed, true);
+                }
+            }
+
             // Backward compatibility: ensure existing bank transactions have walletId
             (parsed.bankTransactions || []).forEach(tx => {
                 if (!tx.walletId) {
@@ -351,14 +672,6 @@ class StorageManager {
                 }
             });
 
-            // Ensure tenants have a portalPin for Tenant Self-Service Portal
-            (parsed.tenants || []).forEach(t => {
-                if (!t.portalPin) {
-                    const phoneClean = (t.phone || '').replace(/\D/g, '');
-                    t.portalPin = phoneClean.length >= 4 ? phoneClean.slice(-4) : '1234';
-                }
-            });
-
             return parsed;
         } catch (e) {
             console.error('Error reading localStorage:', e);
@@ -366,8 +679,21 @@ class StorageManager {
         }
     }
 
-    static saveDataLocallyOnly(data) {
+    static saveDataLocallyOnly(data, allowEmpty = false) {
         try {
+            if (!allowEmpty) {
+                // Prevent empty overwrite of existing data
+                const currentRaw = localStorage.getItem(STORAGE_KEYS.APP_DATA);
+                if (currentRaw) {
+                    try {
+                        const current = JSON.parse(currentRaw);
+                        if ((current.tenants || []).length > 0 && (!data.tenants || data.tenants.length === 0)) {
+                            console.warn('Blocked attempt to save empty tenants array over populated local storage.');
+                            return false;
+                        }
+                    } catch (e) {}
+                }
+            }
             localStorage.setItem(STORAGE_KEYS.APP_DATA, JSON.stringify(data));
             return true;
         } catch (e) {
@@ -726,10 +1052,11 @@ class CloudSyncManager {
 
             this.updateStatus('connected', 'Live Cloud Sync Connected');
 
+            const localData = StorageManager.getData();
+
             if (!docSnapshot.exists) {
                 // Cloud document does not exist yet. Seed cloud with current local dataset!
                 console.log('Cloud database document does not exist yet. Initializing with local data...');
-                const localData = StorageManager.getData();
                 this.pushToCloud(localData, true);
                 return;
             }
@@ -741,6 +1068,17 @@ class CloudSyncManager {
             const myDevId = this.getDeviceId();
             if (cloudPayload._cloudMeta && cloudPayload._cloudMeta.senderDeviceId === myDevId) {
                 this.setLastSynced(new Date());
+                return;
+            }
+
+            // CRITICAL ANTI-WIPE GUARD:
+            // If cloud snapshot has 0 tenants while local data has tenants, do NOT wipe local data!
+            // Seed cloud with localData immediately so all paired devices (Android, iOS) receive real data!
+            const cloudTenants = Array.isArray(cloudPayload.tenants) ? cloudPayload.tenants : [];
+            const localTenants = Array.isArray(localData.tenants) ? localData.tenants : [];
+            if (cloudTenants.length === 0 && localTenants.length > 0) {
+                console.warn('Cloud database document has 0 tenants while local device has', localTenants.length, 'tenants. Protecting local data and repairing cloud...');
+                this.pushToCloud(localData, true);
                 return;
             }
 

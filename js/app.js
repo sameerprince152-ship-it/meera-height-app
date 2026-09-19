@@ -1191,17 +1191,19 @@ const App = {
     // Universal Mobile/Desktop PDF Save Helper (Web Share API for Android/iOS, direct download for desktop)
     savePDFUniversally(doc, fileName) {
         try {
-            const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
-                             (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-            if (isMobile && typeof ExcelExporter !== 'undefined' && ExcelExporter.downloadBlobUniversal) {
+            if (typeof ExcelExporter !== 'undefined' && ExcelExporter.downloadBlobUniversal) {
                 const blob = doc.output('blob');
                 ExcelExporter.downloadBlobUniversal(blob, fileName);
                 return;
             }
         } catch (e) {
-            console.warn('Fallback to standard doc.save:', e);
+            console.warn('Universal blob download failed, falling back to doc.save:', e);
         }
-        doc.save(fileName);
+        try {
+            doc.save(fileName);
+        } catch (err) {
+            console.error('doc.save failed:', err);
+        }
     },
 
     // -------------------------------------------------------------
@@ -8411,23 +8413,78 @@ const App = {
             });
         }
 
-        // Cloud Sync direct event listeners
-        const btnCloudNav = document.getElementById('nav-cloud-sync-btn');
-        if (btnCloudNav) {
-            btnCloudNav.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.openCloudSyncModal();
-            });
-        }
+        // -------------------------------------------------------------
+        // TOP HEADER ACTION BAR BUTTONS (7 UNIVERSAL PLATFORM BUTTONS)
+        // -------------------------------------------------------------
+        // 1. Cloud Sync Buttons (Desktop & Mobile)
+        ['nav-cloud-sync-btn-desktop', 'nav-cloud-sync-btn', 'btn-cloud-configure'].forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.openCloudSyncModal();
+                });
+            }
+        });
 
-        const btnCloudCfg = document.getElementById('btn-cloud-configure');
-        if (btnCloudCfg) {
-            btnCloudCfg.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.openCloudSyncModal();
-            });
-        }
+        // 2. Month Filter Dropdowns (Desktop & Mobile change handlers already registered above)
 
+        // 3. Treasury Balance Badges (Desktop & Mobile -> Switch to Wallets Page)
+        ['header-treasury-btn-desktop', 'header-treasury-badge-desktop', 'header-treasury-btn-mobile', 'header-treasury-badge'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.switchTab('wallets');
+                });
+            }
+        });
+
+        // 4. Excel Download Buttons (Desktop & Mobile)
+        ['btn-download-excel', 'btn-download-excel-mobile'].forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.openExportModal();
+                });
+            }
+        });
+
+        // 5. PDF Download Buttons (Desktop & Mobile)
+        ['btn-download-pdf-header', 'btn-download-pdf-mobile'].forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.openPDFExportModal();
+                });
+            }
+        });
+
+        // 6. CSV Download Buttons (Desktop & Mobile)
+        ['btn-download-csv-header', 'btn-download-csv-mobile'].forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.downloadCSV();
+                });
+            }
+        });
+
+        // 7. Light / Dark Theme Toggle Buttons (Desktop & Mobile)
+        ['btn-theme-toggle-desktop', 'btn-theme-toggle-mobile'].forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.toggleTheme();
+                });
+            }
+        });
+
+        // Mobile QR Pairing direct button
         const btnCloudPair = document.getElementById('btn-cloud-pair-mobile');
         if (btnCloudPair) {
             btnCloudPair.addEventListener('click', (e) => {
@@ -8467,7 +8524,12 @@ const App = {
         this.applyTheme(mode, true);
     },
 
+    _lastThemeToggle: 0,
     toggleTheme() {
+        const now = Date.now();
+        if (now - this._lastThemeToggle < 350) return;
+        this._lastThemeToggle = now;
+
         const currentIsDark = document.documentElement.classList.contains('dark');
         const nextMode = currentIsDark ? 'light' : 'dark';
         this.setTheme(nextMode);

@@ -5,59 +5,73 @@
  */
 
 class ExcelExporter {
-    static async downloadBlobUniversal(blob, fileName) {
+    static downloadBlobUniversal(blob, fileName) {
         if (typeof window === 'undefined') return false;
 
-        // Detect mobile platforms (Android, iPhone, iPad, iPod)
+        // 1. Direct browser file download using HTML5 download attribute (Supported on Desktop, Android, iOS 13+)
+        try {
+            if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+                window.navigator.msSaveOrOpenBlob(blob, fileName);
+                return true;
+            }
+
+            if (typeof document !== 'undefined') {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.setAttribute('download', fileName);
+                // CRITICAL FOR IOS SAFARI & MOBILE WEBVIEWS: Do NOT set target="_blank".
+                // target="_blank" opens an unresponsive blank tab instead of triggering download on iOS.
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(() => {
+                    try {
+                        document.body.removeChild(a);
+                        window.URL.revokeObjectURL(url);
+                    } catch (e) {}
+                }, 10000);
+                return true;
+            }
+        } catch (downloadErr) {
+            console.warn('Direct link download error, trying mobile share fallback:', downloadErr);
+        }
+
+        // 2. Native Web Share API fallback for mobile devices where direct download might be sandboxed
         const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
                          (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
-        // Native Web Share API on mobile devices (iOS Safari / Android Chrome / PWA)
         if (isMobile && typeof navigator.share === 'function' && typeof File !== 'undefined') {
             try {
                 const file = new File([blob], fileName, { type: blob.type || 'application/octet-stream' });
                 if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                    await navigator.share({
+                    navigator.share({
                         files: [file],
                         title: fileName,
                         text: `Meera Heights Report: ${fileName}`
+                    }).catch(err => {
+                        if (err.name !== 'AbortError') console.warn('Web Share API error:', err);
                     });
                     return true;
                 }
             } catch (err) {
                 if (err.name === 'AbortError') return true;
-                console.warn('Web Share API error, falling back to direct download:', err);
+                console.warn('Web Share API error:', err);
             }
-        }
-
-        // Direct browser file download fallback
-        if (window.navigator && window.navigator.msSaveOrOpenBlob) {
-            window.navigator.msSaveOrOpenBlob(blob, fileName);
-            return true;
-        }
-
-        if (typeof document !== 'undefined') {
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.style.display = 'none';
-            a.href = url;
-            a.download = fileName;
-            a.target = '_blank';
-            document.body.appendChild(a);
-            a.click();
-            setTimeout(() => {
-                try {
-                    document.body.removeChild(a);
-                    window.URL.revokeObjectURL(url);
-                } catch (e) {}
-            }, 30000);
-            return true;
         }
 
         return false;
     }
 
     static downloadWorkbook(wb, fileName) {
+        try {
+            if (typeof XLSX !== 'undefined' && typeof XLSX.writeFile === 'function') {
+                XLSX.writeFile(wb, fileName);
+                return true;
+            }
+        } catch (e) {
+            console.warn('XLSX.writeFile threw error, falling back to universal blob download:', e);
+        }
         const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
         const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
         return this.downloadBlobUniversal(blob, fileName);
@@ -1017,13 +1031,13 @@ class ExcelExporter {
     // CSV Fallback Export
     static exportCSV(appState) {
         try {
-            let csv = "MEERA HEIGHTS - BUILDING EXPENDITURE & RENT LEDGER\n";
+            let csv = "\uFEFFMEERA HEIGHTS - BUILDING EXPENDITURE & RENT LEDGER\n";
             csv += `Generated: ${new Date().toLocaleString('en-IN')}\n`;
             csv += "Floor Ownership: Sajida (1st & 2nd Floors) | Jeelani (3rd, 4th & 5th Floors)\n\n";
             csv += "Date,Expense Description,Category,Total Amount,Split Type,Sajida Share,Jeelani Share,Debited Wallet,Notes\n";
 
-            appState.data.expenses.forEach(e => {
-                const cat = appState.data.categories.find(c => c.id === e.categoryId);
+            (appState.data.expenses || []).forEach(e => {
+                const cat = (appState.data.categories || []).find(c => c.id === e.categoryId);
                 const catName = cat ? cat.name : 'General';
                 const row = [
                     `"${e.date || ''}"`,

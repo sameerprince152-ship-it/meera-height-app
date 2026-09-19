@@ -69,6 +69,7 @@ const App = {
 
     init() {
         this.initTheme();
+        this.initAuthGate();
         this.data = StorageManager.getData();
         this.setupEventListeners();
         this.populateMonthFilter();
@@ -6271,6 +6272,10 @@ const App = {
         }
 
         StorageManager.saveData(this.data);
+        if (typeof CloudSyncManager !== 'undefined' && CloudSyncManager.isEnabled()) {
+            CloudSyncManager.pushLocalDataToCloud(this.data);
+        }
+        ActivityLogger.log('tenant', `Tenant Saved: ${name}`, `Flat ${flat} (Floor ${floor}, ${ownerInfo.name})`);
         this.hideModal('modal-add-tenant');
         this.renderAll();
         this.showToast(`Tenant "${name}" (${floor} Floor, ${ownerInfo.name}) saved.`);
@@ -6282,10 +6287,15 @@ const App = {
 
     deleteTenant(id) {
         if (!confirm('Are you sure you want to delete this tenant record? All history will remain.')) return;
+        const tenantToDelete = this.data.tenants.find(t => t.id === id);
         this.data.tenants = this.data.tenants.filter(t => t.id !== id);
         StorageManager.saveData(this.data);
+        if (typeof CloudSyncManager !== 'undefined' && CloudSyncManager.isEnabled()) {
+            CloudSyncManager.pushLocalDataToCloud(this.data);
+        }
+        ActivityLogger.log('tenant', 'Tenant Deleted', `Deleted tenant: ${tenantToDelete ? tenantToDelete.name : id}`);
         this.renderAll();
-        this.showToast('Tenant record removed.');
+        this.showToast('Tenant removed.');
     },
 
     // -------------------------------------------------------------
@@ -6694,6 +6704,10 @@ const App = {
 
         this.data.rentCollections.push(newRentRecord);
         StorageManager.saveData(this.data);
+        if (typeof CloudSyncManager !== 'undefined' && CloudSyncManager.isEnabled()) {
+            CloudSyncManager.pushLocalDataToCloud(this.data);
+        }
+        ActivityLogger.log('rent', `Rent Collected: ₹${amount.toLocaleString('en-IN')}`, `${tenantName || 'Tenant'} (${tenantFlat}) • Month: ${month}`);
         this.hideModal('modal-collect-rent');
 
         // Make sure newly recorded past month is not hidden by active filter
@@ -6718,6 +6732,10 @@ const App = {
         if (!confirm('Are you sure you want to delete this rent collection record?')) return;
         this.data.rentCollections = this.data.rentCollections.filter(r => r.id !== id);
         StorageManager.saveData(this.data);
+        if (typeof CloudSyncManager !== 'undefined' && CloudSyncManager.isEnabled()) {
+            CloudSyncManager.pushLocalDataToCloud(this.data);
+        }
+        ActivityLogger.log('rent', 'Rent Record Deleted', `Deleted rent collection entry ID: ${id}`);
         this.renderAll();
         this.showToast('Rent record removed.');
     },
@@ -7075,6 +7093,10 @@ const App = {
         }
 
         StorageManager.saveData(this.data);
+        if (typeof CloudSyncManager !== 'undefined' && CloudSyncManager.isEnabled()) {
+            CloudSyncManager.pushLocalDataToCloud(this.data);
+        }
+        ActivityLogger.log('expense', `Expense: ₹${amount.toLocaleString('en-IN')}`, `${title} (${paidBy}) • ${date}`);
         this.hideModal('modal-add-expense');
         this.renderAll();
         this.showToast(`Expense of ₹${amount.toLocaleString('en-IN')} debited successfully!`);
@@ -7086,8 +7108,13 @@ const App = {
 
     deleteExpense(id) {
         if (!confirm('Are you sure you want to delete this expense record?')) return;
+        const expToDelete = this.data.expenses.find(e => e.id === id);
         this.data.expenses = this.data.expenses.filter(e => e.id !== id);
         StorageManager.saveData(this.data);
+        if (typeof CloudSyncManager !== 'undefined' && CloudSyncManager.isEnabled()) {
+            CloudSyncManager.pushLocalDataToCloud(this.data);
+        }
+        ActivityLogger.log('expense', 'Expense Deleted', `Removed expense: ${expToDelete ? expToDelete.title : id}`);
         this.renderAll();
         this.showToast('Expense entry removed.');
     },
@@ -8603,6 +8630,235 @@ const App = {
     },
 
     // =============================================================
+    // SECURE AUTHENTICATION GATE ENGINE
+    // Username & Password Gateway with Masked Credentials & Recovery
+    // =============================================================
+    initAuthGate() {
+        const overlay = document.getElementById('auth-gate-overlay');
+        if (!overlay) return;
+
+        if (AuthManager.isAuthenticated()) {
+            overlay.style.display = 'none';
+        } else {
+            overlay.style.display = 'flex';
+            if (!AuthManager.isPasswordConfigured()) {
+                this.showAuthSetupView();
+            } else {
+                this.showAuthLoginView();
+            }
+        }
+    },
+
+    showAuthSetupView() {
+        const setup = document.getElementById('auth-view-setup');
+        const login = document.getElementById('auth-view-login');
+        const recovery = document.getElementById('auth-view-recovery');
+        if (setup) setup.classList.remove('hidden');
+        if (login) login.classList.add('hidden');
+        if (recovery) recovery.classList.add('hidden');
+        const err = document.getElementById('auth-setup-error');
+        if (err) err.classList.add('hidden');
+    },
+
+    showAuthLoginView() {
+        const setup = document.getElementById('auth-view-setup');
+        const login = document.getElementById('auth-view-login');
+        const recovery = document.getElementById('auth-view-recovery');
+        if (setup) setup.classList.add('hidden');
+        if (login) login.classList.remove('hidden');
+        if (recovery) recovery.classList.add('hidden');
+        const err = document.getElementById('auth-login-error');
+        if (err) err.classList.add('hidden');
+    },
+
+    showAuthRecoveryView() {
+        const setup = document.getElementById('auth-view-setup');
+        const login = document.getElementById('auth-view-login');
+        const recovery = document.getElementById('auth-view-recovery');
+        if (setup) setup.classList.add('hidden');
+        if (login) login.classList.add('hidden');
+        if (recovery) recovery.classList.remove('hidden');
+        const err = document.getElementById('auth-recovery-error');
+        if (err) err.classList.add('hidden');
+    },
+
+    togglePasswordVisibility(inputId, iconId) {
+        const input = document.getElementById(inputId);
+        const icon = document.getElementById(iconId);
+        if (!input) return;
+        if (input.type === 'password') {
+            input.type = 'text';
+            if (icon) {
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            }
+        } else {
+            input.type = 'password';
+            if (icon) {
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+    },
+
+    async handleAuthSetupSubmit(e) {
+        if (e) e.preventDefault();
+        const usernameInput = document.getElementById('auth-setup-username');
+        const passwordInput = document.getElementById('auth-setup-password');
+        const confirmInput = document.getElementById('auth-setup-confirm');
+        const errorBox = document.getElementById('auth-setup-error');
+        const errorText = document.getElementById('auth-setup-error-text');
+
+        const username = (usernameInput?.value || '').trim();
+        const password = (passwordInput?.value || '').trim();
+        const confirm = (confirmInput?.value || '').trim();
+
+        if (errorBox) errorBox.classList.add('hidden');
+
+        const isUserValid = await AuthManager.verifyUsername(username);
+        if (!isUserValid) {
+            if (errorBox && errorText) {
+                errorText.textContent = 'Invalid administrator username. Access denied.';
+                errorBox.classList.remove('hidden');
+            }
+            return;
+        }
+
+        if (!password || password.length < 4) {
+            if (errorBox && errorText) {
+                errorText.textContent = 'Password must be at least 4 characters long.';
+                errorBox.classList.remove('hidden');
+            }
+            return;
+        }
+
+        if (password !== confirm) {
+            if (errorBox && errorText) {
+                errorText.textContent = 'Passwords do not match. Please re-enter.';
+                errorBox.classList.remove('hidden');
+            }
+            return;
+        }
+
+        try {
+            await AuthManager.setPassword(password);
+            ActivityLogger.log('security', 'Master Password Configured', 'Initial master password setup completed successfully.');
+            const overlay = document.getElementById('auth-gate-overlay');
+            if (overlay) overlay.style.display = 'none';
+            this.showToast('Master password configured successfully! Welcome to Meera Heights.', 'success');
+        } catch (err) {
+            if (errorBox && errorText) {
+                errorText.textContent = err.message || 'Setup failed.';
+                errorBox.classList.remove('hidden');
+            }
+        }
+    },
+
+    async handleAuthLoginSubmit(e) {
+        if (e) e.preventDefault();
+        const usernameInput = document.getElementById('auth-login-username');
+        const passwordInput = document.getElementById('auth-login-password');
+        const errorBox = document.getElementById('auth-login-error');
+        const errorText = document.getElementById('auth-login-error-text');
+
+        const username = (usernameInput?.value || '').trim();
+        const password = (passwordInput?.value || '').trim();
+
+        if (errorBox) errorBox.classList.add('hidden');
+
+        const isUserValid = await AuthManager.verifyUsername(username);
+        if (!isUserValid) {
+            if (errorBox && errorText) {
+                errorText.textContent = 'Invalid username or password.';
+                errorBox.classList.remove('hidden');
+            }
+            ActivityLogger.log('security', 'Failed Sign-In Attempt', 'Invalid username provided.');
+            return;
+        }
+
+        const isPassValid = await AuthManager.verifyPassword(password);
+        if (!isPassValid) {
+            if (errorBox && errorText) {
+                errorText.textContent = 'Invalid username or password.';
+                errorBox.classList.remove('hidden');
+            }
+            ActivityLogger.log('security', 'Failed Sign-In Attempt', 'Incorrect password entered.');
+            return;
+        }
+
+        AuthManager.setAuthenticated(true);
+        ActivityLogger.log('security', 'Administrator Signed In', 'Successful authentication into management portal.');
+        const overlay = document.getElementById('auth-gate-overlay');
+        if (overlay) overlay.style.display = 'none';
+        this.showToast('Signed in successfully!', 'success');
+    },
+
+    async handleAuthRecoverySubmit(e) {
+        if (e) e.preventDefault();
+        const keyInput = document.getElementById('auth-recovery-key');
+        const passwordInput = document.getElementById('auth-recovery-password');
+        const confirmInput = document.getElementById('auth-recovery-confirm');
+        const errorBox = document.getElementById('auth-recovery-error');
+        const errorText = document.getElementById('auth-recovery-error-text');
+
+        const key = (keyInput?.value || '').trim();
+        const password = (passwordInput?.value || '').trim();
+        const confirm = (confirmInput?.value || '').trim();
+
+        if (errorBox) errorBox.classList.add('hidden');
+
+        const isKeyValid = await AuthManager.verifyRecoveryKey(key);
+        if (!isKeyValid) {
+            if (errorBox && errorText) {
+                errorText.textContent = 'Invalid Master Recovery Key. Verification failed.';
+                errorBox.classList.remove('hidden');
+            }
+            ActivityLogger.log('security', 'Failed Recovery Attempt', 'Invalid recovery key entered.');
+            return;
+        }
+
+        if (!password || password.length < 4) {
+            if (errorBox && errorText) {
+                errorText.textContent = 'New password must be at least 4 characters long.';
+                errorBox.classList.remove('hidden');
+            }
+            return;
+        }
+
+        if (password !== confirm) {
+            if (errorBox && errorText) {
+                errorText.textContent = 'New passwords do not match.';
+                errorBox.classList.remove('hidden');
+            }
+            return;
+        }
+
+        try {
+            await AuthManager.setPassword(password);
+            ActivityLogger.log('security', 'Password Reset via Recovery Key', 'Master password successfully reset.');
+            const overlay = document.getElementById('auth-gate-overlay');
+            if (overlay) overlay.style.display = 'none';
+            this.showToast('Master password successfully reset! Welcome back.', 'success');
+        } catch (err) {
+            if (errorBox && errorText) {
+                errorText.textContent = err.message || 'Recovery failed.';
+                errorBox.classList.remove('hidden');
+            }
+        }
+    },
+
+    lockApp() {
+        AuthManager.logout();
+        ActivityLogger.log('security', 'Portal Locked', 'User locked portal session.');
+        const overlay = document.getElementById('auth-gate-overlay');
+        if (overlay) {
+            overlay.style.display = 'flex';
+            this.showAuthLoginView();
+        }
+        this.showToast('Portal locked.', 'info');
+    },
+
+    // =============================================================
     // AUTOMATED GOOGLE DRIVE & EMAIL BACKUP ENGINE
     // =============================================================
     initBackupScheduler() {
@@ -8865,6 +9121,7 @@ const App = {
             settings.lastRunTimestamp = new Date().toISOString();
             StorageManager.saveBackupSettings(settings);
             this.updateBackupSettingsUI(settings);
+            ActivityLogger.log('backup', 'Google Drive Backup Dispatched', `File: ${filename} (${isEncrypted ? 'Encrypted' : 'JSON'})`);
 
             // 1. If user configured an automated Google Apps Script Webhook, upload directly to Drive!
             if (settings.webhookUrl) {
@@ -8954,6 +9211,8 @@ const App = {
                 ? settings.recipients
                 : ['mahaboob.1411ali@gmail.com'];
 
+            ActivityLogger.log('backup', 'Email Backup Dispatched', `File: ${filename} to ${recipients.join(', ')}`);
+
             // 1. If user configured an automated Google Apps Script Webhook, send email with attachment directly!
             if (settings.webhookUrl) {
                 this.showToast('Sending automated email with backup attachment...', 'info');
@@ -9032,6 +9291,197 @@ const App = {
 
     exportStandardBackup() {
         StorageManager.exportJsonBackup();
+        ActivityLogger.log('backup', 'Database Backup Exported', 'Standard JSON backup downloaded.');
+    },
+
+    openRestoreModal() {
+        this.showModal('modal-restore-options');
+    },
+
+    triggerLocalRestorePicker() {
+        this.hideModal('modal-restore-options');
+        const input = document.getElementById('file-import-backup');
+        if (input) input.click();
+    },
+
+    async browseGoogleDriveBackups() {
+        this.hideModal('modal-restore-options');
+        const settings = StorageManager.getBackupSettings();
+        const container = document.getElementById('drive-backups-container');
+
+        if (!settings.webhookUrl) {
+            // Webhook is not configured yet -> guide user with clear steps & open Drive
+            if (container) {
+                container.innerHTML = `
+                    <div class="text-center py-6 px-4 space-y-3">
+                        <div class="w-12 h-12 rounded-2xl bg-blue-100 dark:bg-blue-950/60 text-blue-600 flex items-center justify-center mx-auto text-2xl">
+                            <i class="fa-brands fa-google-drive"></i>
+                        </div>
+                        <h4 class="font-bold text-sm text-slate-900 dark:text-white">Google Drive Backup Storage</h4>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto leading-relaxed">
+                            Backups uploaded to your Google Drive are stored in your <strong class="text-slate-700 dark:text-slate-300">'Meera Heights App Backups'</strong> folder.
+                        </p>
+                        <div class="pt-2 flex flex-col sm:flex-row gap-2 justify-center">
+                            <a href="https://drive.google.com/drive/u/0/my-drive" target="_blank" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm">
+                                <i class="fa-solid fa-arrow-up-right-from-square text-[11px]"></i>
+                                <span>Open Google Drive</span>
+                            </a>
+                            <button onclick="App.hideModal('modal-drive-backups-list'); App.triggerLocalRestorePicker();" class="px-4 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer">
+                                <i class="fa-solid fa-file-arrow-up text-[11px]"></i>
+                                <span>Select Downloaded File</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+            this.showModal('modal-drive-backups-list');
+            return;
+        }
+
+        // Webhook URL is configured -> fetch list of backups directly from Google Drive!
+        if (container) {
+            container.innerHTML = `
+                <div class="text-center py-8 text-slate-400">
+                    <i class="fa-solid fa-circle-notch fa-spin text-2xl mb-2 text-blue-500"></i>
+                    <p class="text-xs font-medium">Fetching backups from Google Drive...</p>
+                </div>
+            `;
+        }
+        this.showModal('modal-drive-backups-list');
+
+        try {
+            const resp = await fetch(settings.webhookUrl + '?action=list', {
+                method: 'GET'
+            });
+            const data = await resp.json();
+            if (data && Array.isArray(data.files) && data.files.length > 0) {
+                container.innerHTML = data.files.map(f => `
+                    <div class="p-3 bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <div class="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-950/60 text-blue-600 flex items-center justify-center shrink-0">
+                                <i class="fa-solid fa-file-code"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <p class="text-xs font-bold text-slate-900 dark:text-white truncate">${App.escapeHtml(f.name)}</p>
+                                <p class="text-[11px] text-slate-400">${new Date(f.createdTime || f.date).toLocaleString('en-IN')}</p>
+                            </div>
+                        </div>
+                        <button onclick="App.restoreDriveFileById('${f.id}', '${App.escapeHtml(f.name)}')" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shrink-0 cursor-pointer shadow-sm">
+                            Restore This
+                        </button>
+                    </div>
+                `).join('');
+            } else {
+                container.innerHTML = `
+                    <div class="text-center py-6 text-slate-400 text-xs">
+                        <p>No backup files found yet in Google Drive folder.</p>
+                    </div>
+                `;
+            }
+        } catch (e) {
+            console.warn('Could not query Drive webhook list:', e);
+            container.innerHTML = `
+                <div class="text-center py-6 px-4 space-y-2">
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Direct cloud browser accessed. Click below to select a downloaded Drive backup file:</p>
+                    <button onclick="App.hideModal('modal-drive-backups-list'); App.triggerLocalRestorePicker();" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer mx-auto">
+                        <i class="fa-solid fa-folder-open"></i>
+                        <span>Select File</span>
+                    </button>
+                </div>
+            `;
+        }
+    },
+
+    async initiateRevertToLatestDriveBackup() {
+        this.hideModal('modal-restore-options');
+        const settings = StorageManager.getBackupSettings();
+        const filenameEl = document.getElementById('revert-confirm-filename');
+        const dateEl = document.getElementById('revert-confirm-date');
+
+        if (filenameEl) filenameEl.textContent = 'Meera_Heights_Latest_Backup.json';
+        if (dateEl) dateEl.textContent = settings.lastRunTimestamp ? new Date(settings.lastRunTimestamp).toLocaleString('en-IN') : 'Latest Cloud Backup';
+
+        // Query webhook if available to display actual latest file metadata
+        this._pendingRevertFileId = null;
+        if (settings.webhookUrl) {
+            try {
+                const resp = await fetch(settings.webhookUrl + '?action=latest', { method: 'GET' });
+                const json = await resp.json();
+                if (json && json.latest) {
+                    if (filenameEl) filenameEl.textContent = json.latest.name || 'Meera_Heights_Latest_Backup.json';
+                    if (dateEl) dateEl.textContent = new Date(json.latest.createdTime || json.latest.date).toLocaleString('en-IN');
+                    this._pendingRevertFileId = json.latest.id;
+                }
+            } catch (e) {
+                console.warn('Unable to query latest backup metadata from webhook:', e);
+            }
+        }
+
+        this.showModal('modal-revert-confirm');
+    },
+
+    async executeRevertBackup() {
+        const settings = StorageManager.getBackupSettings();
+        this.hideModal('modal-revert-confirm');
+
+        if (settings.webhookUrl && this._pendingRevertFileId) {
+            this.showToast('Fetching latest cloud backup from Google Drive...', 'info');
+            try {
+                const resp = await fetch(`${settings.webhookUrl}?action=download&id=${this._pendingRevertFileId}`);
+                const payload = await resp.json();
+                const content = payload.content;
+                const parsed = (typeof content === 'string') ? JSON.parse(content) : content;
+                const dataToRestore = parsed.data || parsed;
+                if (!dataToRestore.expenses || !dataToRestore.tenants) {
+                    throw new Error('Invalid backup structure returned from Drive.');
+                }
+                StorageManager.saveData(dataToRestore);
+                this.data = StorageManager.getData();
+                if (typeof CloudSyncManager !== 'undefined' && CloudSyncManager.isEnabled()) {
+                    CloudSyncManager.pushLocalDataToCloud(this.data, true);
+                }
+                ActivityLogger.log('restore', 'Reverted to Latest Cloud Backup', `Reverted database to backup: ${payload.filename || 'latest'}`);
+                this.renderAll();
+                this.showToast('Database successfully reverted to latest Google Drive backup!', 'success');
+                return;
+            } catch (err) {
+                console.warn('Direct cloud revert download failed, falling back to local selector:', err);
+            }
+        }
+
+        // Fallback: prompt user to pick the downloaded backup file
+        this.showToast('Please select your latest downloaded backup file to complete revert:', 'info');
+        this.triggerLocalRestorePicker();
+    },
+
+    async restoreDriveFileById(fileId, fileName) {
+        this.hideModal('modal-drive-backups-list');
+        const settings = StorageManager.getBackupSettings();
+        if (!settings.webhookUrl) return;
+
+        this.showToast(`Fetching ${fileName} from Google Drive...`, 'info');
+        try {
+            const resp = await fetch(`${settings.webhookUrl}?action=download&id=${fileId}`);
+            const payload = await resp.json();
+            const content = payload.content;
+            const parsed = (typeof content === 'string') ? JSON.parse(content) : content;
+            const dataToRestore = parsed.data || parsed;
+            if (!dataToRestore.expenses || !dataToRestore.tenants) {
+                throw new Error('Invalid backup structure.');
+            }
+            if (confirm(`Restore ${fileName} and replace current local entries?`)) {
+                StorageManager.saveData(dataToRestore);
+                this.data = StorageManager.getData();
+                if (typeof CloudSyncManager !== 'undefined' && CloudSyncManager.isEnabled()) {
+                    CloudSyncManager.pushLocalDataToCloud(this.data, true);
+                }
+                ActivityLogger.log('restore', 'Restored from Google Drive', `Restored ${fileName}`);
+                this.renderAll();
+                this.showToast(`${fileName} restored successfully!`, 'success');
+            }
+        } catch (e) {
+            alert('Failed to download file from Google Drive: ' + e.message);
+        }
     },
 
     handleBackupFileRestore(input) {
@@ -9059,6 +9509,10 @@ const App = {
                 this.showToast(msg, success ? 'success' : 'error');
                 if (success) {
                     this.data = StorageManager.getData();
+                    if (typeof CloudSyncManager !== 'undefined' && CloudSyncManager.isEnabled()) {
+                        CloudSyncManager.pushLocalDataToCloud(this.data, true);
+                    }
+                    ActivityLogger.log('restore', 'Local Backup Restored', `Restored database from file: ${file.name}`);
                     this.activeTab = 'dashboard';
                     this.selectedMonthFilter = 'all';
                     this.renderAll();
@@ -9102,6 +9556,10 @@ const App = {
 
             StorageManager.saveData(dataToRestore);
             this.data = StorageManager.getData();
+            if (typeof CloudSyncManager !== 'undefined' && CloudSyncManager.isEnabled()) {
+                CloudSyncManager.pushLocalDataToCloud(this.data, true);
+            }
+            ActivityLogger.log('restore', 'Encrypted Backup Decrypted & Restored', 'Restored database from encrypted .mhbackup file.');
             this.activeTab = 'dashboard';
             this.selectedMonthFilter = 'all';
             this.renderAll();
@@ -9111,6 +9569,119 @@ const App = {
         } catch (err) {
             console.error('Decryption failed:', err);
             alert('Decryption failed: Incorrect passphrase or damaged backup file.');
+        }
+    },
+
+    // =============================================================
+    // ACTIVITY HISTORY & AUDIT LOG UI ENGINE
+    // =============================================================
+    activityCategoryFilter: 'all',
+
+    openActivityHistoryModal() {
+        this.renderActivityHistory();
+        this.showModal('modal-activity-history');
+    },
+
+    setActivityCategoryFilter(cat) {
+        this.activityCategoryFilter = cat;
+        document.querySelectorAll('.activity-cat-pill').forEach(btn => {
+            if (btn.dataset.cat === cat) {
+                btn.className = 'activity-cat-pill px-3 py-1 rounded-lg text-xs font-bold bg-indigo-600 text-white transition cursor-pointer';
+            } else {
+                btn.className = 'activity-cat-pill px-3 py-1 rounded-lg text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition cursor-pointer';
+            }
+        });
+        this.renderActivityHistory();
+    },
+
+    renderActivityHistory() {
+        const container = document.getElementById('activity-timeline-container');
+        const badge = document.getElementById('activity-count-badge');
+        const search = (document.getElementById('activity-search-input')?.value || '').trim();
+
+        const logs = ActivityLogger.getLogs(this.activityCategoryFilter, search);
+        if (badge) badge.textContent = `${logs.length} log${logs.length !== 1 ? 's' : ''}`;
+
+        if (!container) return;
+
+        if (logs.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-12 text-slate-400">
+                    <i class="fa-solid fa-clock-rotate-left text-3xl mb-2 opacity-50"></i>
+                    <p class="text-xs font-semibold">No activity logs found</p>
+                    <p class="text-[11px] text-slate-500 mt-0.5">Activities will appear automatically as you record rents, expenses, and backups.</p>
+                </div>
+            `;
+            return;
+        }
+
+        const categoryMeta = {
+            rent: { icon: 'fa-hand-holding-dollar', bg: 'bg-emerald-100 dark:bg-emerald-950/70', text: 'text-emerald-600 dark:text-emerald-400', label: 'Rent' },
+            expense: { icon: 'fa-file-invoice-dollar', bg: 'bg-rose-100 dark:bg-rose-950/70', text: 'text-rose-600 dark:text-rose-400', label: 'Expense' },
+            tenant: { icon: 'fa-user-group', bg: 'bg-purple-100 dark:bg-purple-950/70', text: 'text-purple-600 dark:text-purple-400', label: 'Tenant' },
+            backup: { icon: 'fa-cloud-arrow-up', bg: 'bg-blue-100 dark:bg-blue-950/70', text: 'text-blue-600 dark:text-blue-400', label: 'Backup' },
+            restore: { icon: 'fa-rotate-left', bg: 'bg-amber-100 dark:bg-amber-950/70', text: 'text-amber-600 dark:text-amber-400', label: 'Restore' },
+            security: { icon: 'fa-shield-halved', bg: 'bg-indigo-100 dark:bg-indigo-950/70', text: 'text-indigo-600 dark:text-indigo-400', label: 'Security' },
+            sync: { icon: 'fa-cloud', bg: 'bg-cyan-100 dark:bg-cyan-950/70', text: 'text-cyan-600 dark:text-cyan-400', label: 'Sync' }
+        };
+
+        container.innerHTML = logs.map(l => {
+            const meta = categoryMeta[l.category] || { icon: 'fa-circle-check', bg: 'bg-slate-100 dark:bg-slate-800', text: 'text-slate-600 dark:text-slate-300', label: l.category || 'General' };
+            const timeAgo = ActivityLogger.formatRelativeTime(l.timestamp);
+            const fullDate = new Date(l.timestamp).toLocaleString('en-IN');
+
+            return `
+                <div class="p-3 bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100/70 dark:hover:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 transition flex items-start gap-3">
+                    <div class="w-9 h-9 rounded-xl ${meta.bg} ${meta.text} flex items-center justify-center text-sm shrink-0 mt-0.5">
+                        <i class="fa-solid ${meta.icon}"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between gap-2">
+                            <h4 class="font-extrabold text-xs text-slate-900 dark:text-white truncate">${App.escapeHtml(l.title)}</h4>
+                            <span class="text-[10px] text-slate-400 font-medium shrink-0" title="${fullDate}">${timeAgo}</span>
+                        </div>
+                        <p class="text-[11px] text-slate-600 dark:text-slate-300 mt-0.5 leading-snug">${App.escapeHtml(l.description)}</p>
+                        <div class="flex items-center gap-2 mt-1.5">
+                            <span class="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded ${meta.bg} ${meta.text}">${meta.label}</span>
+                            <span class="text-[9px] text-slate-400 font-mono flex items-center gap-1">
+                                <i class="fa-solid fa-display text-[8px]"></i>
+                                <span>${App.escapeHtml(l.device || 'Web')}</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    },
+
+    exportActivityHistoryCSV() {
+        const csv = ActivityLogger.exportCSV();
+        if (!csv) {
+            this.showToast('No activity logs available to export.', 'info');
+            return;
+        }
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const dateStr = new Date().toISOString().slice(0, 10);
+        const filename = `Meera_Heights_Activity_History_${dateStr}.csv`;
+        
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }, 1000);
+        this.showToast('Activity history exported to CSV!', 'success');
+    },
+
+    clearActivityHistory() {
+        if (confirm('Are you sure you want to clear all activity logs? This cannot be undone.')) {
+            ActivityLogger.clear();
+            this.renderActivityHistory();
+            this.showToast('Activity logs cleared.', 'info');
         }
     }
 };

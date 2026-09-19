@@ -8,7 +8,10 @@ const STORAGE_KEYS = {
     APP_DATA: 'meera_heights_data_v4', // v4: Floor ownership & Advance settlement architecture
     SETTINGS: 'meera_heights_settings_v4',
     BACKUP_SETTINGS: 'meera_backup_settings_v1',
-    THEME: 'meera_theme_v1'
+    THEME: 'meera_theme_v1',
+    AUTH_CREDENTIALS: 'meera_auth_sec_v1',
+    AUTH_SESSION: 'meera_auth_session_active',
+    ACTIVITY_LOG: 'meera_activity_history_v1'
 };
 
 // Floor ownership definition requested by user
@@ -825,8 +828,296 @@ class StorageManager {
     }
 }
 
+// -------------------------------------------------------------
+// SECURE AUTHENTICATION MANAGER (ENCRYPTED / MASKED CREDENTIALS)
+// Protects Meera Heights Portal with Password & Masked SHA-256
+// -------------------------------------------------------------
+class AuthManager {
+    // Masked security hashes (Plain credentials never exist in code)
+    static _AUTH_U = [
+        '8a0d2365f4f608fe993d72743a1e42995922b26b8b28349631500fcfb148c217',
+        'dd62803a46ee169dd726aacf177a6ab23d84857893ad6634cded281bf05693e7'
+    ];
+    static _AUTH_R = '116ac23fb4c2b60dbe307b42937e26f536533fe797a855bb60c176f533265cef';
+
+    static async sha256(text) {
+        const str = String(text || '');
+        if (typeof window !== 'undefined' && window.crypto && window.crypto.subtle) {
+            try {
+                const enc = new TextEncoder();
+                const buf = await window.crypto.subtle.digest('SHA-256', enc.encode(str));
+                return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+            } catch (e) {}
+        }
+        return AuthManager._sha256Fallback(str);
+    }
+
+    static _sha256Fallback(ascii) {
+        function rightRotate(value, amount) {
+            return (value >>> amount) | (value << (32 - amount));
+        }
+        const mathPow = Math.pow;
+        const maxWord = mathPow(2, 32);
+        const lengthProperty = 'length';
+        let i, j;
+        const words = [];
+        const asciiBitLength = ascii[lengthProperty] * 8;
+        let hash = AuthManager._h = AuthManager._h || [];
+        const k = AuthManager._k = AuthManager._k || [];
+        let primeCounter = k[lengthProperty];
+        const isComposite = {};
+        for (let candidate = 2; primeCounter < 64; candidate++) {
+            if (!isComposite[candidate]) {
+                for (i = 0; i < 300; i += candidate) {
+                    isComposite[i] = candidate;
+                }
+                hash[primeCounter] = (mathPow(candidate, 0.5) * maxWord) | 0;
+                k[primeCounter++] = (mathPow(candidate, 1 / 3) * maxWord) | 0;
+            }
+        }
+        hash = hash.slice(0);
+        ascii += '\x80';
+        while (ascii[lengthProperty] % 64 - 56) ascii += '\x00';
+        for (i = 0; i < ascii[lengthProperty]; i++) {
+            j = ascii.charCodeAt(i);
+            if (j >> 8) return '';
+            words[i >> 2] |= j << ((3 - i) % 4) * 8;
+        }
+        words[words[lengthProperty]] = ((asciiBitLength / maxWord) | 0);
+        words[words[lengthProperty]] = (asciiBitLength) | 0;
+        for (j = 0; j < words[lengthProperty];) {
+            const w = words.slice(j, j += 16);
+            const oldHash = hash;
+            hash = hash.slice(0, 8);
+            for (i = 0; i < 64; i++) {
+                const w15 = w[i - 15], w2 = w[i - 2];
+                const s0 = rightRotate(w15, 7) ^ rightRotate(w15, 18) ^ (w15 >>> 3);
+                const s1 = rightRotate(w2, 17) ^ rightRotate(w2, 19) ^ (w2 >>> 10);
+                const ch = (hash[4] & hash[5]) ^ (~hash[4] & hash[6]);
+                const temp1 = (hash[7] + (rightRotate(hash[4], 6) ^ rightRotate(hash[4], 11) ^ rightRotate(hash[4], 25)) + ch + k[i] + (w[i] = (i < 16) ? w[i] : (w[i - 16] + s0 + w[i - 7] + s1) | 0)) | 0;
+                const maj = (hash[0] & hash[1]) ^ (hash[0] & hash[2]) ^ (hash[1] & hash[2]);
+                const temp2 = ((rightRotate(hash[0], 2) ^ rightRotate(hash[0], 13) ^ rightRotate(hash[0], 22)) + maj) | 0;
+                hash = [(temp1 + temp2) | 0].concat(hash);
+                hash[4] = (hash[4] + temp1) | 0;
+            }
+            for (i = 0; i < 8; i++) {
+                hash[i] = (hash[i] + oldHash[i]) | 0;
+            }
+        }
+        let res = '';
+        for (i = 0; i < 8; i++) {
+            for (j = 3; j + 1; j--) {
+                const b = (hash[i] >> (j * 8)) & 255;
+                res += ((b < 16) ? '0' : '') + b.toString(16);
+            }
+        }
+        return res;
+    }
+
+    static async verifyUsername(username) {
+        if (!username || typeof username !== 'string') return false;
+        const hash = await this.sha256(username.trim());
+        return this._AUTH_U.includes(hash);
+    }
+
+    static async verifyRecoveryKey(key) {
+        if (!key || typeof key !== 'string') return false;
+        const hash = await this.sha256(key.trim());
+        return hash === this._AUTH_R;
+    }
+
+    static isPasswordConfigured() {
+        try {
+            const raw = localStorage.getItem(STORAGE_KEYS.AUTH_CREDENTIALS);
+            if (!raw) return false;
+            const creds = JSON.parse(raw);
+            return !!(creds && creds.hash && creds.salt);
+        } catch (e) {
+            return false;
+        }
+    }
+
+    static async setPassword(password) {
+        if (!password || password.length < 4) {
+            throw new Error('Password must be at least 4 characters.');
+        }
+        let salt = '';
+        if (typeof window !== 'undefined' && window.crypto && window.crypto.getRandomValues) {
+            const bytes = new Uint8Array(16);
+            window.crypto.getRandomValues(bytes);
+            salt = Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+        } else {
+            salt = Math.random().toString(36).substring(2) + Date.now().toString(36);
+        }
+        const saltedHash = await this.sha256(salt + ':' + password);
+        const creds = {
+            salt,
+            hash: saltedHash,
+            configuredAt: new Date().toISOString()
+        };
+        localStorage.setItem(STORAGE_KEYS.AUTH_CREDENTIALS, JSON.stringify(creds));
+        this.setAuthenticated(true);
+        return true;
+    }
+
+    static async verifyPassword(password) {
+        try {
+            const raw = localStorage.getItem(STORAGE_KEYS.AUTH_CREDENTIALS);
+            if (!raw) return false;
+            const creds = JSON.parse(raw);
+            if (!creds || !creds.salt || !creds.hash) return false;
+            const calculated = await this.sha256(creds.salt + ':' + password);
+            return calculated === creds.hash;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    static isAuthenticated() {
+        try {
+            return sessionStorage.getItem(STORAGE_KEYS.AUTH_SESSION) === 'authenticated';
+        } catch (e) {
+            return false;
+        }
+    }
+
+    static setAuthenticated(status) {
+        try {
+            if (status) {
+                sessionStorage.setItem(STORAGE_KEYS.AUTH_SESSION, 'authenticated');
+            } else {
+                sessionStorage.removeItem(STORAGE_KEYS.AUTH_SESSION);
+            }
+        } catch (e) {}
+    }
+
+    static logout() {
+        this.setAuthenticated(false);
+    }
+}
+
+// -------------------------------------------------------------
+// COMPREHENSIVE ACTIVITY HISTORY & AUDIT LOG
+// Records all financial, tenant, backup, security & sync events
+// -------------------------------------------------------------
+class ActivityLogger {
+    static MAX_RECORDS = 300;
+
+    static getLogs(category = 'all', searchQuery = '') {
+        try {
+            const raw = localStorage.getItem(STORAGE_KEYS.ACTIVITY_LOG);
+            let logs = raw ? JSON.parse(raw) : [];
+            if (!Array.isArray(logs)) logs = [];
+
+            if (category && category !== 'all') {
+                logs = logs.filter(l => l.category === category);
+            }
+
+            if (searchQuery && searchQuery.trim()) {
+                const q = searchQuery.toLowerCase().trim();
+                logs = logs.filter(l =>
+                    (l.title && l.title.toLowerCase().includes(q)) ||
+                    (l.description && l.description.toLowerCase().includes(q)) ||
+                    (l.category && l.category.toLowerCase().includes(q))
+                );
+            }
+
+            return logs;
+        } catch (e) {
+            console.error('Error fetching activity logs:', e);
+            return [];
+        }
+    }
+
+    static log(category, title, description, meta = {}) {
+        try {
+            const raw = localStorage.getItem(STORAGE_KEYS.ACTIVITY_LOG);
+            let logs = raw ? JSON.parse(raw) : [];
+            if (!Array.isArray(logs)) logs = [];
+
+            const newRecord = {
+                id: 'act_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+                timestamp: new Date().toISOString(),
+                category: category || 'general',
+                title: title || 'Activity',
+                description: description || '',
+                device: ActivityLogger.detectPlatform(),
+                meta: meta || {}
+            };
+
+            logs.unshift(newRecord);
+            if (logs.length > this.MAX_RECORDS) {
+                logs = logs.slice(0, this.MAX_RECORDS);
+            }
+
+            localStorage.setItem(STORAGE_KEYS.ACTIVITY_LOG, JSON.stringify(logs));
+            return newRecord;
+        } catch (e) {
+            console.error('Error recording activity log:', e);
+            return null;
+        }
+    }
+
+    static clear() {
+        try {
+            localStorage.removeItem(STORAGE_KEYS.ACTIVITY_LOG);
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    static detectPlatform() {
+        if (typeof navigator === 'undefined') return 'Web';
+        const ua = navigator.userAgent || '';
+        if (/android/i.test(ua)) return 'Android';
+        if (/iPad|iPhone|iPod/.test(ua)) return 'iOS';
+        if (/Macintosh|Mac OS X/.test(ua)) return 'macOS';
+        if (/Windows NT/.test(ua)) return 'Windows';
+        if (/Linux/.test(ua)) return 'Linux';
+        return 'Web';
+    }
+
+    static formatRelativeTime(isoString) {
+        try {
+            const date = new Date(isoString);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffSec = Math.floor(diffMs / 1000);
+            const diffMin = Math.floor(diffSec / 60);
+            const diffHour = Math.floor(diffMin / 60);
+            const diffDays = Math.floor(diffHour / 24);
+
+            if (diffSec < 45) return 'Just now';
+            if (diffMin < 60) return `${diffMin} min${diffMin > 1 ? 's' : ''} ago`;
+            if (diffHour < 24) return `${diffHour} hr${diffHour > 1 ? 's' : ''} ago`;
+            if (diffDays === 1) return 'Yesterday, ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            if (diffDays < 7) return `${diffDays} days ago`;
+            return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+        } catch (e) {
+            return isoString;
+        }
+    }
+
+    static exportCSV() {
+        const logs = this.getLogs('all');
+        if (!logs.length) return null;
+        const headers = ['Timestamp', 'Category', 'Title', 'Description', 'Device'];
+        const rows = logs.map(l => [
+            `"${new Date(l.timestamp).toLocaleString('en-IN')}"`,
+            `"${(l.category || '').replace(/"/g, '""')}"`,
+            `"${(l.title || '').replace(/"/g, '""')}"`,
+            `"${(l.description || '').replace(/"/g, '""')}"`,
+            `"${(l.device || '').replace(/"/g, '""')}"`
+        ]);
+        return [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    }
+}
+
 if (typeof window !== 'undefined') {
     window.StorageManager = StorageManager;
+    window.AuthManager = AuthManager;
+    window.ActivityLogger = ActivityLogger;
 }
 
 // -------------------------------------------------------------

@@ -8440,16 +8440,21 @@ const App = {
             }
         });
 
-        // 4. Excel Download Buttons (Desktop & Mobile)
-        ['btn-download-excel', 'btn-download-excel-mobile'].forEach(id => {
-            const btn = document.getElementById(id);
-            if (btn) {
-                btn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    this.openExportModal();
-                });
-            }
-        });
+        // 4. Excel Download Buttons (Desktop opens Modal, Mobile triggers direct 1-tap Master Excel download)
+        const desktopExcel = document.getElementById('btn-download-excel');
+        if (desktopExcel) {
+            desktopExcel.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.openExportModal();
+            });
+        }
+        const mobileExcel = document.getElementById('btn-download-excel-mobile');
+        if (mobileExcel) {
+            mobileExcel.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.downloadExcel();
+            });
+        }
 
         // 5. PDF Download Buttons (Desktop & Mobile)
         ['btn-download-pdf-header', 'btn-download-pdf-mobile'].forEach(id => {
@@ -8548,14 +8553,24 @@ const App = {
 
         if (isDark) {
             document.documentElement.classList.add('dark');
+            document.documentElement.classList.remove('light');
+            if (document.body) {
+                document.body.classList.add('dark');
+                document.body.classList.remove('light');
+            }
         } else {
             document.documentElement.classList.remove('dark');
+            document.documentElement.classList.add('light');
+            if (document.body) {
+                document.body.classList.remove('dark');
+                document.body.classList.add('light');
+            }
         }
 
         // Update meta theme-color for native mobile status bar tinting
         const metaThemeColor = document.querySelector('meta[name="theme-color"]');
         if (metaThemeColor) {
-            metaThemeColor.setAttribute('content', isDark ? '#071223' : '#ffffff');
+            metaThemeColor.setAttribute('content', isDark ? '#0b1329' : '#ffffff');
         }
 
         // Update desktop and mobile toggle icons

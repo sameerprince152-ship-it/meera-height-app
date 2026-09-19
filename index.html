@@ -45,7 +45,10 @@
     <script src="js/xlsx.full.min.js"></script>
     <script>
         if (typeof XLSX === 'undefined') {
-            document.write('<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"><\/script>');
+            var s = document.createElement('script');
+            s.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
+            s.async = false;
+            document.head.appendChild(s);
         }
     </script>
 
@@ -66,12 +69,12 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/styles.css?v=5.0.0">
 </head>
-<body class="bg-slate-50 text-slate-900 min-h-screen pb-28 sm:pb-32 md:pb-8 antialiased selection:bg-emerald-100 selection:text-emerald-900">
+<body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 min-h-screen pb-28 sm:pb-32 md:pb-8 antialiased selection:bg-emerald-100 selection:text-emerald-900 transition-colors duration-200">
 
     <!-- Top App Navigation Bar -->
-    <header class="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200 px-3 sm:px-4 lg:px-8 py-2.5 sm:py-3 transition-all">
+    <header class="sticky top-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-b border-slate-200 dark:border-slate-800 px-3 sm:px-4 lg:px-8 py-2.5 sm:py-3 transition-all">
         <div class="max-w-7xl mx-auto">
             <!-- Row 1: Brand (Left) + Actions (Right) -->
             <div class="flex items-center justify-between gap-2">
@@ -144,23 +147,23 @@
                 </div>
 
                 <!-- Mobile Top Right (Only on screens < md): Theme + Cloud Sync + CSV + Excel + PDF -->
-                <div class="flex md:hidden items-center gap-1 shrink-0">
-                    <button id="btn-theme-toggle-mobile" onclick="App.toggleTheme()" class="w-8 h-8 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-amber-400 flex items-center justify-center text-xs shadow-sm active:scale-90 transition cursor-pointer" title="Toggle Light/Dark Mode">
+                <div class="flex md:hidden items-center gap-1.5 shrink-0">
+                    <button id="btn-theme-toggle-mobile" onclick="App.toggleTheme()" class="w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-amber-400 flex items-center justify-center text-sm shadow-sm active:scale-90 transition cursor-pointer" title="Toggle Light/Dark Mode" aria-label="Toggle Light/Dark Mode">
                         <i id="theme-toggle-icon-mobile" class="fa-solid fa-moon"></i>
                     </button>
-                    <button id="nav-cloud-sync-btn" onclick="App.openCloudSyncModal()" class="flex items-center gap-1 px-2 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 transition text-[11px] font-bold text-slate-700 dark:text-slate-200 cursor-pointer shadow-sm active:scale-95" title="Real-Time Cloud Sync">
+                    <button id="nav-cloud-sync-btn" onclick="App.openCloudSyncModal()" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 transition text-[11px] font-bold text-slate-700 dark:text-slate-200 cursor-pointer shadow-sm active:scale-95" title="Real-Time Cloud Sync" aria-label="Real-Time Cloud Sync">
                         <span id="nav-cloud-sync-dot" class="w-2 h-2 rounded-full bg-slate-400"></span>
-                        <i class="fa-solid fa-cloud text-[11px] text-slate-500 dark:text-slate-400"></i>
+                        <i class="fa-solid fa-cloud text-xs text-slate-500 dark:text-slate-400"></i>
                         <span id="nav-cloud-sync-text" class="text-[10px] font-bold">Sync</span>
                     </button>
-                    <button id="btn-download-csv-mobile" onclick="App.downloadCSV()" class="w-8 h-8 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center text-xs shadow-sm active:scale-95 transition cursor-pointer" title="Download CSV Ledger">
-                        <i class="fa-solid fa-file-csv"></i>
+                    <button id="btn-download-csv-mobile" onclick="App.downloadCSV()" class="w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center text-xs shadow-sm active:scale-95 transition cursor-pointer" title="Download CSV Ledger" aria-label="Download CSV Ledger">
+                        <i class="fa-solid fa-file-csv text-sm"></i>
                     </button>
-                    <button id="btn-download-excel-mobile" onclick="App.openExportModal()" class="w-8 h-8 rounded-xl bg-slate-900 hover:bg-slate-800 text-emerald-400 flex items-center justify-center text-xs shadow-sm active:scale-95 transition cursor-pointer" title="Export Excel Sheets">
-                        <i class="fa-solid fa-file-excel"></i>
+                    <button id="btn-download-excel-mobile" onclick="App.downloadExcel()" class="w-9 h-9 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center text-xs shadow-sm active:scale-95 transition cursor-pointer" title="Download Master Excel Statement (.xlsx)" aria-label="Download Master Excel Statement">
+                        <i class="fa-solid fa-file-excel text-sm"></i>
                     </button>
-                    <button id="btn-download-pdf-mobile" onclick="App.openPDFExportModal()" class="w-8 h-8 rounded-xl bg-rose-600 hover:bg-rose-700 text-white flex items-center justify-center text-xs shadow-sm shadow-rose-600/20 active:scale-95 transition cursor-pointer" title="Export PDF Reports">
-                        <i class="fa-solid fa-file-pdf"></i>
+                    <button id="btn-download-pdf-mobile" onclick="App.openPDFExportModal()" class="w-9 h-9 rounded-xl bg-rose-600 hover:bg-rose-700 text-white flex items-center justify-center text-xs shadow-sm shadow-rose-600/20 active:scale-95 transition cursor-pointer" title="Export PDF Reports" aria-label="Export PDF Reports">
+                        <i class="fa-solid fa-file-pdf text-sm"></i>
                     </button>
                 </div>
             </div>
@@ -187,7 +190,7 @@
     </header>
 
     <!-- Desktop Sub-Navigation Tabs (Visible on screens md and above) -->
-    <nav class="hidden md:block bg-white border-b border-slate-200 px-4 lg:px-8 py-2">
+    <nav class="hidden md:block bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 lg:px-8 py-2">
         <div class="max-w-7xl mx-auto flex items-center gap-2">
             <button onclick="App.switchTab('dashboard')" data-tab="dashboard" class="nav-btn px-4 py-2 rounded-xl text-xs font-bold text-emerald-600 bg-emerald-50 flex items-center gap-2 transition">
                 <i class="fa-solid fa-chart-pie"></i>
@@ -1682,7 +1685,7 @@
     </main>
 
     <!-- Mobile Bottom Navigation Bar (Visible on mobile screens) -->
-    <nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur border-t border-slate-200 px-2 py-2 flex items-center justify-around safe-bottom shadow-lg">
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-t border-slate-200 dark:border-slate-800 px-2 py-2 flex items-center justify-around safe-bottom shadow-lg">
         <button onclick="App.switchTab('dashboard')" data-tab="dashboard" class="nav-btn flex-1 flex flex-col items-center gap-1 text-emerald-600 text-[10px] font-extrabold py-0.5 transition">
             <i class="fa-solid fa-chart-pie text-base"></i>
             <span>Overview</span>
@@ -3970,9 +3973,9 @@
     <div id="app-floating-toast" class="fixed top-5 right-5 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl shadow-2xl text-xs font-bold transition-all transform duration-300 pointer-events-none opacity-0 translate-y-[-10px]"></div>
 
     <!-- Application JavaScript Scripts -->
-    <script src="js/storage.js?v=4.9.0"></script>
-    <script src="js/excel-export.js?v=4.9.0"></script>
-    <script src="js/app.js?v=4.9.0"></script>
+    <script src="js/storage.js?v=5.0.0"></script>
+    <script src="js/excel-export.js?v=5.0.0"></script>
+    <script src="js/app.js?v=5.0.0"></script>
 
     <!-- Register Service Worker for PWA Offline Functionality -->
     <script>

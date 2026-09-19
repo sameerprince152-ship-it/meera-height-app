@@ -427,39 +427,53 @@ label {
 /* -------------------------------------------------------------
    DARK MODE UNIVERSAL SYSTEM-WIDE STYLING
    ------------------------------------------------------------- */
-html.dark {
+html.dark,
+body.dark {
     color-scheme: dark;
 }
 
-html.dark body {
+html.dark body,
+body.dark {
     background-color: #0b1329 !important;
     color: #f8fafc !important;
 }
 
+/* Fast responsive tap response on mobile touchscreens (eliminates 300ms tap delay) */
+button, a, select, input {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
 /* Universal Containers & Surfaces */
-html.dark .bg-white {
+html.dark .bg-white,
+.dark .bg-white {
     background-color: #111e38 !important;
 }
 
-html.dark .bg-slate-50 {
+html.dark .bg-slate-50,
+.dark .bg-slate-50 {
     background-color: #0c1628 !important;
 }
 
-html.dark .bg-slate-100 {
+html.dark .bg-slate-100,
+.dark .bg-slate-100 {
     background-color: #162544 !important;
 }
 
-html.dark .bg-slate-200 {
+html.dark .bg-slate-200,
+.dark .bg-slate-200 {
     background-color: #1e3158 !important;
 }
 
 /* Headers, Footers & Navigation */
-html.dark header {
+html.dark header,
+.dark header {
     background-color: rgba(17, 30, 56, 0.95) !important;
     border-color: #1e2e4a !important;
 }
 
-html.dark nav {
+html.dark nav,
+.dark nav {
     background-color: rgba(17, 30, 56, 0.98) !important;
     border-color: #1e2e4a !important;
 }
@@ -467,7 +481,10 @@ html.dark nav {
 /* Borders & Dividers */
 html.dark .border-slate-100,
 html.dark .border-slate-200,
-html.dark .border-slate-300 {
+html.dark .border-slate-300,
+.dark .border-slate-100,
+.dark .border-slate-200,
+.dark .border-slate-300 {
     border-color: #1e2e4a !important;
 }
 
@@ -479,48 +496,64 @@ html.dark .divide-slate-200 > :not([hidden]) ~ :not([hidden]) {
 /* Typography */
 html.dark .text-slate-900,
 html.dark .text-slate-800,
-html.dark .text-slate-700 {
+html.dark .text-slate-700,
+.dark .text-slate-900,
+.dark .text-slate-800,
+.dark .text-slate-700 {
     color: #f8fafc !important;
 }
 
 html.dark .text-slate-600,
-html.dark .text-slate-500 {
+html.dark .text-slate-500,
+.dark .text-slate-600,
+.dark .text-slate-500 {
     color: #94a3b8 !important;
 }
 
-html.dark .text-slate-400 {
+html.dark .text-slate-400,
+.dark .text-slate-400 {
     color: #64748b !important;
 }
 
 /* Form Controls & Inputs */
 html.dark input:not([type="checkbox"]):not([type="radio"]),
 html.dark select,
-html.dark textarea {
+html.dark textarea,
+.dark input:not([type="checkbox"]):not([type="radio"]),
+.dark select,
+.dark textarea {
     background-color: #0c1628 !important;
     border-color: #243656 !important;
     color: #f8fafc !important;
 }
 
 html.dark input::placeholder,
-html.dark textarea::placeholder {
+html.dark textarea::placeholder,
+.dark input::placeholder,
+.dark textarea::placeholder {
     color: #64748b !important;
 }
 
 /* Table styling */
-html.dark table thead th {
+html.dark table thead th,
+.dark table thead th {
     background-color: #0c1628 !important;
     color: #94a3b8 !important;
     border-color: #1e2e4a !important;
 }
 
 html.dark tr.hover\:bg-slate-50:hover,
-html.dark tr:hover {
+html.dark tr:hover,
+.dark tr.hover\:bg-slate-50:hover,
+.dark tr:hover {
     background-color: #162544 !important;
 }
 
 /* Modals & Dialogs */
 html.dark .modal-content,
-html.dark .fixed .bg-white {
+html.dark .fixed .bg-white,
+.dark .modal-content,
+.dark .fixed .bg-white {
     background-color: #111e38 !important;
     color: #f8fafc !important;
     border-color: #1e2e4a !important;

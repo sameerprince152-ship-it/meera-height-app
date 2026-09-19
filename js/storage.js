@@ -1021,10 +1021,20 @@ class CloudSyncManager {
         }
 
         if (typeof firebase === 'undefined' || !firebase.initializeApp) {
-            this.updateStatus('error', 'Firebase SDK library not loaded');
+            this.updateStatus('syncing', 'Connecting to cloud database...');
+            if (!this._firebaseWaitAttempts) this._firebaseWaitAttempts = 0;
+            if (this._firebaseWaitAttempts < 25) { // Poll for up to 10 seconds (25 * 400ms)
+                this._firebaseWaitAttempts++;
+                setTimeout(() => {
+                    this.connect(config, notifyUserOnPair);
+                }, 400);
+                return true;
+            }
+            this.updateStatus('error', 'Firebase SDK library taking long to load');
             console.warn('Firebase SDK script tags missing or failed to load.');
             return false;
         }
+        this._firebaseWaitAttempts = 0;
 
         this.updateStatus('syncing', 'Connecting to cloud database...');
 
@@ -1153,7 +1163,14 @@ class CloudSyncManager {
             if (error.code === 'permission-denied') {
                 this.updateStatus('error', 'Firestore permission denied. Ensure database rules allow read/write.');
             } else {
-                this.updateStatus('error', 'Sync error: ' + error.message);
+                this.updateStatus('error', 'Sync interrupted: ' + (error.message || error.code || 'Network'));
+                // Auto-retry reconnection after 4 seconds on mobile network switch or transient drop
+                setTimeout(() => {
+                    if (navigator.onLine && this.isEnabled() && this.db) {
+                        console.log('Retrying Firestore listener connection...');
+                        this.listenToCloudDocument();
+                    }
+                }, 4000);
             }
         });
     }

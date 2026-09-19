@@ -8,7 +8,33 @@ class ExcelExporter {
     static downloadBlobUniversal(blob, fileName) {
         if (typeof window === 'undefined') return false;
 
-        // 1. Direct browser file download using HTML5 download attribute (Supported on Desktop, Android, iOS 13+)
+        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+                         (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        const isStandalonePWA = (typeof window !== 'undefined' && window.navigator && window.navigator.standalone) ||
+                                (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+
+        // 1. In iOS Standalone PWA mode (Add-to-HomeScreen), WebKit restricts <a download>.
+        // Prefer native Web Share API with file payload so user can 'Save to Files' or send directly.
+        if (isStandalonePWA && isMobile && typeof navigator.share === 'function' && typeof File !== 'undefined') {
+            try {
+                const file = new File([blob], fileName, { type: blob.type || 'application/octet-stream' });
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    navigator.share({
+                        files: [file],
+                        title: fileName,
+                        text: `Meera Heights Report: ${fileName}`
+                    }).catch(err => {
+                        if (err.name !== 'AbortError') console.warn('Web Share API error:', err);
+                    });
+                    return true;
+                }
+            } catch (err) {
+                if (err.name === 'AbortError') return true;
+                console.warn('Web Share PWA check error, falling back to standard download:', err);
+            }
+        }
+
+        // 2. Direct browser file download using HTML5 download attribute (Supported on Desktop, Android, iOS Safari 13+)
         try {
             if (window.navigator && window.navigator.msSaveOrOpenBlob) {
                 window.navigator.msSaveOrOpenBlob(blob, fileName);
@@ -18,29 +44,38 @@ class ExcelExporter {
             if (typeof document !== 'undefined') {
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
-                a.style.display = 'none';
+                // CRITICAL FOR IOS SAFARI & MOBILE WEBVIEWS: Do NOT use display: none.
+                // WebKit ignores synthetic clicks on elements without a layout object.
+                a.style.position = 'fixed';
+                a.style.left = '-9999px';
+                a.style.top = '-9999px';
+                a.style.opacity = '0';
+                a.style.pointerEvents = 'none';
                 a.href = url;
                 a.setAttribute('download', fileName);
-                // CRITICAL FOR IOS SAFARI & MOBILE WEBVIEWS: Do NOT set target="_blank".
-                // target="_blank" opens an unresponsive blank tab instead of triggering download on iOS.
                 document.body.appendChild(a);
-                a.click();
+
+                // Dispatch synthetic MouseEvent with full bubble & cancelable flags
+                try {
+                    const clickEvt = new MouseEvent('click', { bubbles: true, cancelable: true, view: window });
+                    a.dispatchEvent(clickEvt);
+                } catch (clickErr) {
+                    a.click();
+                }
+
                 setTimeout(() => {
                     try {
                         document.body.removeChild(a);
                         window.URL.revokeObjectURL(url);
                     } catch (e) {}
-                }, 10000);
+                }, 15000);
                 return true;
             }
         } catch (downloadErr) {
             console.warn('Direct link download error, trying mobile share fallback:', downloadErr);
         }
 
-        // 2. Native Web Share API fallback for mobile devices where direct download might be sandboxed
-        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
-                         (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-
+        // 3. Native Web Share API fallback for mobile devices where direct download failed
         if (isMobile && typeof navigator.share === 'function' && typeof File !== 'undefined') {
             try {
                 const file = new File([blob], fileName, { type: blob.type || 'application/octet-stream' });
@@ -65,16 +100,22 @@ class ExcelExporter {
 
     static downloadWorkbook(wb, fileName) {
         try {
-            if (typeof XLSX !== 'undefined' && typeof XLSX.writeFile === 'function') {
-                XLSX.writeFile(wb, fileName);
-                return true;
-            }
+            // Generate binary array buffer directly from SheetJS workbook
+            const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+            const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+            return this.downloadBlobUniversal(blob, fileName);
         } catch (e) {
-            console.warn('XLSX.writeFile threw error, falling back to universal blob download:', e);
+            console.warn('XLSX direct blob generation error, trying XLSX.writeFile:', e);
+            try {
+                if (typeof XLSX !== 'undefined' && typeof XLSX.writeFile === 'function') {
+                    XLSX.writeFile(wb, fileName);
+                    return true;
+                }
+            } catch (err2) {
+                console.error('All workbook download methods failed:', err2);
+            }
+            return false;
         }
-        const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-        const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-        return this.downloadBlobUniversal(blob, fileName);
     }
 
     static getSheetConfig(sheetKey, appState) {

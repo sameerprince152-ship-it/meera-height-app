@@ -132,6 +132,18 @@ body {
     border: 1px solid #99f6e4;
 }
 
+.category-export-btn.quick-add {
+    background: #059669;
+    color: #ffffff;
+    border: 1px solid #047857;
+    box-shadow: 0 2px 6px rgba(5, 150, 105, 0.25);
+}
+
+.category-export-btn.quick-add:hover {
+    background: #047857;
+    color: #ffffff;
+}
+
 .expense-calendar-grid {
     display: grid;
     grid-template-columns: repeat(7, minmax(0, 1fr));

@@ -674,6 +674,21 @@
                 </div>
             </div>
 
+            <!-- Quick 1-Tap Category Expense Creator -->
+            <div class="bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200/90 rounded-2xl p-3 shadow-sm">
+                <div class="flex items-center justify-between gap-2 mb-2">
+                    <div class="flex items-center gap-2 min-w-0">
+                        <span class="w-6 h-6 rounded-lg bg-emerald-600 text-white flex items-center justify-center text-xs shadow-sm shrink-0"><i class="fa-solid fa-bolt"></i></span>
+                        <span class="text-xs font-black text-slate-800 tracking-tight truncate">Quick Add Expense by Category</span>
+                        <span class="hidden sm:inline text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full shrink-0">1-Tap Fast Record</span>
+                    </div>
+                    <span class="text-[10px] text-slate-500 font-semibold shrink-0">Tap to record</span>
+                </div>
+                <div id="quick-expense-category-chips" class="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+                    <!-- Rendered dynamically for every category in app.js -->
+                </div>
+            </div>
+
             <div id="category-export-actions" class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-emerald-50/70 border border-emerald-200 rounded-2xl p-3">
                 <!-- Populated dynamically for the selected category -->
             </div>
@@ -1074,9 +1089,13 @@
                         <i class="fa-solid fa-plus-circle text-emerald-400"></i>
                         <span>Owner Capital</span>
                     </button>
+                    <button onclick="App.openWalletExportModal()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm shadow-emerald-600/20" title="Export Wallet Statements (PDF, Excel, CSV)">
+                        <i class="fa-solid fa-file-arrow-down"></i>
+                        <span>Export Wallet</span>
+                    </button>
                 </div>
 
-                <!-- Mobile Action Buttons (< md: clean 2-column grid) -->
+                <!-- Mobile Action Buttons (< md: balanced 2x2 grid) -->
                 <div class="md:hidden grid grid-cols-2 gap-2 w-full mt-2">
                     <button onclick="App.openWalletTransferModal()" class="py-2.5 px-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm">
                         <i class="fa-solid fa-arrows-left-right text-purple-200"></i>
@@ -1086,9 +1105,13 @@
                         <i class="fa-solid fa-building-columns text-sky-200"></i>
                         <span>Bank ⇄ Wallet</span>
                     </button>
-                    <button onclick="App.openCapitalModal()" class="col-span-2 py-2.5 px-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm">
+                    <button onclick="App.openCapitalModal()" class="py-2.5 px-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm">
                         <i class="fa-solid fa-plus-circle text-emerald-400"></i>
-                        <span>+ Owner Capital</span>
+                        <span>+ Capital</span>
+                    </button>
+                    <button onclick="App.openWalletExportModal()" class="py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm shadow-emerald-600/20" title="Export Wallet PDF, Excel, CSV">
+                        <i class="fa-solid fa-file-arrow-down text-emerald-100"></i>
+                        <span>Export Wallet</span>
                     </button>
                 </div>
             </div>
@@ -1295,11 +1318,17 @@
                         </button>
                     </div>
 
-                    <!-- Owner Filter -->
-                    <div class="flex items-center gap-1 shrink-0 bg-slate-100 p-1 rounded-xl text-xs font-semibold">
-                        <button onclick="App.setWalletOwnerFilter('all')" data-owner="all" class="wallet-owner-filter-btn px-2.5 py-1 rounded-lg transition bg-emerald-600 text-white font-bold">All</button>
-                        <button onclick="App.setWalletOwnerFilter('sajida')" data-owner="sajida" class="wallet-owner-filter-btn px-2.5 py-1 rounded-lg transition bg-white text-slate-600">Sajida (Fl 1-2)</button>
-                        <button onclick="App.setWalletOwnerFilter('jeelani')" data-owner="jeelani" class="wallet-owner-filter-btn px-2.5 py-1 rounded-lg transition bg-white text-slate-600">Jeelani (Fl 3-5)</button>
+                    <!-- Owner Filter & Quick Export -->
+                    <div class="flex items-center gap-2 shrink-0 flex-wrap">
+                        <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-semibold">
+                            <button onclick="App.setWalletOwnerFilter('all')" data-owner="all" class="wallet-owner-filter-btn px-2.5 py-1 rounded-lg transition bg-emerald-600 text-white font-bold">All</button>
+                            <button onclick="App.setWalletOwnerFilter('sajida')" data-owner="sajida" class="wallet-owner-filter-btn px-2.5 py-1 rounded-lg transition bg-white text-slate-600">Sajida (Fl 1-2)</button>
+                            <button onclick="App.setWalletOwnerFilter('jeelani')" data-owner="jeelani" class="wallet-owner-filter-btn px-2.5 py-1 rounded-lg transition bg-white text-slate-600">Jeelani (Fl 3-5)</button>
+                        </div>
+                        <button onclick="App.openWalletExportModal()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm" title="Export Wallet Statements (PDF, Excel, CSV)">
+                            <i class="fa-solid fa-file-arrow-down text-xs"></i>
+                            <span>Export</span>
+                        </button>
                     </div>
                 </div>
 
@@ -3100,7 +3129,7 @@
     </div>
 
     <!-- MODAL 10: EXCEL EXPORT CENTER (SEPARATE SHEETS & MASTER WORKBOOK) -->
-    <div id="modal-export-sheets" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div id="modal-export-sheets" style="z-index: 99999; display: none;" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
         <div class="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl modal-enter max-h-[90vh] overflow-y-auto space-y-4">
             <!-- Modal Header -->
             <div class="flex items-center justify-between pb-3 border-b border-slate-100">
@@ -3476,6 +3505,123 @@
         </div>
     </div>
 
+    <!-- MODAL: DYNAMIC WALLET EXPORT (PDF, Excel .xlsx, CSV) -->
+    <div id="modal-export-wallet" style="z-index: 99999; display: none;" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl modal-enter max-h-[90vh] overflow-y-auto space-y-4">
+            <!-- Header -->
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold">
+                        <i class="fa-solid fa-wallet text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-base text-slate-900">Wallet Statements & Ledger Export</h3>
+                        <p class="text-xs text-slate-500">Download dynamic reports in PDF, Excel (.xlsx) and CSV</p>
+                    </div>
+                </div>
+                <button onclick="App.hideModal('modal-export-wallet')" class="w-8 h-8 rounded-full bg-slate-100 text-slate-400 hover:text-slate-600 flex items-center justify-center">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Dynamic Period Selection -->
+            <div class="space-y-2">
+                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Select Statement Period</label>
+                <div class="grid grid-cols-2 sm:grid-cols-5 gap-1.5">
+                    <button type="button" onclick="App.setWalletExportPeriod('all')" id="btn-wallet-period-all" class="wallet-period-btn py-2 px-2 rounded-xl text-xs font-bold transition text-center border bg-slate-900 text-white border-slate-900">All-Time</button>
+                    <button type="button" onclick="App.setWalletExportPeriod('weekly')" id="btn-wallet-period-weekly" class="wallet-period-btn py-2 px-2 rounded-xl text-xs font-bold transition text-center border bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200">Past 7 Days</button>
+                    <button type="button" onclick="App.setWalletExportPeriod('monthly')" id="btn-wallet-period-monthly" class="wallet-period-btn py-2 px-2 rounded-xl text-xs font-bold transition text-center border bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200">Monthly</button>
+                    <button type="button" onclick="App.setWalletExportPeriod('yearly')" id="btn-wallet-period-yearly" class="wallet-period-btn py-2 px-2 rounded-xl text-xs font-bold transition text-center border bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200">Yearly</button>
+                    <button type="button" onclick="App.setWalletExportPeriod('custom')" id="btn-wallet-period-custom" class="wallet-period-btn py-2 px-2 rounded-xl text-xs font-bold transition text-center border bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200">Custom</button>
+                </div>
+
+                <!-- Monthly Picker Sub-row -->
+                <div id="wallet-export-monthly-picker" class="hidden pt-2">
+                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">Select Month</label>
+                    <input type="month" id="wallet-export-month-input" onchange="App.updateWalletExportPreview()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 outline-none">
+                </div>
+
+                <!-- Yearly Picker Sub-row -->
+                <div id="wallet-export-yearly-picker" class="hidden pt-2">
+                    <label class="block text-[11px] font-semibold text-slate-600 mb-1">Select Year</label>
+                    <select id="wallet-export-year-select" onchange="App.updateWalletExportPreview()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 outline-none">
+                        <option value="2027">2027</option>
+                        <option value="2026" selected>2026</option>
+                        <option value="2025">2025</option>
+                        <option value="2024">2024</option>
+                    </select>
+                </div>
+
+                <!-- Custom Date Range Picker Sub-row -->
+                <div id="wallet-export-custom-picker" class="hidden pt-2 grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">Start Date</label>
+                        <input type="date" id="wallet-export-start-date" onchange="App.updateWalletExportPreview()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-slate-600 mb-1">End Date</label>
+                        <input type="date" id="wallet-export-end-date" onchange="App.updateWalletExportPreview()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 outline-none">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scope & Sub-Tab Options -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Wallet / Owner Scope</label>
+                    <select id="wallet-export-scope" onchange="App.updateWalletExportPreview()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 outline-none">
+                        <option value="all">All 4 Wallets (Combined)</option>
+                        <option value="sajida_advance">Sajida Advance Account (Fl 1-2)</option>
+                        <option value="sajida_rent">Sajida Rent Account (Fl 1-2)</option>
+                        <option value="jeelani_advance">Jeelani Advance Account (Fl 3-5)</option>
+                        <option value="jeelani_rent">Jeelani Rent Account (Fl 3-5)</option>
+                        <option value="owner_sajida">Only Sajida (Advance + Rent)</option>
+                        <option value="owner_jeelani">Only Jeelani (Advance + Rent)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Transaction Type</label>
+                    <select id="wallet-export-type" onchange="App.updateWalletExportPreview()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-700 outline-none">
+                        <option value="all">All Transactions</option>
+                        <option value="bank">Bank ⇄ Wallet Transfers</option>
+                        <option value="transfers">Advance ⇄ Rent Transfers</option>
+                        <option value="advances">Tenant Advances (Received & Settled)</option>
+                        <option value="rents">Rent Collections</option>
+                        <option value="expenses">Expenses Debited</option>
+                        <option value="capital">Capital Corpus Adjustments</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Live Count / Summary Preview -->
+            <div id="wallet-export-preview-box" class="p-3 bg-purple-50/70 border border-purple-200 rounded-2xl flex items-center justify-between text-xs">
+                <span class="text-purple-900 font-semibold flex items-center gap-1.5">
+                    <i class="fa-solid fa-calculator text-purple-600"></i>
+                    <span>Transactions to export:</span>
+                </span>
+                <span id="wallet-export-preview-count" class="font-extrabold text-purple-950">0 entries</span>
+            </div>
+
+            <!-- Action Export Buttons -->
+            <div class="space-y-2 pt-1">
+                <button type="button" onclick="App.executeWalletExport('pdf')" class="w-full py-3 px-4 bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs rounded-xl transition flex items-center justify-center gap-2 shadow-sm shadow-rose-600/20 cursor-pointer">
+                    <i class="fa-solid fa-file-pdf text-sm"></i>
+                    <span>Download Executive PDF Report</span>
+                </button>
+                <div class="grid grid-cols-2 gap-2">
+                    <button type="button" onclick="App.executeWalletExport('xlsx')" class="py-2.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl transition flex items-center justify-center gap-2 shadow-sm shadow-emerald-600/20 cursor-pointer">
+                        <i class="fa-solid fa-file-excel text-sm"></i>
+                        <span>Excel (.xlsx)</span>
+                    </button>
+                    <button type="button" onclick="App.executeWalletExport('csv')" class="py-2.5 px-3 bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs rounded-xl transition flex items-center justify-center gap-2 shadow-sm cursor-pointer">
+                        <i class="fa-solid fa-file-csv text-sm"></i>
+                        <span>CSV Ledger</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL: CLOUD SYNC SETUP & CONFIG -->
     <div id="modal-cloud-sync-setup" style="z-index: 99999; display: none;" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
         <div class="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl modal-enter max-h-[90vh] overflow-y-auto">
@@ -3608,9 +3754,9 @@
     <div id="app-floating-toast" class="fixed top-5 right-5 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl shadow-2xl text-xs font-bold transition-all transform duration-300 pointer-events-none opacity-0 translate-y-[-10px]"></div>
 
     <!-- Application JavaScript Scripts -->
-    <script src="js/storage.js?v=4.4.0"></script>
-    <script src="js/excel-export.js?v=4.4.0"></script>
-    <script src="js/app.js?v=4.4.0"></script>
+    <script src="js/storage.js?v=4.7.0"></script>
+    <script src="js/excel-export.js?v=4.7.0"></script>
+    <script src="js/app.js?v=4.7.0"></script>
 
     <!-- Register Service Worker for PWA Offline Functionality -->
     <script>

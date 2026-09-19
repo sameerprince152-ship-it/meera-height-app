@@ -1123,15 +1123,13 @@ const App = {
         const cfg = ExcelExporter.getSheetConfig(sheetKey, { data: this.data, stats: this.getStats() });
         const title = cfg ? cfg.name : sheetKey;
         this.showToast(`Generating ${title} (.xlsx)...`, 'info');
-        setTimeout(() => {
-            const success = ExcelExporter.exportSheet(sheetKey, {
-                data: this.data,
-                stats: this.getStats()
-            });
-            if (success) {
-                this.showToast(`${title} exported successfully!`, 'success');
-            }
-        }, 100);
+        const success = ExcelExporter.exportSheet(sheetKey, {
+            data: this.data,
+            stats: this.getStats()
+        });
+        if (success) {
+            this.showToast(`${title} exported successfully!`, 'success');
+        }
     },
 
     downloadAllSheetsSeparately() {
@@ -1148,28 +1146,364 @@ const App = {
 
     downloadExcel() {
         this.showToast('Generating multi-sheet Excel statement...', 'info');
-        setTimeout(() => {
-            const success = ExcelExporter.exportWorkbook({
-                data: this.data,
-                stats: this.getStats()
-            });
-            if (success) {
-                this.showToast('Meera_Heights_Building_Accounts.xlsx downloaded successfully!', 'success');
-            }
-        }, 100);
+        const success = ExcelExporter.exportWorkbook({
+            data: this.data,
+            stats: this.getStats()
+        });
+        if (success) {
+            this.showToast('Meera_Heights_Building_Accounts.xlsx downloaded successfully!', 'success');
+        }
     },
 
     downloadCSV() {
         this.showToast('Generating CSV ledger...', 'info');
-        setTimeout(() => {
-            const success = ExcelExporter.exportCSV({
-                data: this.data,
-                stats: this.getStats()
-            });
-            if (success) {
-                this.showToast('CSV Ledger downloaded successfully!', 'success');
+        const success = ExcelExporter.exportCSV({
+            data: this.data,
+            stats: this.getStats()
+        });
+        if (success) {
+            this.showToast('CSV Ledger downloaded successfully!', 'success');
+        }
+    },
+
+    // Universal Mobile/Desktop PDF Save Helper (Web Share API for Android/iOS, direct download for desktop)
+    savePDFUniversally(doc, fileName) {
+        try {
+            const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+                             (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+            if (isMobile && typeof ExcelExporter !== 'undefined' && ExcelExporter.downloadBlobUniversal) {
+                const blob = doc.output('blob');
+                ExcelExporter.downloadBlobUniversal(blob, fileName);
+                return;
             }
-        }, 100);
+        } catch (e) {
+            console.warn('Fallback to standard doc.save:', e);
+        }
+        doc.save(fileName);
+    },
+
+    // -------------------------------------------------------------
+    // DYNAMIC WALLET EXPORT (PDF, EXCEL .xlsx, CSV)
+    // -------------------------------------------------------------
+    walletExportPeriodState: 'all',
+
+    openWalletExportModal() {
+        this.walletExportPeriodState = 'all';
+        const mInput = document.getElementById('wallet-export-month-input');
+        if (mInput) mInput.value = (this.selectedMonthFilter && this.selectedMonthFilter !== 'all') ? this.selectedMonthFilter : this.getCurrentMonthKey();
+        const ySelect = document.getElementById('wallet-export-year-select');
+        if (ySelect) ySelect.value = new Date().getFullYear().toString();
+        const sDate = document.getElementById('wallet-export-start-date');
+        const eDate = document.getElementById('wallet-export-end-date');
+        if (sDate) sDate.value = '';
+        if (eDate) eDate.value = '';
+        this.setWalletExportPeriod('all');
+        this.showModal('modal-export-wallet');
+    },
+
+    setWalletExportPeriod(period) {
+        this.walletExportPeriodState = period;
+        ['all', 'weekly', 'monthly', 'yearly', 'custom'].forEach(p => {
+            const btn = document.getElementById(`btn-wallet-period-${p}`);
+            if (btn) {
+                if (p === period) {
+                    btn.className = 'wallet-period-btn py-2 px-2 rounded-xl text-xs font-bold transition text-center border bg-slate-900 text-white border-slate-900 shadow-sm';
+                } else {
+                    btn.className = 'wallet-period-btn py-2 px-2 rounded-xl text-xs font-bold transition text-center border bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200';
+                }
+            }
+        });
+
+        const mPicker = document.getElementById('wallet-export-monthly-picker');
+        const yPicker = document.getElementById('wallet-export-yearly-picker');
+        const cPicker = document.getElementById('wallet-export-custom-picker');
+        if (mPicker) mPicker.classList.toggle('hidden', period !== 'monthly');
+        if (yPicker) yPicker.classList.toggle('hidden', period !== 'yearly');
+        if (cPicker) cPicker.classList.toggle('hidden', period !== 'custom');
+
+        this.updateWalletExportPreview();
+    },
+
+    getWalletExportOptions() {
+        const period = this.walletExportPeriodState;
+        const scope = document.getElementById('wallet-export-scope')?.value || 'all';
+        const type = document.getElementById('wallet-export-type')?.value || 'all';
+        const month = document.getElementById('wallet-export-month-input')?.value || this.getCurrentMonthKey();
+        const year = document.getElementById('wallet-export-year-select')?.value || new Date().getFullYear().toString();
+        const startDate = document.getElementById('wallet-export-start-date')?.value || '';
+        const endDate = document.getElementById('wallet-export-end-date')?.value || '';
+
+        return {
+            period,
+            walletScope: scope,
+            type,
+            month,
+            year,
+            startDate,
+            endDate
+        };
+    },
+
+    updateWalletExportPreview() {
+        const options = this.getWalletExportOptions();
+        const txs = this.getWalletTransactionsStream(options);
+        const countEl = document.getElementById('wallet-export-preview-count');
+        if (countEl) {
+            countEl.textContent = `${txs.length} entries`;
+        }
+    },
+
+    executeWalletExport(format) {
+        const options = this.getWalletExportOptions();
+        this.hideModal('modal-export-wallet');
+
+        if (format === 'pdf') {
+            this.showToast('Generating Wallet PDF Statement...', 'info');
+            this.generateWalletPDF(options);
+        } else if (format === 'xlsx') {
+            this.showToast('Generating Wallet Excel Workbook...', 'info');
+            ExcelExporter.exportWalletWorkbook(options, this);
+            this.showToast('Wallet Excel (.xlsx) downloaded successfully!', 'success');
+        } else if (format === 'csv') {
+            this.showToast('Generating Wallet CSV Ledger...', 'info');
+            ExcelExporter.exportWalletCSV(options, this);
+            this.showToast('Wallet CSV Ledger downloaded successfully!', 'success');
+        }
+    },
+
+    generateWalletPDF(options = {}) {
+        if (!window.jspdf || !window.jspdf.jsPDF) {
+            this.showToast('PDF library is loading. Please check internet connection.', 'error');
+            return;
+        }
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+
+        const txs = this.getWalletTransactionsStream(options);
+        const stats = this.getStats();
+
+        // Scope Label
+        let scopeLabel = 'All 4 Wallets (Combined)';
+        const scope = options.walletScope || 'all';
+        if (scope === 'sajida_advance') scopeLabel = 'Sajida Advance Account (Fl 1-2)';
+        else if (scope === 'sajida_rent') scopeLabel = 'Sajida Rent Account (Fl 1-2)';
+        else if (scope === 'jeelani_advance') scopeLabel = 'Jeelani Advance Account (Fl 3-5)';
+        else if (scope === 'jeelani_rent') scopeLabel = 'Jeelani Rent Account (Fl 3-5)';
+        else if (scope === 'owner_sajida') scopeLabel = 'Sajida Accounts (Advance + Rent)';
+        else if (scope === 'owner_jeelani') scopeLabel = 'Jeelani Accounts (Advance + Rent)';
+
+        // Period Label
+        let periodLabel = 'All-Time Statement';
+        if (options.period === 'weekly') {
+            const past7 = new Date();
+            past7.setDate(past7.getDate() - 7);
+            periodLabel = `Weekly Report: ${past7.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })} to ${new Date().toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+        } else if (options.period === 'monthly') {
+            periodLabel = `Monthly Statement: ${options.month || this.getCurrentMonthKey()}`;
+        } else if (options.period === 'yearly') {
+            periodLabel = `Annual Statement: ${options.year || new Date().getFullYear()}`;
+        } else if (options.period === 'custom') {
+            periodLabel = `Custom Range: ${options.startDate || 'Start'} to ${options.endDate || 'Present'}`;
+        }
+
+        // Header Background Banner
+        doc.setFillColor(7, 18, 35); // Deep navy #071223
+        doc.rect(0, 0, pageWidth, 40, 'F');
+
+        // Gold Accent Stripe
+        doc.setFillColor(217, 119, 6); // amber-600
+        doc.rect(0, 40, pageWidth, 2, 'F');
+
+        // Brand Title
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(17);
+        doc.setTextColor(255, 255, 255);
+        doc.text('MEERA HEIGHTS', 14, 15);
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8.5);
+        doc.setTextColor(203, 213, 225);
+        doc.text('4 CAPITAL WALLETS & LEDGER STATEMENT', 14, 21);
+
+        doc.setFontSize(7.5);
+        doc.setTextColor(148, 163, 184);
+        doc.text('Co-owned by Sajida (1st-2nd Fl) & Jeelani (3rd-5th Fl)', 14, 27);
+        doc.text(`Scope: ${scopeLabel}`, 14, 33);
+
+        // Right side metadata
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8.5);
+        doc.setTextColor(255, 255, 255);
+        doc.text(periodLabel, pageWidth - 14, 15, { align: 'right' });
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7.5);
+        doc.setTextColor(203, 213, 225);
+        doc.text(`Generated: ${new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}`, pageWidth - 14, 21, { align: 'right' });
+        doc.text(`Total Records: ${txs.length}`, pageWidth - 14, 27, { align: 'right' });
+
+        // 4 Wallets KPI Cards
+        const cardY = 46;
+        const cardW = (pageWidth - 28 - 9) / 4;
+        const cardH = 18;
+
+        const walletsMeta = [
+            { name: 'Sajida Adv (Fl 1-2)', bal: stats.wallets.sajidaAdvance, color: [16, 185, 129], bg: [236, 253, 245] },
+            { name: 'Sajida Rent (Fl 1-2)', bal: stats.wallets.sajidaRent, color: [13, 148, 136], bg: [240, 253, 250] },
+            { name: 'Jeelani Adv (Fl 3-5)', bal: stats.wallets.jeelaniAdvance, color: [59, 130, 246], bg: [239, 246, 255] },
+            { name: 'Jeelani Rent (Fl 3-5)', bal: stats.wallets.jeelaniRent, color: [99, 102, 241], bg: [238, 242, 255] }
+        ];
+
+        walletsMeta.forEach((w, i) => {
+            const x = 14 + i * (cardW + 3);
+            doc.setFillColor(w.bg[0], w.bg[1], w.bg[2]);
+            doc.roundedRect(x, cardY, cardW, cardH, 2, 2, 'F');
+            doc.setDrawColor(w.color[0], w.color[1], w.color[2]);
+            doc.setLineWidth(0.3);
+            doc.roundedRect(x, cardY, cardW, cardH, 2, 2, 'D');
+
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(7);
+            doc.setTextColor(w.color[0], w.color[1], w.color[2]);
+            doc.text(w.name, x + 3, cardY + 5);
+
+            doc.setFontSize(9.5);
+            doc.setTextColor(15, 23, 42);
+            doc.text(`INR ${w.bal.toLocaleString('en-IN')}`, x + 3, cardY + 12);
+        });
+
+        // Summary Net Bar
+        const netY = cardY + cardH + 3;
+        doc.setFillColor(248, 250, 252);
+        doc.roundedRect(14, netY, pageWidth - 28, 9, 2, 2, 'F');
+        doc.setDrawColor(226, 232, 240);
+        doc.roundedRect(14, netY, pageWidth - 28, 9, 2, 2, 'D');
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.5);
+        doc.setTextColor(51, 65, 85);
+        doc.text(`Total Liquid Treasury: INR ${stats.wallets.totalTreasury.toLocaleString('en-IN')}`, 18, netY + 6);
+        doc.text(`Tenant Advances Held: INR ${stats.wallets.totalAdvancesHeld.toLocaleString('en-IN')}`, 85, netY + 6);
+        doc.text(`Net Free Capital: INR ${stats.wallets.netFreeCapital.toLocaleString('en-IN')}`, 145, netY + 6);
+
+        // Transaction Ledger Table
+        let totalInflow = 0;
+        let totalOutflow = 0;
+
+        const tableRows = txs.map((t, idx) => {
+            const amt = parseFloat(t.amount) || 0;
+            let cashflow = '+ Inflow';
+            if (t.type === 'expense' || (t.type === 'capital' && !t.isDeposit) || (t.type === 'advance_settlement' && !t.isDeductOnly) || (t.type === 'bank_transfer' && !t.isCredit)) {
+                cashflow = '- Outflow';
+                totalOutflow += amt;
+            } else {
+                totalInflow += amt;
+            }
+
+            return [
+                idx + 1,
+                t.date || '',
+                t.title || 'Transaction',
+                t.category || '',
+                cashflow,
+                `INR ${amt.toLocaleString('en-IN')}`,
+                t.ownerDisplay || ''
+            ];
+        });
+
+        // Footer Summary Row
+        tableRows.push([
+            '',
+            'TOTALS',
+            `Net Cashflow: INR ${(totalInflow - totalOutflow).toLocaleString('en-IN')}`,
+            '',
+            `+ INR ${totalInflow.toLocaleString('en-IN')} / - INR ${totalOutflow.toLocaleString('en-IN')}`,
+            `INR ${(totalInflow - totalOutflow).toLocaleString('en-IN')}`,
+            ''
+        ]);
+
+        doc.autoTable({
+            startY: netY + 13,
+            head: [['#', 'Date', 'Description / Title', 'Category', 'Flow', 'Amount', 'Wallet / Owner']],
+            body: tableRows,
+            theme: 'striped',
+            headStyles: {
+                fillColor: [15, 23, 42],
+                textColor: [255, 255, 255],
+                fontSize: 7.5,
+                fontStyle: 'bold',
+                halign: 'left',
+                cellPadding: 2.5
+            },
+            bodyStyles: {
+                fontSize: 7,
+                cellPadding: 2,
+                textColor: [30, 41, 59]
+            },
+            alternateRowStyles: {
+                fillColor: [248, 250, 252]
+            },
+            columnStyles: {
+                0: { cellWidth: 8, halign: 'center' },
+                1: { cellWidth: 18 },
+                2: { cellWidth: 'auto' },
+                3: { cellWidth: 28 },
+                4: { cellWidth: 18, fontStyle: 'bold' },
+                5: { cellWidth: 24, halign: 'right', fontStyle: 'bold' },
+                6: { cellWidth: 32 }
+            },
+            didParseCell: (data) => {
+                if (data.section === 'body') {
+                    if (data.row.index === tableRows.length - 1) {
+                        data.cell.styles.fontStyle = 'bold';
+                        data.cell.styles.fillColor = [241, 245, 249];
+                        data.cell.styles.textColor = [15, 23, 42];
+                    } else if (data.column.index === 4) {
+                        if (data.cell.raw === '+ Inflow') {
+                            data.cell.styles.textColor = [16, 185, 129];
+                        } else {
+                            data.cell.styles.textColor = [225, 29, 72];
+                        }
+                    }
+                }
+            },
+            margin: { left: 14, right: 14, bottom: 18 }
+        });
+
+        // Add Signatures on Last Page
+        let finalY = doc.lastAutoTable.finalY + 12;
+        if (finalY + 25 > pageHeight) {
+            doc.addPage();
+            finalY = 25;
+        }
+
+        const sigWidth = 70;
+        doc.setDrawColor(203, 213, 225);
+        doc.setLineWidth(0.4);
+
+        // Sajida Signature
+        doc.line(14, finalY, 14 + sigWidth, finalY);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7.5);
+        doc.setTextColor(71, 85, 105);
+        doc.text('Co-Owner: Sajida (1st & 2nd Floors)', 14, finalY + 4);
+        doc.text('Authorized Signature & Date', 14, finalY + 8);
+
+        // Jeelani Signature
+        const jX = pageWidth - 14 - sigWidth;
+        doc.line(jX, finalY, jX + sigWidth, finalY);
+        doc.text('Co-Owner: Jeelani (3rd, 4th & 5th Floors)', jX, finalY + 4);
+        doc.text('Authorized Signature & Date', jX, finalY + 8);
+
+        this.drawPdfPageFooter(doc, pageWidth, pageHeight);
+
+        const cleanPeriod = periodLabel.slice(0, 25).replace(/[^a-zA-Z0-9]+/g, '_');
+        const fileName = `Meera_Heights_Wallet_Report_${cleanPeriod}.pdf`;
+        this.savePDFUniversally(doc, fileName);
+        this.showToast(`✓ Wallet PDF "${fileName}" exported successfully!`, 'success');
     },
 
     setSort(view, value) {
@@ -1719,7 +2053,7 @@ const App = {
         const cleanPeriod = periodLabel.slice(0, 20).replace(/[^a-zA-Z0-9]+/g, '_');
         const fileName = `Meera_Heights_${cleanTitle}_${cleanPeriod}.pdf`;
 
-        doc.save(fileName);
+        this.savePDFUniversally(doc, fileName);
         this.showToast(`✓ PDF Report "${fileName}" downloaded successfully!`, 'success');
     },
 
@@ -1834,7 +2168,7 @@ const App = {
         doc.text('Authorized Signatory (Sajida / Jeelani)', pageWidth - 80, y + 4);
 
         const cleanTitle = (exp.title || 'Expense').replace(/[^a-zA-Z0-9]+/g, '_');
-        doc.save(`Meera_Heights_Voucher_${exp.date || ''}_${cleanTitle}.pdf`);
+        this.savePDFUniversally(doc, `Meera_Heights_Voucher_${exp.date || ''}_${cleanTitle}.pdf`);
         this.showToast(`✓ Payment voucher for "${exp.title}" downloaded!`, 'success');
     },
 
@@ -1933,7 +2267,7 @@ const App = {
         doc.text('Meera Heights Management', pageWidth - 85, y + 8);
 
         const cleanTenant = (tenant.name || 'Tenant').replace(/[^a-zA-Z0-9]+/g, '_');
-        doc.save(`Meera_Heights_Rent_Receipt_${cleanTenant}_${rent.month || ''}.pdf`);
+        this.savePDFUniversally(doc, `Meera_Heights_Rent_Receipt_${cleanTenant}_${rent.month || ''}.pdf`);
         this.showToast(`✓ Official rent receipt for "${tenant.name}" downloaded!`, 'success');
     },
 
@@ -2197,6 +2531,42 @@ const App = {
         `;
 
         container.innerHTML = html;
+        this.renderQuickExpenseCategoryBar();
+    },
+
+    // ⚡ 1-Tap Quick Expense Creator by Category
+    renderQuickExpenseCategoryBar() {
+        const container = document.getElementById('quick-expense-category-chips');
+        if (!container) return;
+        let html = '';
+        (this.data.categories || []).forEach(cat => {
+            html += `
+                <button onclick="App.openQuickExpenseForCategory('${cat.id}')" 
+                    class="px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 bg-white hover:bg-emerald-50 text-slate-800 hover:text-emerald-700 border border-slate-200 hover:border-emerald-300 shadow-sm active:scale-95 cursor-pointer" 
+                    title="1-Tap record ${this.escapeHtml(cat.name)} expense">
+                    <span class="w-4 h-4 rounded-full flex items-center justify-center text-[9px] text-white shrink-0" style="background-color: ${cat.color || '#10B981'}">
+                        <i class="fa-solid fa-plus"></i>
+                    </span>
+                    <span>${this.escapeHtml(cat.name)}</span>
+                </button>
+            `;
+        });
+        container.innerHTML = html;
+    },
+
+    openQuickExpenseForCategory(categoryId) {
+        this.openExpenseModal();
+        if (categoryId && categoryId !== 'all') {
+            const catSelect = document.getElementById('exp-category');
+            if (catSelect) {
+                catSelect.value = categoryId;
+                this.onExpenseCategoryChanged(categoryId);
+            }
+        }
+        setTimeout(() => {
+            const amtInput = document.getElementById('exp-amount');
+            if (amtInput) amtInput.focus();
+        }, 120);
     },
 
     setExpenseCategory(catId) {
@@ -2224,6 +2594,7 @@ const App = {
                 <div class="min-w-0"><p class="text-[10px] uppercase tracking-wide font-extrabold text-emerald-700">Selected sheet</p><p class="text-sm font-extrabold text-slate-900 truncate">${label}</p></div>
             </div>
             <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                <button onclick="App.openQuickExpenseForCategory(${categoryArg})" class="category-export-btn quick-add px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm cursor-pointer" title="Quickly record expense under ${label}"><i class="fa-solid fa-plus-circle"></i> + Record in ${cat ? this.escapeHtml(cat.name) : 'Sheet'}</button>
                 <button onclick="App.downloadCategoryExcel(${categoryArg})" class="category-export-btn excel" title="Download formatted Excel workbook (.xlsx)"><i class="fa-solid fa-file-excel"></i> Excel (.xlsx)</button>
                 <button onclick="App.downloadCategoryPDF(${categoryArg})" class="category-export-btn pdf" title="Download Executive PDF"><i class="fa-solid fa-file-pdf"></i> PDF</button>
                 <button onclick="App.openPDFExportModal('category', ${categoryArg})" class="category-export-btn period" title="Custom Period PDF (Weekly, Monthly, Yearly)"><i class="fa-solid fa-calendar-days"></i> Period PDF</button>
@@ -2242,11 +2613,9 @@ const App = {
             return [e.date, e.title, c?.name || '', e.amount, e.sajidaAmount || 0, e.jeelaniAmount || 0, e.debitedWallet || e.debitedSource || '', e.isRecurring ? 'Yes' : 'No', e.notes || ''];
         });
         const csv = [header, ...body].map(row => row.map(q).join(',')).join('\r\n');
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' }));
-        a.download = `Meera_Heights_${name.replace(/[^a-z0-9]+/gi, '-')}_Expenses.csv`;
-        a.click();
-        URL.revokeObjectURL(a.href);
+        const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
+        const fileName = `Meera_Heights_${name.replace(/[^a-z0-9]+/gi, '-')}_Expenses.csv`;
+        ExcelExporter.downloadBlobUniversal(blob, fileName);
         this.showToast(`${name} CSV downloaded.`, 'success');
     },
 
@@ -4088,11 +4457,11 @@ const App = {
         }
     },
 
-    // --- Sub-Tab 1: Unified Wallet History with EDIT & DELETE on EVERY transaction ---
-    renderWalletUnifiedTimeline(container) {
+    // --- Unified Wallet Transactions Stream Generator ---
+    getWalletTransactionsStream(options = {}) {
         const stream = [];
 
-        // Rents
+        // 1. Rents
         (this.data.rentCollections || []).forEach(r => {
             const floor = r.floor || this.detectFloorFromFlat(r.flat);
             const targetWallet = r.ownerCredited === 'sajida' ? 'sajida_rent' : 'jeelani_rent';
@@ -4101,7 +4470,7 @@ const App = {
                 type: 'rent',
                 walletId: targetWallet,
                 title: `Rent: ${r.tenantName} (${r.flat} - ${floor} Floor)`,
-                amount: r.amount,
+                amount: parseFloat(r.amount) || 0,
                 date: r.paymentDate,
                 category: 'Rent Collection',
                 ownerCredited: r.ownerCredited,
@@ -4109,7 +4478,7 @@ const App = {
             });
         });
 
-        // Expenses
+        // 2. Expenses
         (this.data.expenses || []).forEach(e => {
             const cat = this.data.categories.find(c => c.id === e.categoryId);
             const targetWallet = e.debitedWallet === 'sajida' ? 'sajida_advance' : (e.debitedWallet === 'jeelani' ? 'jeelani_advance' : 'both');
@@ -4118,7 +4487,7 @@ const App = {
                 type: 'expense',
                 walletId: targetWallet,
                 title: `Expense: ${e.title}`,
-                amount: e.amount,
+                amount: parseFloat(e.amount) || 0,
                 date: e.date,
                 category: cat ? cat.name : 'Maintenance',
                 debitedWallet: e.debitedWallet,
@@ -4128,7 +4497,7 @@ const App = {
             });
         });
 
-        // Capital Adjustments
+        // 3. Capital Adjustments
         (this.data.walletAdjustments || []).forEach(adj => {
             const isDeposit = adj.type === 'deposit';
             const targetWallet = adj.walletId || (adj.ownerId === 'sajida' ? 'sajida_advance' : 'jeelani_advance');
@@ -4138,7 +4507,7 @@ const App = {
                 type: 'capital',
                 walletId: targetWallet,
                 title: `Capital ${isDeposit ? 'Deposit' : 'Withdrawal'}: ${adj.notes || 'Owner corpus'}`,
-                amount: adj.amount,
+                amount: parseFloat(adj.amount) || 0,
                 date: adj.date,
                 category: isDeposit ? 'Capital Inflow' : 'Capital Payout',
                 isDeposit,
@@ -4147,7 +4516,7 @@ const App = {
             });
         });
 
-        // Advance Deposits Received
+        // 4. Advance Deposits Received
         (this.data.tenants || []).forEach(t => {
             const deposit = parseFloat(t.advanceDeposit) || 0;
             if (deposit > 0) {
@@ -4170,7 +4539,7 @@ const App = {
             }
         });
 
-        // Advance Settlements (Refunds Paid & Deductions Retained)
+        // 5. Advance Settlements (Refunds Paid & Deductions Retained)
         (this.data.advanceSettlements || []).forEach(settle => {
             const targetWallet = settle.walletId || (settle.refundOwner === 'sajida' ? 'sajida_advance' : 'jeelani_advance');
             const ownerName = (settle.refundOwner === 'sajida' || targetWallet === 'sajida_advance') ? 'Sajida' : 'Jeelani';
@@ -4207,7 +4576,7 @@ const App = {
             });
         });
 
-        // Wallet ⇄ Bank Transactions
+        // 6. Wallet ⇄ Bank Transactions
         (this.data.bankTransactions || []).forEach(tx => {
             const isWalletToBank = (tx.type === 'wallet_to_bank');
             const targetWallet = tx.walletId || (tx.ownerId === 'sajida' ? 'sajida_rent' : 'jeelani_rent');
@@ -4221,39 +4590,58 @@ const App = {
                 title: isWalletToBank 
                     ? `Wallet ➔ Bank: ${tx.bankName || 'Bank Account'}${tx.notes ? ` (${tx.notes})` : ''}`
                     : `Bank ➔ Wallet: Deposit from ${tx.bankName || 'Bank Account'}${tx.notes ? ` (${tx.notes})` : ''}`,
-                amount: tx.amount,
+                amount: parseFloat(tx.amount) || 0,
                 date: tx.date,
                 category: isWalletToBank ? 'Wallet ➔ Bank' : 'Bank ➔ Wallet',
                 isCredit: !isWalletToBank,
                 ownerCredited: tx.ownerId,
-                ownerDisplay: wInfo.shortName,
+                ownerDisplay: wInfo ? wInfo.shortName : (tx.ownerId === 'sajida' ? 'Sajida' : 'Jeelani'),
                 reference: tx.reference,
                 transferMode: tx.transferMode
             });
         });
 
-        // Advance ⇄ Rent Internal Wallet Transfers
+        // 7. Advance ⇄ Rent Internal Wallet Transfers
         (this.data.walletTransfers || []).forEach(wt => {
             const fromInfo = this.getWalletInfo(wt.fromWallet);
             const toInfo = this.getWalletInfo(wt.toWallet);
             stream.push({
                 id: wt.id,
                 type: 'wallet_transfer',
-                title: `Wallet Transfer: ${fromInfo.shortName} ➔ ${toInfo.shortName}`,
-                amount: wt.amount,
+                title: `Wallet Transfer: ${fromInfo ? fromInfo.shortName : wt.fromWallet} ➔ ${toInfo ? toInfo.shortName : wt.toWallet}`,
+                amount: parseFloat(wt.amount) || 0,
                 date: wt.date,
                 category: 'Advance ⇄ Rent Transfer',
-                ownerCredited: fromInfo.ownerId,
+                ownerCredited: fromInfo ? fromInfo.ownerId : null,
                 fromWallet: wt.fromWallet,
                 toWallet: wt.toWallet,
-                ownerDisplay: `${fromInfo.shortName} ➔ ${toInfo.shortName}`,
+                ownerDisplay: `${fromInfo ? fromInfo.shortName : wt.fromWallet} ➔ ${toInfo ? toInfo.shortName : wt.toWallet}`,
                 notes: wt.reason ? `${wt.reason}${wt.notes ? ` • ${wt.notes}` : ''}` : wt.notes
             });
         });
 
-        // Filter by Owner or Specific Wallet
+        // Filter by Transaction Type (subTab or options.type)
         let filtered = stream;
-        if (this.walletOwnerFilter === 'sajida') {
+        const txType = options.type || options.subTab;
+        if (txType && txType !== 'all') {
+            if (txType === 'bank') {
+                filtered = filtered.filter(item => item.type === 'bank_transfer');
+            } else if (txType === 'transfers') {
+                filtered = filtered.filter(item => item.type === 'wallet_transfer');
+            } else if (txType === 'advances') {
+                filtered = filtered.filter(item => item.type === 'advance_received' || item.type === 'advance_settlement');
+            } else if (txType === 'rents') {
+                filtered = filtered.filter(item => item.type === 'rent');
+            } else if (txType === 'expenses') {
+                filtered = filtered.filter(item => item.type === 'expense');
+            } else if (txType === 'capital') {
+                filtered = filtered.filter(item => item.type === 'capital');
+            }
+        }
+
+        // Filter by Scope / Owner
+        const scope = options.walletScope || options.ownerFilter;
+        if (scope === 'sajida' || scope === 'owner_sajida') {
             filtered = filtered.filter(item => 
                 item.ownerCredited === 'sajida' || 
                 item.debitedWallet === 'sajida' || 
@@ -4262,7 +4650,7 @@ const App = {
                 (item.fromWallet && item.fromWallet.startsWith('sajida')) ||
                 (item.toWallet && item.toWallet.startsWith('sajida'))
             );
-        } else if (this.walletOwnerFilter === 'jeelani') {
+        } else if (scope === 'jeelani' || scope === 'owner_jeelani') {
             filtered = filtered.filter(item => 
                 item.ownerCredited === 'jeelani' || 
                 item.debitedWallet === 'jeelani' || 
@@ -4271,16 +4659,50 @@ const App = {
                 (item.fromWallet && item.fromWallet.startsWith('jeelani')) ||
                 (item.toWallet && item.toWallet.startsWith('jeelani'))
             );
-        } else if (this.walletOwnerFilter !== 'all') {
+        } else if (scope && scope !== 'all') {
             filtered = filtered.filter(item => 
-                item.fromWallet === this.walletOwnerFilter ||
-                item.toWallet === this.walletOwnerFilter ||
-                item.walletId === this.walletOwnerFilter ||
-                (item.walletId === 'both' && (this.walletOwnerFilter === 'sajida_advance' || this.walletOwnerFilter === 'jeelani_advance'))
+                item.fromWallet === scope ||
+                item.toWallet === scope ||
+                item.walletId === scope ||
+                (item.walletId === 'both' && (scope === 'sajida_advance' || scope === 'jeelani_advance'))
             );
         }
 
-        filtered = this.sortRecords(filtered, this.sortState.wallet, 'title');
+        // Filter by Dynamic Period
+        const period = options.period || 'all';
+        if (period === 'weekly') {
+            const now = new Date();
+            const past7 = new Date();
+            past7.setDate(now.getDate() - 7);
+            const past7Str = past7.toISOString().slice(0, 10);
+            filtered = filtered.filter(t => (t.date || '') >= past7Str);
+        } else if (period === 'monthly') {
+            const m = options.month || (this.selectedMonthFilter && this.selectedMonthFilter !== 'all' ? this.selectedMonthFilter : this.getCurrentMonthKey());
+            if (m && m !== 'all') {
+                filtered = filtered.filter(t => (t.date || '').startsWith(m));
+            }
+        } else if (period === 'yearly') {
+            const yr = options.year || new Date().getFullYear().toString();
+            filtered = filtered.filter(t => (t.date || '').startsWith(yr));
+        } else if (period === 'custom') {
+            if (options.startDate) {
+                filtered = filtered.filter(t => (t.date || '') >= options.startDate);
+            }
+            if (options.endDate) {
+                filtered = filtered.filter(t => (t.date || '') <= options.endDate);
+            }
+        }
+
+        const sortKey = options.sortKey || (this.sortState ? this.sortState.wallet : 'date-desc');
+        return this.sortRecords(filtered, sortKey, 'title');
+    },
+
+    // --- Sub-Tab 1: Unified Wallet History with EDIT & DELETE on EVERY transaction ---
+    renderWalletUnifiedTimeline(container) {
+        const filtered = this.getWalletTransactionsStream({
+            ownerFilter: this.walletOwnerFilter,
+            sortKey: this.sortState.wallet
+        });
 
         if (filtered.length === 0) {
             container.innerHTML = `

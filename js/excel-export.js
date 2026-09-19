@@ -5,25 +5,62 @@
  */
 
 class ExcelExporter {
-    static downloadWorkbook(wb, fileName) {
-        const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-        const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    static async downloadBlobUniversal(blob, fileName) {
+        if (typeof window === 'undefined') return false;
 
-        if (typeof window !== 'undefined' && window.navigator && window.navigator.msSaveOrOpenBlob) {
+        // Detect mobile platforms (Android, iPhone, iPad, iPod)
+        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+                         (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+        // Native Web Share API on mobile devices (iOS Safari / Android Chrome / PWA)
+        if (isMobile && typeof navigator.share === 'function' && typeof File !== 'undefined') {
+            try {
+                const file = new File([blob], fileName, { type: blob.type || 'application/octet-stream' });
+                if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                    await navigator.share({
+                        files: [file],
+                        title: fileName,
+                        text: `Meera Heights Report: ${fileName}`
+                    });
+                    return true;
+                }
+            } catch (err) {
+                if (err.name === 'AbortError') return true;
+                console.warn('Web Share API error, falling back to direct download:', err);
+            }
+        }
+
+        // Direct browser file download fallback
+        if (window.navigator && window.navigator.msSaveOrOpenBlob) {
             window.navigator.msSaveOrOpenBlob(blob, fileName);
-        } else if (typeof document !== 'undefined') {
+            return true;
+        }
+
+        if (typeof document !== 'undefined') {
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.style.display = 'none';
             a.href = url;
             a.download = fileName;
+            a.target = '_blank';
             document.body.appendChild(a);
             a.click();
             setTimeout(() => {
-                document.body.removeChild(a);
-                window.URL.revokeObjectURL(url);
-            }, 1500);
+                try {
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                } catch (e) {}
+            }, 30000);
+            return true;
         }
+
+        return false;
+    }
+
+    static downloadWorkbook(wb, fileName) {
+        const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+        const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        return this.downloadBlobUniversal(blob, fileName);
     }
 
     static getSheetConfig(sheetKey, appState) {
@@ -1004,21 +1041,147 @@ class ExcelExporter {
 
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const fileName = `Meera_Heights_Ledger_${new Date().toISOString().slice(0, 10)}.csv`;
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = fileName;
-            document.body.appendChild(a);
-            a.click();
-            setTimeout(() => {
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-            }, 1000);
-
-            return true;
+            return this.downloadBlobUniversal(blob, fileName);
         } catch (err) {
             console.error('Error generating CSV:', err);
             alert('Failed to export CSV: ' + err.message);
+            return false;
+        }
+    }
+
+    // Dynamic Period Wallet Excel Workbook Export
+    static exportWalletWorkbook(options, appState) {
+        try {
+            const stats = appState.getStats ? appState.getStats() : {};
+            const txs = appState.getWalletTransactionsStream ? appState.getWalletTransactionsStream(options) : [];
+
+            const wb = XLSX.utils.book_new();
+
+            // 1. Sheet 1: Wallets Summary & Balances
+            const summaryData = [
+                ["MEERA HEIGHTS - 4 CAPITAL WALLETS & TREASURY STATEMENT"],
+                [`Generated on: ${new Date().toLocaleString('en-IN')}`],
+                [`Scope: ${options.scopeLabel || 'All Wallets'} | Period: ${options.periodLabel || 'All Time'}`],
+                ["Co-Owners: Sajida (Floors 1-2 • 40%) | Jeelani (Floors 3-5 • 60%)"],
+                [""],
+                ["WALLET SUMMARY & BALANCES", "", "", ""],
+                ["Wallet Account", "Owner & Floor Coverage", "Liquid Balance (₹)", "Status / Notes"],
+                ["Sajida Advance Wallet", "Sajida (Floors 1 & 2)", stats.sajidaAdvanceBalance || 0, `Held Advances: ₹${(stats.sajidaHeldAdvances || 0).toLocaleString('en-IN')}`],
+                ["Sajida Rent Wallet", "Sajida (Floors 1 & 2)", stats.sajidaRentBalance || 0, "Rental Collections Vault"],
+                ["Jeelani Advance Wallet", "Jeelani (Floors 3, 4 & 5)", stats.jeelaniAdvanceBalance || 0, `Held Advances: ₹${(stats.jeelaniHeldAdvances || 0).toLocaleString('en-IN')}`],
+                ["Jeelani Rent Wallet", "Jeelani (Floors 3, 4 & 5)", stats.jeelaniRentBalance || 0, "Rental Collections Vault"],
+                ["TOTAL LIQUID TREASURY", "Combined All 4 Wallets", stats.totalLiquidTreasury || 0, "All Funds Available"],
+                [""],
+                ["LIABILITY & ADVANCE DETAILS", "", "", ""],
+                ["Tenant Advances Held (Liabilities)", "Total Deposit Liabilities", stats.totalAdvanceLiabilities || 0, "To be refunded upon tenant checkout"],
+                ["Retained Deductions from Advances", "Total Retained Revenue", (stats.sajidaDeductionsRetained || 0) + (stats.jeelaniDeductionsRetained || 0), "Painting, cleaning, utilities, repairs"],
+                ["Net Free Capital (After Advance Liabilities)", "Available Capital", stats.netFreeCapital || 0, "Treasury minus Held Deposits"]
+            ];
+
+            const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
+            wsSummary['!cols'] = [{ wch: 38 }, { wch: 28 }, { wch: 22 }, { wch: 35 }];
+            XLSX.utils.book_append_sheet(wb, wsSummary, "Wallet Summary");
+
+            // 2. Sheet 2: Transactions Ledger
+            const ledgerData = [
+                ["MEERA HEIGHTS - WALLET TRANSACTIONS LEDGER"],
+                [`Period: ${options.periodLabel || 'All Time'} | Wallet Scope: ${options.scopeLabel || 'All Wallets'} | Total Records: ${txs.length}`],
+                [""],
+                ["S.No", "Date", "Description", "Category", "Transaction Type", "Cashflow", "Amount (₹)", "Wallet Account", "Owner / Floors", "Notes & Reference"]
+            ];
+
+            let totalInflow = 0;
+            let totalOutflow = 0;
+
+            txs.forEach((t, idx) => {
+                const amt = parseFloat(t.amount) || 0;
+                let cashflow = 'Inflow (+)';
+                if (t.type === 'expense' || (t.type === 'capital' && !t.isDeposit) || (t.type === 'advance_settlement' && !t.isDeductOnly) || (t.type === 'bank_transfer' && !t.isCredit)) {
+                    cashflow = 'Outflow (-)';
+                    totalOutflow += amt;
+                } else {
+                    totalInflow += amt;
+                }
+
+                ledgerData.push([
+                    idx + 1,
+                    t.date || '',
+                    t.title || 'Transaction',
+                    t.category || '',
+                    t.type || '',
+                    cashflow,
+                    amt,
+                    t.walletId || '',
+                    t.ownerDisplay || '',
+                    t.notes || t.reference || ''
+                ]);
+            });
+
+            ledgerData.push([
+                "SUMMARY", "", "", "", "",
+                `Inflow: ₹${totalInflow.toLocaleString('en-IN')} | Outflow: ₹${totalOutflow.toLocaleString('en-IN')}`,
+                totalInflow - totalOutflow,
+                `Net Flow: ₹${(totalInflow - totalOutflow).toLocaleString('en-IN')}`,
+                "", ""
+            ]);
+
+            const wsLedger = XLSX.utils.aoa_to_sheet(ledgerData);
+            wsLedger['!cols'] = [
+                { wch: 6 }, { wch: 14 }, { wch: 38 }, { wch: 22 },
+                { wch: 20 }, { wch: 14 }, { wch: 18 }, { wch: 25 },
+                { wch: 25 }, { wch: 35 }
+            ];
+            XLSX.utils.book_append_sheet(wb, wsLedger, "Transaction Ledger");
+
+            const dateStr = new Date().toISOString().slice(0, 10);
+            const fileName = `Meera_Heights_Wallet_Ledger_${options.period || 'all'}_${dateStr}.xlsx`;
+            this.downloadWorkbook(wb, fileName);
+            return true;
+        } catch (err) {
+            console.error('Error generating Wallet Excel:', err);
+            alert('Failed to export Wallet Excel: ' + err.message);
+            return false;
+        }
+    }
+
+    // Dynamic Period Wallet CSV Export
+    static exportWalletCSV(options, appState) {
+        try {
+            const txs = appState.getWalletTransactionsStream ? appState.getWalletTransactionsStream(options) : [];
+            let csv = "\uFEFF"; // UTF-8 BOM for Excel compatibility
+            csv += "MEERA HEIGHTS - WALLET TRANSACTIONS STATEMENT\n";
+            csv += `Generated: ${new Date().toLocaleString('en-IN')}\n`;
+            csv += `Scope: ${options.scopeLabel || 'All Wallets'} | Period: ${options.periodLabel || 'All Time'}\n\n`;
+            csv += "S.No,Date,Description,Category,Type,Cashflow,Amount (INR),Wallet Account,Owner / Floors,Notes / Reference\n";
+
+            txs.forEach((t, idx) => {
+                const amt = parseFloat(t.amount) || 0;
+                let cashflow = 'Inflow (+)';
+                if (t.type === 'expense' || (t.type === 'capital' && !t.isDeposit) || (t.type === 'advance_settlement' && !t.isDeductOnly) || (t.type === 'bank_transfer' && !t.isCredit)) {
+                    cashflow = 'Outflow (-)';
+                }
+                const row = [
+                    idx + 1,
+                    `"${t.date || ''}"`,
+                    `"${(t.title || '').replace(/"/g, '""')}"`,
+                    `"${(t.category || '').replace(/"/g, '""')}"`,
+                    `"${t.type || ''}"`,
+                    `"${cashflow}"`,
+                    amt,
+                    `"${t.walletId || ''}"`,
+                    `"${(t.ownerDisplay || '').replace(/"/g, '""')}"`,
+                    `"${(t.notes || t.reference || '').replace(/"/g, '""')}"`
+                ];
+                csv += row.join(',') + "\n";
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const dateStr = new Date().toISOString().slice(0, 10);
+            const fileName = `Meera_Heights_Wallet_Ledger_${options.period || 'all'}_${dateStr}.csv`;
+            return this.downloadBlobUniversal(blob, fileName);
+        } catch (err) {
+            console.error('Error generating Wallet CSV:', err);
+            alert('Failed to export Wallet CSV: ' + err.message);
             return false;
         }
     }

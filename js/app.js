@@ -187,9 +187,11 @@ const App = {
     },
 
     updateCloudSyncUI(status, detail = '') {
-        // Top Navbar Pill Indicators
+        // Mobile & Desktop Pill Indicators
         const dot = document.getElementById('nav-cloud-sync-dot');
         const text = document.getElementById('nav-cloud-sync-text');
+        const dotDesktop = document.getElementById('nav-cloud-sync-dot-desktop');
+        const textDesktop = document.getElementById('nav-cloud-sync-text-desktop');
         const badge = document.getElementById('cloud-sync-status-badge');
         const statusText = document.getElementById('cloud-sync-status-text');
         const lastTime = document.getElementById('cloud-sync-last-time');
@@ -216,9 +218,14 @@ const App = {
         }
         if (lastTime) lastTime.textContent = formattedLast;
 
+        const updatePill = (dotEl, textEl, dotClass, textStr) => {
+            if (dotEl) dotEl.className = dotClass;
+            if (textEl) textEl.textContent = textStr;
+        };
+
         if (status === 'connected') {
-            if (dot) dot.className = 'w-2 h-2 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50';
-            if (text) text.textContent = 'Sync Live';
+            updatePill(dot, text, 'w-2 h-2 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50', 'Sync Live');
+            updatePill(dotDesktop, textDesktop, 'w-2 h-2 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50', 'Sync Live');
             if (badge) {
                 badge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
                 badge.textContent = 'Connected (Live)';
@@ -228,8 +235,8 @@ const App = {
             if (modalLabel) modalLabel.textContent = 'Connected & Syncing';
             if (modalDetails) modalDetails.textContent = detail || 'Firestore real-time listener active';
         } else if (status === 'syncing') {
-            if (dot) dot.className = 'w-2 h-2 rounded-full bg-blue-500 animate-pulse';
-            if (text) text.textContent = 'Syncing...';
+            updatePill(dot, text, 'w-2 h-2 rounded-full bg-blue-500 animate-pulse', 'Syncing...');
+            updatePill(dotDesktop, textDesktop, 'w-2 h-2 rounded-full bg-blue-500 animate-pulse', 'Syncing...');
             if (badge) {
                 badge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-blue-500/20 text-blue-300 border border-blue-500/30';
                 badge.textContent = 'Syncing...';
@@ -239,8 +246,8 @@ const App = {
             if (modalLabel) modalLabel.textContent = 'Syncing...';
             if (modalDetails) modalDetails.textContent = detail;
         } else if (status === 'offline') {
-            if (dot) dot.className = 'w-2 h-2 rounded-full bg-amber-500';
-            if (text) text.textContent = 'Offline';
+            updatePill(dot, text, 'w-2 h-2 rounded-full bg-amber-500', 'Offline');
+            updatePill(dotDesktop, textDesktop, 'w-2 h-2 rounded-full bg-amber-500', 'Offline');
             if (badge) {
                 badge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-amber-500/20 text-amber-300 border border-amber-500/30';
                 badge.textContent = 'Offline';
@@ -250,8 +257,8 @@ const App = {
             if (modalLabel) modalLabel.textContent = 'Device Offline';
             if (modalDetails) modalDetails.textContent = detail || 'Changes queued locally';
         } else if (status === 'error') {
-            if (dot) dot.className = 'w-2 h-2 rounded-full bg-rose-500';
-            if (text) text.textContent = 'Sync Error';
+            updatePill(dot, text, 'w-2 h-2 rounded-full bg-rose-500', 'Sync Error');
+            updatePill(dotDesktop, textDesktop, 'w-2 h-2 rounded-full bg-rose-500', 'Sync Error');
             if (badge) {
                 badge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-rose-500/20 text-rose-300 border border-rose-500/30';
                 badge.textContent = 'Sync Error';
@@ -262,8 +269,8 @@ const App = {
             if (modalDetails) modalDetails.textContent = detail;
         } else {
             // Disconnected
-            if (dot) dot.className = 'w-2 h-2 rounded-full bg-slate-400';
-            if (text) text.textContent = 'Sync Off';
+            updatePill(dot, text, 'w-2 h-2 rounded-full bg-slate-400', 'Sync Off');
+            updatePill(dotDesktop, textDesktop, 'w-2 h-2 rounded-full bg-slate-400', 'Sync Off');
             if (badge) {
                 badge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-slate-700 text-slate-300';
                 badge.textContent = 'Not Configured';
@@ -1368,8 +1375,9 @@ const App = {
         this.setElementText('settlement-headline', stats.settlementText);
         this.setElementText('settlement-subtext', stats.settlementNote);
 
-        // Header mini balance badge
+        // Header mini balance badge (Mobile & Desktop)
         this.setElementText('header-treasury-badge', `₹${stats.netBuildingBalance.toLocaleString('en-IN')}`);
+        this.setElementText('header-treasury-badge-desktop', `₹${stats.netBuildingBalance.toLocaleString('en-IN')}`);
     },
 
     // -------------------------------------------------------------
@@ -1479,8 +1487,9 @@ const App = {
             return;
         }
 
-        let html = `
-            <div class="overflow-x-auto rounded-2xl bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700">
+        // 1. Desktop Table View (visible on md and above)
+        let desktopHtml = `
+            <div class="hidden md:block overflow-x-auto rounded-2xl bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700">
                 <table class="w-full text-left text-sm text-slate-600 dark:text-slate-300">
                     <thead class="bg-slate-50 dark:bg-slate-700/60 text-xs uppercase font-semibold text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
                         <tr>
@@ -1495,27 +1504,36 @@ const App = {
                     <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50">
         `;
 
+        // 2. Mobile Cards View (visible on screens < md)
+        let mobileHtml = `<div class="md:hidden space-y-3">`;
+
         filtered.forEach(exp => {
             const cat = this.data.categories.find(c => c.id === exp.categoryId) || { name: 'General', icon: 'fa-tag', color: '#10B981' };
             
             let splitBadge = '';
+            let splitSummaryText = '60:40 Floor Ratio';
             if (exp.splitType === 'sajida_only') {
                 splitBadge = `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300">100% Sajida (Fl 1-2)</span>`;
+                splitSummaryText = '100% Sajida (Floors 1-2)';
             } else if (exp.splitType === 'jeelani_only') {
                 splitBadge = `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300">100% Jeelani (Fl 3-5)</span>`;
+                splitSummaryText = '100% Jeelani (Floors 3-5)';
             } else if (exp.splitType === 'custom') {
                 splitBadge = `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300">Custom (${exp.sajidaRatio}% : ${exp.jeelaniRatio}%)</span>
                               <div class="text-[11px] text-slate-500 mt-0.5">S: ₹${exp.sajidaAmount} | J: ₹${exp.jeelaniAmount}</div>`;
+                splitSummaryText = `S: ₹${exp.sajidaAmount} | J: ₹${exp.jeelaniAmount}`;
             } else {
                 splitBadge = `<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300">60:40 Floor Ratio</span>
                               <div class="text-[11px] text-slate-500 mt-0.5">S(40%): ₹${exp.sajidaAmount} | J(60%): ₹${exp.jeelaniAmount}</div>`;
+                splitSummaryText = `S(40%): ₹${exp.sajidaAmount} | J(60%): ₹${exp.jeelaniAmount}`;
             }
 
             let walletText = `<span class="font-medium text-slate-700 dark:text-slate-300">Both Wallets</span>`;
             if (exp.debitedWallet === 'sajida') walletText = `<span class="font-medium text-emerald-600">Sajida's Wallet</span>`;
             if (exp.debitedWallet === 'jeelani') walletText = `<span class="font-medium text-blue-600">Jeelani's Wallet</span>`;
 
-            html += `
+            // Desktop Table Row
+            desktopHtml += `
                 <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-700/30 transition">
                     <td class="px-4 py-3.5">
                         <div class="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
@@ -1548,15 +1566,53 @@ const App = {
                     </td>
                 </tr>
             `;
+
+            // Mobile Card
+            mobileHtml += `
+                <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm space-y-3">
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-700">
+                            <i class="fa-solid ${cat.icon}" style="color: ${cat.color}"></i>
+                            <span>${cat.name}</span>
+                        </span>
+                        <div class="text-right">
+                            <div class="text-base font-black text-slate-900">₹${parseFloat(exp.amount).toLocaleString('en-IN')}</div>
+                            <span class="text-[10px] text-slate-400 font-medium">${exp.date || 'N/A'}</span>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-extrabold text-slate-900 flex items-center gap-1.5 flex-wrap">
+                            <span>${exp.title}</span>
+                            ${exp.isRecurring ? `<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800"><i class="fa-solid fa-arrows-rotate text-[8px]"></i> Auto</span>` : ''}
+                        </h4>
+                        ${exp.notes ? `<p class="text-xs text-slate-500 mt-1">${exp.notes}</p>` : ''}
+                    </div>
+                    <div class="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+                        <div class="text-[11px] leading-tight">
+                            <div>${walletText}</div>
+                            <div class="text-[10px] text-slate-400 mt-0.5">${splitSummaryText}</div>
+                        </div>
+                        <div class="flex items-center gap-1 shrink-0">
+                            <button onclick="App.editExpense('${exp.id}')" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center text-xs transition" title="Edit">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </button>
+                            <button onclick="App.deleteExpense('${exp.id}')" class="w-8 h-8 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 flex items-center justify-center text-xs transition" title="Delete">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
         });
 
-        html += `
+        desktopHtml += `
                     </tbody>
                 </table>
             </div>
         `;
+        mobileHtml += `</div>`;
 
-        container.innerHTML = html;
+        container.innerHTML = desktopHtml + mobileHtml;
     },
 
     // -------------------------------------------------------------
@@ -2141,7 +2197,8 @@ const App = {
                 </div>
             </div>
 
-            <div class="overflow-x-auto">
+            <!-- 1. Desktop Table View (visible on md and above) -->
+            <div class="hidden md:block overflow-x-auto">
                 <table class="w-full text-left text-xs text-slate-600">
                     <thead class="bg-slate-50 text-[11px] uppercase font-bold text-slate-500 border-b border-slate-200">
                         <tr>
@@ -2159,6 +2216,8 @@ const App = {
                     <tbody class="divide-y divide-slate-100 font-medium">
         `;
 
+        let mobileHtml = `<div class="md:hidden p-3 space-y-3">`;
+
         if (tableList.length === 0) {
             ledgerHtml += `
                 <tr>
@@ -2167,6 +2226,12 @@ const App = {
                         No expense records found for this floor filter.
                     </td>
                 </tr>
+            `;
+            mobileHtml += `
+                <div class="text-center py-8 text-slate-400 text-xs">
+                    <i class="fa-solid fa-layer-group text-2xl mb-2 text-slate-300 block"></i>
+                    No expense records found for this floor filter.
+                </div>
             `;
         } else {
             tableList.forEach(item => {
@@ -2178,6 +2243,7 @@ const App = {
                 else if (item.debitedWallet === 'jeelani') walletBadge = 'Jeelani (100%)';
                 else if (item.paidBy) walletBadge = item.paidBy;
 
+                // Desktop Row
                 ledgerHtml += `
                     <tr class="hover:bg-slate-50/80 transition">
                         <td class="px-4 py-3 whitespace-nowrap font-semibold text-slate-800">${item.date || 'N/A'}</td>
@@ -2217,6 +2283,42 @@ const App = {
                         </td>
                     </tr>
                 `;
+
+                // Mobile Card
+                mobileHtml += `
+                    <div class="bg-slate-50/70 rounded-2xl p-3.5 border border-slate-200 space-y-2.5">
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold ${ownerBadge}">
+                                    ${item.floorName}
+                                </span>
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-white text-slate-700 border border-slate-200">
+                                    <i class="fa-solid ${cat.icon}" style="color: ${cat.color}"></i>
+                                    ${cat.name}
+                                </span>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-xs font-black text-emerald-700">Share: ₹${parseFloat(item.floorShare || 0).toLocaleString('en-IN')}</span>
+                            </div>
+                        </div>
+                        <div>
+                            <h5 class="text-xs font-bold text-slate-900">${item.title}</h5>
+                            ${item.notes ? `<p class="text-[11px] text-slate-500 mt-0.5">${item.notes}</p>` : ''}
+                        </div>
+                        <div class="pt-2 border-t border-slate-200/60 flex items-center justify-between text-[11px] text-slate-500">
+                            <div>
+                                <span>Total: <strong>₹${parseFloat(item.amount).toLocaleString('en-IN')}</strong></span>
+                                <span class="text-slate-400 ml-1">(${item.scope || '20% Share'})</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[10px] font-semibold text-slate-600">${walletBadge}</span>
+                                <button onclick="App.openExpenseModal('${item.id}')" class="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-emerald-600 flex items-center justify-center text-xs transition" title="Edit Expense">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
             });
         }
 
@@ -2225,8 +2327,9 @@ const App = {
                 </table>
             </div>
         `;
+        mobileHtml += `</div>`;
 
-        ledgerContainer.innerHTML = ledgerHtml;
+        ledgerContainer.innerHTML = ledgerHtml + mobileHtml;
     },
 
     // -------------------------------------------------------------
@@ -2419,8 +2522,9 @@ const App = {
             return;
         }
 
-        let html = `
-            <div class="overflow-x-auto rounded-2xl bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700">
+        // 1. Desktop Table View (visible on md and above)
+        let desktopHtml = `
+            <div class="hidden md:block overflow-x-auto rounded-2xl bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700">
                 <table class="w-full text-left text-sm text-slate-600 dark:text-slate-300">
                     <thead class="bg-slate-50 dark:bg-slate-700/60 text-xs uppercase font-semibold text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
                         <tr>
@@ -2437,15 +2541,18 @@ const App = {
                     <tbody class="divide-y divide-slate-100 dark:divide-slate-700/50">
         `;
 
+        // 2. Mobile Cards View (visible on screens < md)
+        let mobileHtml = `<div class="md:hidden space-y-3">`;
+
         list.forEach(rent => {
             const floor = rent.floor || this.detectFloorFromFlat(rent.flat);
             const ownerInfo = this.getFloorOwner(floor);
 
             let ownerBadge = '';
             if (rent.ownerCredited === 'sajida') {
-                ownerBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">Sajida (Floors 1-2)</span>`;
+                ownerBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">Sajida (Fl 1-2)</span>`;
             } else if (rent.ownerCredited === 'jeelani') {
-                ownerBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">Jeelani (Floors 3-5)</span>`;
+                ownerBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">Jeelani (Fl 3-5)</span>`;
             } else {
                 ownerBadge = `<span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-800">50:50 Shared</span>`;
             }
@@ -2457,7 +2564,8 @@ const App = {
                 destBadge = `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 mt-1 block w-max"><i class="fa-solid fa-wallet"></i> Cash Wallet</span>`;
             }
 
-            html += `
+            // Desktop Row
+            desktopHtml += `
                 <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-700/30 transition">
                     <td class="px-4 py-3 text-xs text-slate-500 font-medium">${rent.paymentDate}</td>
                     <td class="px-4 py-3">
@@ -2482,15 +2590,54 @@ const App = {
                     </td>
                 </tr>
             `;
+
+            // Mobile Card
+            mobileHtml += `
+                <div class="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm space-y-3">
+                    <div class="flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            <div class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-800 font-bold flex items-center justify-center text-xs shrink-0">
+                                ${rent.flat}
+                            </div>
+                            <div class="min-w-0">
+                                <h4 class="text-sm font-extrabold text-slate-900 truncate">${rent.tenantName}</h4>
+                                <span class="text-[10px] text-slate-400 font-medium">${floor} Floor • ${rent.month}</span>
+                            </div>
+                        </div>
+                        <div class="text-right shrink-0">
+                            <div class="text-base font-black text-emerald-600">₹${parseFloat(rent.amount).toLocaleString('en-IN')}</div>
+                            <span class="text-[10px] text-slate-400">${rent.paymentDate}</span>
+                        </div>
+                    </div>
+                    <div class="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            ${ownerBadge}
+                            ${destBadge}
+                        </div>
+                        <div class="flex items-center gap-1 shrink-0">
+                            <button onclick="App.showRentReceipt('${rent.id}')" class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 flex items-center justify-center text-xs transition" title="Receipt">
+                                <i class="fa-solid fa-receipt"></i>
+                            </button>
+                            <button onclick="App.openEditRentModal('${rent.id}')" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center text-xs transition" title="Edit">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                            <button onclick="App.deleteRentCollection('${rent.id}')" class="w-8 h-8 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 flex items-center justify-center text-xs transition" title="Delete">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
         });
 
-        html += `
+        desktopHtml += `
                     </tbody>
                 </table>
             </div>
         `;
+        mobileHtml += `</div>`;
 
-        container.innerHTML = html;
+        container.innerHTML = desktopHtml + mobileHtml;
     },
 
     // -------------------------------------------------------------
@@ -5933,7 +6080,14 @@ const App = {
             const isTarget = btn.getAttribute('data-tab') === tabId;
             btn.classList.toggle('text-emerald-600', isTarget);
             btn.classList.toggle('dark:text-emerald-400', isTarget);
+            btn.classList.toggle('active-tab', isTarget);
+            btn.classList.toggle('font-extrabold', isTarget);
             btn.classList.toggle('text-slate-400', !isTarget);
+            // Desktop active background badge
+            if (btn.classList.contains('px-4')) {
+                btn.classList.toggle('bg-emerald-50', isTarget);
+                btn.classList.toggle('text-slate-500', !isTarget);
+            }
         });
 
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -5942,6 +6096,12 @@ const App = {
             setTimeout(() => this.renderCharts(), 50);
         } else if (tabId === 'floors') {
             this.renderFloorBreakupPage();
+        } else if (tabId === 'expenses') {
+            this.renderExpenses();
+        } else if (tabId === 'tenants') {
+            this.renderRentLedger();
+        } else if (tabId === 'settings') {
+            this.renderSettingsPage();
         }
     },
 
@@ -5972,8 +6132,9 @@ const App = {
     },
 
     populateMonthFilter() {
-        const select = document.getElementById('global-month-filter');
-        if (!select) return;
+        const selectMobile = document.getElementById('global-month-filter');
+        const selectDesktop = document.getElementById('global-month-filter-desktop');
+        if (!selectMobile && !selectDesktop) return;
 
         const monthsMap = {};
         monthsMap[this.getCurrentMonthKey()] = true;
@@ -5986,9 +6147,30 @@ const App = {
         const sorted = Object.keys(monthsMap).sort().reverse();
         let html = `<option value="all">All Months</option>`;
         sorted.forEach(m => {
-            html += `<option value="${m}">${m}</option>`;
+            const isSel = (m === this.selectedMonthFilter) ? 'selected' : '';
+            html += `<option value="${m}" ${isSel}>${m}</option>`;
         });
-        select.innerHTML = html;
+
+        if (selectMobile) {
+            selectMobile.innerHTML = html;
+            selectMobile.value = this.selectedMonthFilter || 'all';
+        }
+        if (selectDesktop) {
+            selectDesktop.innerHTML = html;
+            selectDesktop.value = this.selectedMonthFilter || 'all';
+        }
+    },
+
+    onMonthFilterChange(val) {
+        this.selectedMonthFilter = val;
+        const selectMobile = document.getElementById('global-month-filter');
+        const selectDesktop = document.getElementById('global-month-filter-desktop');
+        if (selectMobile) selectMobile.value = val;
+        if (selectDesktop) selectDesktop.value = val;
+        this.renderExpenses();
+        this.renderRentLedger();
+        this.updateDashboard();
+        if (this.activeTab === 'floors') this.renderFloorBreakupPage();
     },
 
     renderSettingsPage() {
@@ -6284,14 +6466,14 @@ const App = {
             rentSort.addEventListener('change', e => this.setSort('rent', e.target.value));
         }
 
-        // Global month filter
+        // Global month filter (Mobile & Desktop)
         const monthFilter = document.getElementById('global-month-filter');
         if (monthFilter) {
-            monthFilter.addEventListener('change', e => {
-                this.selectedMonthFilter = e.target.value;
-                this.renderExpenses();
-                this.renderRentLedger();
-            });
+            monthFilter.addEventListener('change', e => this.onMonthFilterChange(e.target.value));
+        }
+        const monthFilterDesktop = document.getElementById('global-month-filter-desktop');
+        if (monthFilterDesktop) {
+            monthFilterDesktop.addEventListener('change', e => this.onMonthFilterChange(e.target.value));
         }
 
         // Backup & Restore

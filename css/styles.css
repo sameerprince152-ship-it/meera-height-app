@@ -94,12 +94,14 @@ html {
     -webkit-text-size-adjust: 100%;
 }
 
-button,
-select,
+input[type="text"],
+input[type="number"],
 input[type="date"],
 input[type="month"],
-input[type="number"] {
-    min-height: 42px;
+input[type="password"],
+input[type="email"],
+select {
+    min-height: 40px;
 }
 
 button,
@@ -109,7 +111,7 @@ label {
 }
 
 .mobile-control {
-    min-width: 150px;
+    min-width: 140px;
 }
 
 .overflow-x-auto {
@@ -117,43 +119,16 @@ label {
     scrollbar-width: thin;
 }
 
+/* Mobile Specific Refinements (< 768px) */
 @media (max-width: 767px) {
     body {
         overflow-x: hidden;
-        padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+        padding-bottom: calc(84px + env(safe-area-inset-bottom, 12px));
     }
 
     header.sticky {
-        padding-top: max(0.75rem, env(safe-area-inset-top, 0px));
-    }
-
-    header.sticky > div,
-    main {
-        min-width: 0;
-    }
-
-    header.sticky .flex.items-center.justify-between {
-        align-items: flex-start;
-        gap: 0.6rem;
-    }
-
-    header.sticky .flex.items-center.justify-between > div:first-child {
-        min-width: 0;
-    }
-
-    header.sticky h1 {
-        font-size: 0.95rem;
-    }
-
-    header.sticky .bg-emerald-50 {
-        padding-left: 0.5rem;
-        padding-right: 0.5rem;
-    }
-
-    header.sticky #btn-download-excel {
-        min-width: 42px;
-        padding-left: 0.65rem;
-        padding-right: 0.65rem;
+        padding-top: max(0.6rem, env(safe-area-inset-top, 0px));
+        padding-bottom: 0.6rem;
     }
 
     .modal-enter,
@@ -170,12 +145,8 @@ label {
 
     [id^="modal-"] > div:last-child {
         width: 100%;
-        border-radius: 1.25rem 1.25rem 0 0;
-        padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
-    }
-
-    table {
-        min-width: 680px;
+        border-radius: 1.5rem 1.5rem 0 0;
+        padding-bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
     }
 
     .mobile-control {
@@ -186,15 +157,10 @@ label {
         padding-bottom: max(0.5rem, env(safe-area-inset-bottom, 0px));
     }
 
-    .grid-cols-2,
-    .grid-cols-3,
-    .grid-cols-4,
-    .grid-cols-5 {
-        grid-template-columns: minmax(0, 1fr) !important;
-    }
-
-    .whitespace-nowrap {
-        white-space: normal;
+    /* Active state styling for bottom navigation items */
+    .nav-btn.active-tab {
+        color: #059669 !important;
+        font-weight: 800 !important;
     }
 }
 
@@ -205,16 +171,10 @@ label {
     }
 
     .text-xl {
-        font-size: 1.1rem;
+        font-size: 1.125rem;
     }
 
     .text-2xl {
         font-size: 1.35rem;
-    }
-
-    .fixed.bottom-0 button {
-        min-width: 56px;
-        padding-left: 0.25rem;
-        padding-right: 0.25rem;
     }
 }

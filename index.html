@@ -65,66 +65,100 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="css/styles.css">
 </head>
-<body class="bg-slate-50 text-slate-900 min-h-screen pb-24 md:pb-8 antialiased selection:bg-emerald-100 selection:text-emerald-900">
+<body class="bg-slate-50 text-slate-900 min-h-screen pb-28 sm:pb-32 md:pb-8 antialiased selection:bg-emerald-100 selection:text-emerald-900">
 
     <!-- Top App Navigation Bar -->
-    <header class="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200 px-4 lg:px-8 py-3 transition-all">
-        <div class="max-w-7xl mx-auto flex items-center justify-between">
-            <!-- Brand & Owners Info -->
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-700 to-emerald-500 text-white flex items-center justify-center shadow-md shadow-emerald-600/20">
-                    <i class="fa-solid fa-building text-lg"></i>
-                </div>
-                <div>
-                    <div class="flex items-center gap-2">
-                        <h1 class="text-base sm:text-lg font-black tracking-tight text-slate-900 leading-tight">Meera Heights</h1>
-                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 uppercase tracking-wide">Building App</span>
+    <header class="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200 px-3 sm:px-4 lg:px-8 py-2.5 sm:py-3 transition-all">
+        <div class="max-w-7xl mx-auto">
+            <!-- Row 1: Brand (Left) + Actions (Right) -->
+            <div class="flex items-center justify-between gap-2">
+                <!-- Brand & Owners Info -->
+                <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                    <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-tr from-emerald-700 to-emerald-500 text-white flex items-center justify-center shadow-md shadow-emerald-600/20 shrink-0">
+                        <i class="fa-solid fa-building text-base sm:text-lg"></i>
                     </div>
-                    <p class="text-xs text-slate-500 flex items-center gap-1.5 font-medium">
-                        <i class="fa-solid fa-user-group text-[10px] text-emerald-600"></i>
-                        <span>Owners: <strong class="text-slate-700">Sajida</strong> & <strong class="text-slate-700">Jeelani</strong></span>
-                    </p>
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-1.5 sm:gap-2">
+                            <h1 class="text-sm sm:text-lg font-black tracking-tight text-slate-900 leading-tight truncate">Meera Heights</h1>
+                            <span class="px-1.5 sm:px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold bg-emerald-100 text-emerald-800 uppercase tracking-wide shrink-0">App</span>
+                        </div>
+                        <p class="text-[11px] sm:text-xs text-slate-500 flex items-center gap-1 font-medium truncate">
+                            <i class="fa-solid fa-user-group text-[9px] text-emerald-600"></i>
+                            <span>Owners: <strong class="text-slate-700">Sajida</strong> & <strong class="text-slate-700">Jeelani</strong></span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Desktop Quick Stats & Actions (Screens md and above: Unchanged single row) -->
+                <div class="hidden md:flex items-center gap-2 sm:gap-3">
+                    <!-- Desktop Cloud Sync Status Pill Button -->
+                    <button id="nav-cloud-sync-btn-desktop" onclick="App.openCloudSyncModal()" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-slate-200 bg-slate-100 hover:bg-slate-200 transition text-xs font-semibold text-slate-700 cursor-pointer shadow-sm" title="Real-Time Cloud Sync (Desktop ⇄ Mobile)">
+                        <span id="nav-cloud-sync-dot-desktop" class="w-2 h-2 rounded-full bg-slate-400"></span>
+                        <i class="fa-solid fa-cloud text-xs text-slate-500"></i>
+                        <span id="nav-cloud-sync-text-desktop" class="text-[11px] font-medium">Sync Off</span>
+                    </button>
+
+                    <!-- Desktop Month Filter -->
+                    <div class="flex items-center bg-slate-100 rounded-xl px-2.5 py-1.5 border border-slate-200">
+                        <i class="fa-regular fa-calendar text-xs text-slate-500 mr-2"></i>
+                        <select id="global-month-filter-desktop" onchange="App.onMonthFilterChange(this.value)" class="bg-transparent text-xs font-semibold text-slate-700 outline-none cursor-pointer">
+                            <option value="all">All Months</option>
+                        </select>
+                    </div>
+
+                    <!-- Desktop Treasury Balance Badge -->
+                    <div class="flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-xl">
+                        <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                        <div class="text-right">
+                            <span class="block text-[10px] font-semibold text-emerald-800 uppercase leading-none">Treasury</span>
+                            <span id="header-treasury-badge-desktop" class="text-xs sm:text-sm font-extrabold text-emerald-900 leading-tight">₹0</span>
+                        </div>
+                    </div>
+
+                    <!-- Guaranteed Excel Download Button -->
+                    <button onclick="App.openExportModal()" id="btn-download-excel" class="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-sm" title="Export Excel Sheets (.xlsx)">
+                        <i class="fa-solid fa-file-excel text-emerald-400 text-sm"></i>
+                        <span class="hidden md:inline">Export Excel</span>
+                        <i class="fa-solid fa-chevron-down text-[10px] text-slate-400 hidden sm:inline"></i>
+                    </button>
+                    
+                    <!-- CSV Fallback Button -->
+                    <button onclick="App.downloadCSV()" class="hidden lg:flex px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition items-center gap-1.5 border border-slate-200" title="Download CSV Ledger">
+                        <i class="fa-solid fa-file-csv text-slate-500"></i>
+                        <span>CSV</span>
+                    </button>
+                </div>
+
+                <!-- Mobile Top Right (Only on screens < md): Cloud Sync Pill + Export Button -->
+                <div class="flex md:hidden items-center gap-1.5 shrink-0">
+                    <button id="nav-cloud-sync-btn" onclick="App.openCloudSyncModal()" class="flex items-center gap-1 px-2 py-1.5 rounded-xl border border-slate-200 bg-slate-100 hover:bg-slate-200 transition text-[11px] font-bold text-slate-700 cursor-pointer shadow-sm" title="Real-Time Cloud Sync">
+                        <span id="nav-cloud-sync-dot" class="w-2 h-2 rounded-full bg-slate-400"></span>
+                        <i class="fa-solid fa-cloud text-[11px] text-slate-500"></i>
+                        <span id="nav-cloud-sync-text" class="text-[10px] font-bold">Sync</span>
+                    </button>
+                    <button onclick="App.openExportModal()" class="w-8 h-8 rounded-xl bg-slate-900 hover:bg-slate-800 text-emerald-400 flex items-center justify-center text-xs shadow-sm" title="Export Sheets">
+                        <i class="fa-solid fa-file-excel"></i>
+                    </button>
                 </div>
             </div>
 
-            <!-- Header Quick Stats & Actions -->
-            <div class="flex items-center gap-2 sm:gap-3">
-                <!-- Cloud Sync Status Pill Button -->
-                <button id="nav-cloud-sync-btn" onclick="App.openCloudSyncModal()" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-slate-200 bg-slate-100 hover:bg-slate-200 transition text-xs font-semibold text-slate-700 cursor-pointer shadow-sm" title="Real-Time Cloud Sync (Desktop ⇄ Mobile)">
-                    <span id="nav-cloud-sync-dot" class="w-2 h-2 rounded-full bg-slate-400"></span>
-                    <i class="fa-solid fa-cloud text-xs text-slate-500"></i>
-                    <span id="nav-cloud-sync-text" class="hidden sm:inline text-[11px] font-medium">Sync Off</span>
-                </button>
-
-                <!-- Month Filter -->
-                <div class="flex items-center bg-slate-100 rounded-xl px-2.5 py-1.5 border border-slate-200">
-                    <i class="fa-regular fa-calendar text-xs text-slate-500 mr-2"></i>
-                    <select id="global-month-filter" class="bg-transparent text-xs font-semibold text-slate-700 outline-none cursor-pointer">
+            <!-- Mobile Row 2 (Only on screens < md): Month Filter & Treasury Balance in a clean 50:50 row -->
+            <div class="flex md:hidden items-center gap-2 mt-2 pt-2 border-t border-slate-100">
+                <!-- Mobile Month Filter -->
+                <div class="flex-1 flex items-center bg-slate-100 rounded-xl px-2.5 py-1.5 border border-slate-200 min-w-0">
+                    <i class="fa-regular fa-calendar text-[11px] text-slate-500 mr-1.5 shrink-0"></i>
+                    <select id="global-month-filter" class="w-full bg-transparent text-[11px] font-bold text-slate-700 outline-none cursor-pointer truncate">
                         <option value="all">All Months</option>
                     </select>
                 </div>
-
-                <!-- Treasury Balance Badge -->
-                <div class="flex items-center gap-2 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-xl">
-                    <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                    <div class="text-right">
-                        <span class="block text-[10px] font-semibold text-emerald-800 uppercase leading-none">Treasury</span>
-                        <span id="header-treasury-badge" class="text-xs sm:text-sm font-extrabold text-emerald-900 leading-tight">₹0</span>
+                <!-- Mobile Treasury Badge -->
+                <div class="flex-1 flex items-center justify-between bg-emerald-50 border border-emerald-200 px-2.5 py-1.5 rounded-xl min-w-0">
+                    <div class="flex items-center gap-1.5 min-w-0">
+                        <div class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shrink-0"></div>
+                        <span class="text-[10px] font-bold text-emerald-800 uppercase tracking-tight truncate">Treasury</span>
                     </div>
+                    <span id="header-treasury-badge" class="text-xs font-black text-emerald-900 shrink-0">₹0</span>
                 </div>
-
-                <!-- Guaranteed Excel Download Button -->
-                <button onclick="App.openExportModal()" id="btn-download-excel" class="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition flex items-center gap-2 shadow-sm" title="Export Excel Sheets (.xlsx)">
-                    <i class="fa-solid fa-file-excel text-emerald-400 text-sm"></i>
-                    <span class="hidden md:inline">Export Excel</span>
-                    <i class="fa-solid fa-chevron-down text-[10px] text-slate-400 hidden sm:inline"></i>
-                </button>
-                
-                <!-- CSV Fallback Button -->
-                <button onclick="App.downloadCSV()" class="hidden lg:flex px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition items-center gap-1.5 border border-slate-200" title="Download CSV Ledger">
-                    <i class="fa-solid fa-file-csv text-slate-500"></i>
-                    <span>CSV</span>
-                </button>
             </div>
         </div>
     </header>
@@ -185,7 +219,7 @@
                             <p class="text-xs text-slate-500">Expenses deduct from Advance Wallets. Rent earnings flow untouched to Rent Wallets.</p>
                         </div>
                     </div>
-                    <div class="flex items-center gap-2 flex-wrap">
+                    <div class="hidden sm:flex items-center gap-2 flex-wrap">
                         <button onclick="App.openWalletTransferModal()" class="px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl transition flex items-center gap-2 shadow-sm shadow-purple-600/20">
                             <i class="fa-solid fa-arrows-left-right text-purple-200"></i>
                             <span>+ Advance ⇄ Rent Transfer</span>
@@ -193,6 +227,16 @@
                         <button onclick="App.openBankTransferModal()" class="px-3.5 py-2 bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold rounded-xl transition flex items-center gap-2 shadow-sm shadow-sky-600/20">
                             <i class="fa-solid fa-building-columns text-sky-200"></i>
                             <span>+ Bank ⇄ Wallet</span>
+                        </button>
+                    </div>
+                    <div class="sm:hidden grid grid-cols-2 gap-2 w-full pt-1">
+                        <button onclick="App.openWalletTransferModal()" class="py-2.5 px-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5 shadow-sm">
+                            <i class="fa-solid fa-arrows-left-right text-purple-200"></i>
+                            <span>Adv ⇄ Rent</span>
+                        </button>
+                        <button onclick="App.openBankTransferModal()" class="py-2.5 px-2 bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5 shadow-sm">
+                            <i class="fa-solid fa-building-columns text-sky-200"></i>
+                            <span>Bank ⇄ Wallet</span>
                         </button>
                     </div>
                 </div>
@@ -563,7 +607,8 @@
                     <h2 class="text-xl font-extrabold text-slate-900">Building Expenditure Sheets</h2>
                     <p class="text-xs text-slate-500">Categorized ledger with 60:40 floor ratio splitting for Sajida & Jeelani</p>
                 </div>
-                <div class="flex items-center gap-2 flex-wrap">
+                <!-- Desktop Action Buttons (md and above: untouched) -->
+                <div class="hidden md:flex items-center gap-2 flex-wrap">
                     <button onclick="App.openAddRecurringModal()" class="px-3 py-2 bg-emerald-50 text-emerald-800 border border-emerald-300 hover:bg-emerald-100 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
                         <i class="fa-solid fa-arrows-rotate text-emerald-600"></i>
                         <span>+ Automated Recurring</span>
@@ -582,6 +627,30 @@
                     <button onclick="App.openExpenseModal()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
                         <i class="fa-solid fa-plus"></i>
                         <span>Record Expense</span>
+                    </button>
+                </div>
+
+                <!-- Mobile Action Buttons (< md: spacious 2-column grid) -->
+                <div class="md:hidden grid grid-cols-2 gap-2 w-full mt-2">
+                    <button onclick="App.openExpenseModal()" class="col-span-2 py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-sm">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>+ Record New Expense</span>
+                    </button>
+                    <button onclick="App.openAddRecurringModal()" class="py-2.5 px-3 bg-emerald-50 text-emerald-800 border border-emerald-300 rounded-xl text-[11px] font-bold transition flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-arrows-rotate text-emerald-600"></i>
+                        <span>+ Recurring</span>
+                    </button>
+                    <button onclick="App.openAddCategoryModal()" class="py-2.5 px-3 bg-white border border-slate-300 text-slate-700 rounded-xl text-[11px] font-bold transition flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-plus text-emerald-600"></i>
+                        <span>New Sheet</span>
+                    </button>
+                    <button onclick="App.downloadMonthlyPDF('expense')" class="py-2.5 px-3 bg-rose-50 text-rose-700 border border-rose-200 rounded-xl text-[11px] font-bold transition flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-file-pdf"></i>
+                        <span>Monthly PDF</span>
+                    </button>
+                    <button onclick="App.downloadSingleSheet('expenses')" class="py-2.5 px-3 bg-slate-900 text-white rounded-xl text-[11px] font-bold transition flex items-center justify-center gap-1.5 shadow-sm">
+                        <i class="fa-solid fa-file-excel text-emerald-400"></i>
+                        <span>Export Excel</span>
                     </button>
                 </div>
             </div>
@@ -618,7 +687,8 @@
                     <h2 class="text-xl font-extrabold text-slate-900">Floor-Wise Expenses & Breakups</h2>
                     <p class="text-xs text-slate-500">Granular expense records and cost breakups across each individual floor (Floors 1 to 5)</p>
                 </div>
-                <div class="flex items-center gap-2 flex-wrap">
+                <!-- Desktop Action Buttons (md and above: untouched) -->
+                <div class="hidden md:flex items-center gap-2 flex-wrap">
                     <button onclick="ExcelExporter.exportFloorExpensesToExcel(App.activeFloorFilter)" class="px-3.5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm shadow-emerald-700/20" title="Export Floor Breakup (.xlsx)">
                         <i class="fa-solid fa-file-excel text-emerald-300"></i>
                         <span>Export Floor Breakup (Excel)</span>
@@ -626,6 +696,18 @@
                     <button onclick="App.openExpenseModal()" class="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
                         <i class="fa-solid fa-plus text-emerald-400"></i>
                         <span>+ Add Expense</span>
+                    </button>
+                </div>
+
+                <!-- Mobile Action Buttons (< md: clean 2-column grid) -->
+                <div class="md:hidden grid grid-cols-2 gap-2 w-full mt-2">
+                    <button onclick="App.openExpenseModal()" class="py-2.5 px-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm">
+                        <i class="fa-solid fa-plus text-emerald-400"></i>
+                        <span>+ Add Expense</span>
+                    </button>
+                    <button onclick="ExcelExporter.exportFloorExpensesToExcel(App.activeFloorFilter)" class="py-2.5 px-3 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm">
+                        <i class="fa-solid fa-file-excel text-emerald-300"></i>
+                        <span>Export Excel</span>
                     </button>
                 </div>
             </div>
@@ -733,7 +815,8 @@
                     <h2 class="text-xl font-extrabold text-slate-900">Tenants & Rent Management</h2>
                     <p class="text-xs text-slate-500">Record advance deposits, manage occupants, and collect rent to owner wallets</p>
                 </div>
-                <div class="flex items-center gap-2 flex-wrap">
+                <!-- Desktop Action Buttons (md and above: untouched) -->
+                <div class="hidden md:flex items-center gap-2 flex-wrap">
                     <button onclick="App.downloadSingleSheet('tenants')" class="px-3 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm" title="Export Tenants Directory (.xlsx)">
                         <i class="fa-solid fa-file-excel text-emerald-400"></i>
                         <span>Export Tenants</span>
@@ -745,6 +828,22 @@
                     <button onclick="App.openRentCollectionModal()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
                         <i class="fa-solid fa-hand-holding-dollar"></i>
                         <span>Collect Rent</span>
+                    </button>
+                </div>
+
+                <!-- Mobile Action Buttons (< md: spacious 2-column grid) -->
+                <div class="md:hidden grid grid-cols-2 gap-2 w-full mt-2">
+                    <button onclick="App.openRentCollectionModal()" class="col-span-2 py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-sm">
+                        <i class="fa-solid fa-hand-holding-dollar"></i>
+                        <span>+ Collect Building Rent</span>
+                    </button>
+                    <button onclick="App.openTenantModal()" class="py-2.5 px-3 bg-white border border-slate-300 text-slate-700 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm">
+                        <i class="fa-solid fa-user-plus text-blue-600"></i>
+                        <span>+ New Tenant</span>
+                    </button>
+                    <button onclick="App.downloadSingleSheet('tenants')" class="py-2.5 px-3 bg-slate-900 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm">
+                        <i class="fa-solid fa-file-excel text-emerald-400"></i>
+                        <span>Export Tenants</span>
                     </button>
                 </div>
             </div>
@@ -765,21 +864,23 @@
 
             <!-- Rent Collection History Ledger -->
             <div class="pt-4">
-                <div class="flex items-center justify-between mb-3">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-3">
                     <div>
                         <h3 class="text-sm font-bold text-slate-700 uppercase tracking-wider">Rent Collections Log</h3>
                         <span class="text-xs text-slate-400">All credited payments</span>
                     </div>
-                    <button onclick="App.downloadMonthlyPDF('rent')" class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-xl text-xs font-bold transition flex items-center gap-1.5 border border-rose-200" title="Export selected month as PDF">
-                        <i class="fa-solid fa-file-pdf"></i><span>Monthly PDF</span>
-                    </button>
-                     <button onclick="App.downloadSingleSheet('rents')" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition flex items-center gap-1.5 border border-slate-200" title="Export Rent Collections (.xlsx)">
-                        <i class="fa-solid fa-file-excel text-emerald-600"></i>
-                         <span>Export Rents (.xlsx)</span>
-                     </button>
-                     <select id="rent-sort" onchange="App.setSort('rent', this.value)" class="mobile-control bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-slate-700 outline-none" aria-label="Sort rent collections">
-                         <option value="date-desc">Newest first</option><option value="date-asc">Oldest first</option><option value="amount-desc">Highest amount</option><option value="amount-asc">Lowest amount</option><option value="title-asc">Tenant A-Z</option>
-                     </select>
+                    <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                        <button onclick="App.downloadMonthlyPDF('rent')" class="flex-1 sm:flex-initial px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 border border-rose-200" title="Export selected month as PDF">
+                            <i class="fa-solid fa-file-pdf"></i><span>PDF</span>
+                        </button>
+                        <button onclick="App.downloadSingleSheet('rents')" class="flex-1 sm:flex-initial px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 border border-slate-200" title="Export Rent Collections (.xlsx)">
+                            <i class="fa-solid fa-file-excel text-emerald-600"></i>
+                            <span>Excel</span>
+                        </button>
+                        <select id="rent-sort" onchange="App.setSort('rent', this.value)" class="w-full sm:w-auto bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 text-xs font-semibold text-slate-700 outline-none" aria-label="Sort rent collections">
+                            <option value="date-desc">Newest first</option><option value="date-asc">Oldest first</option><option value="amount-desc">Highest amount</option><option value="amount-asc">Lowest amount</option><option value="title-asc">Tenant A-Z</option>
+                        </select>
+                    </div>
                 </div>
                 <div id="rent-ledger-container">
                     <!-- Populated dynamically -->
@@ -796,7 +897,8 @@
                     <h2 class="text-xl font-extrabold text-slate-900">4 Capital Wallets & Split Settlement</h2>
                     <p class="text-xs text-slate-500">Live balance breakdown for Advance and Rent wallets with automatic settlement logic</p>
                 </div>
-                <div class="flex items-center gap-2 flex-wrap">
+                <!-- Desktop Action Buttons (md and above: untouched) -->
+                <div class="hidden md:flex items-center gap-2 flex-wrap">
                     <button onclick="App.openWalletTransferModal()" class="px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm shadow-purple-600/20">
                         <i class="fa-solid fa-arrows-left-right text-purple-200"></i>
                         <span>+ Advance ⇄ Rent Transfer</span>
@@ -808,6 +910,22 @@
                     <button onclick="App.openCapitalModal()" class="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
                         <i class="fa-solid fa-plus-circle text-emerald-400"></i>
                         <span>Owner Capital</span>
+                    </button>
+                </div>
+
+                <!-- Mobile Action Buttons (< md: clean 2-column grid) -->
+                <div class="md:hidden grid grid-cols-2 gap-2 w-full mt-2">
+                    <button onclick="App.openWalletTransferModal()" class="py-2.5 px-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm">
+                        <i class="fa-solid fa-arrows-left-right text-purple-200"></i>
+                        <span>Adv ⇄ Rent</span>
+                    </button>
+                    <button onclick="App.openBankTransferModal()" class="py-2.5 px-2 bg-sky-600 hover:bg-sky-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm">
+                        <i class="fa-solid fa-building-columns text-sky-200"></i>
+                        <span>Bank ⇄ Wallet</span>
+                    </button>
+                    <button onclick="App.openCapitalModal()" class="col-span-2 py-2.5 px-3 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm">
+                        <i class="fa-solid fa-plus-circle text-emerald-400"></i>
+                        <span>+ Owner Capital</span>
                     </button>
                 </div>
             </div>
@@ -1255,26 +1373,30 @@
     </main>
 
     <!-- Mobile Bottom Navigation Bar (Visible on mobile screens) -->
-    <nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur border-t border-slate-200 px-3 py-2 flex items-center justify-around safe-bottom">
-        <button onclick="App.switchTab('dashboard')" data-tab="dashboard" class="nav-btn flex flex-col items-center gap-1 text-emerald-600 text-[10px] font-bold">
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur border-t border-slate-200 px-2 py-2 flex items-center justify-around safe-bottom shadow-lg">
+        <button onclick="App.switchTab('dashboard')" data-tab="dashboard" class="nav-btn flex-1 flex flex-col items-center gap-1 text-emerald-600 text-[10px] font-extrabold py-0.5 transition">
             <i class="fa-solid fa-chart-pie text-base"></i>
             <span>Overview</span>
         </button>
-        <button onclick="App.switchTab('expenses')" data-tab="expenses" class="nav-btn flex flex-col items-center gap-1 text-slate-400 text-[10px] font-bold">
+        <button onclick="App.switchTab('expenses')" data-tab="expenses" class="nav-btn flex-1 flex flex-col items-center gap-1 text-slate-400 text-[10px] font-semibold py-0.5 transition">
             <i class="fa-solid fa-file-invoice-dollar text-base"></i>
             <span>Expenses</span>
         </button>
-        <button onclick="App.switchTab('floors')" data-tab="floors" class="nav-btn flex flex-col items-center gap-1 text-slate-400 text-[10px] font-bold">
+        <button onclick="App.switchTab('floors')" data-tab="floors" class="nav-btn flex-1 flex flex-col items-center gap-1 text-slate-400 text-[10px] font-semibold py-0.5 transition">
             <i class="fa-solid fa-layer-group text-base"></i>
             <span>Floors</span>
         </button>
-        <button onclick="App.switchTab('tenants')" data-tab="tenants" class="nav-btn flex flex-col items-center gap-1 text-slate-400 text-[10px] font-bold">
+        <button onclick="App.switchTab('tenants')" data-tab="tenants" class="nav-btn flex-1 flex flex-col items-center gap-1 text-slate-400 text-[10px] font-semibold py-0.5 transition">
             <i class="fa-solid fa-users text-base"></i>
             <span>Tenants</span>
         </button>
-        <button onclick="App.switchTab('wallets')" data-tab="wallets" class="nav-btn flex flex-col items-center gap-1 text-slate-400 text-[10px] font-bold">
+        <button onclick="App.switchTab('wallets')" data-tab="wallets" class="nav-btn flex-1 flex flex-col items-center gap-1 text-slate-400 text-[10px] font-semibold py-0.5 transition">
             <i class="fa-solid fa-wallet text-base"></i>
             <span>Wallets</span>
+        </button>
+        <button onclick="App.switchTab('settings')" data-tab="settings" class="nav-btn flex-1 flex flex-col items-center gap-1 text-slate-400 text-[10px] font-semibold py-0.5 transition">
+            <i class="fa-solid fa-sliders text-base"></i>
+            <span>Settings</span>
         </button>
     </nav>
 
@@ -3153,9 +3275,9 @@
     <div id="app-floating-toast" class="fixed top-5 right-5 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl shadow-2xl text-xs font-bold transition-all transform duration-300 pointer-events-none opacity-0 translate-y-[-10px]"></div>
 
     <!-- Application JavaScript Scripts -->
-    <script src="js/storage.js?v=4.2.2"></script>
-    <script src="js/excel-export.js?v=4.2.2"></script>
-    <script src="js/app.js?v=4.2.2"></script>
+    <script src="js/storage.js?v=4.3.0"></script>
+    <script src="js/excel-export.js?v=4.3.0"></script>
+    <script src="js/app.js?v=4.3.0"></script>
 
     <!-- Register Service Worker for PWA Offline Functionality -->
     <script>

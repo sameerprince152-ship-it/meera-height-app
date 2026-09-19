@@ -136,10 +136,18 @@
                         <i class="fa-solid fa-file-csv text-slate-500"></i>
                         <span>CSV</span>
                     </button>
+
+                    <!-- Desktop Light / Dark Theme Toggle Button -->
+                    <button id="btn-theme-toggle-desktop" onclick="App.toggleTheme()" class="px-2.5 py-2 rounded-xl border border-slate-200 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:hover:bg-slate-700 text-slate-700 dark:text-amber-400 transition flex items-center justify-center cursor-pointer shadow-sm" title="Toggle Light/Dark Mode">
+                        <i id="theme-toggle-icon-desktop" class="fa-solid fa-moon text-sm"></i>
+                    </button>
                 </div>
 
-                <!-- Mobile Top Right (Only on screens < md): Cloud Sync Pill + Export Buttons -->
+                <!-- Mobile Top Right (Only on screens < md): Theme Toggle + Cloud Sync Pill + Export Buttons -->
                 <div class="flex md:hidden items-center gap-1.5 shrink-0">
+                    <button id="btn-theme-toggle-mobile" onclick="App.toggleTheme()" class="w-8 h-8 rounded-xl border border-slate-200 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:border-slate-700 text-slate-700 dark:text-amber-400 flex items-center justify-center text-xs shadow-sm" title="Toggle Light/Dark Mode">
+                        <i id="theme-toggle-icon-mobile" class="fa-solid fa-moon"></i>
+                    </button>
                     <button id="nav-cloud-sync-btn" onclick="App.openCloudSyncModal()" class="flex items-center gap-1 px-2 py-1.5 rounded-xl border border-slate-200 bg-slate-100 hover:bg-slate-200 transition text-[11px] font-bold text-slate-700 cursor-pointer shadow-sm" title="Real-Time Cloud Sync">
                         <span id="nav-cloud-sync-dot" class="w-2 h-2 rounded-full bg-slate-400"></span>
                         <i class="fa-solid fa-cloud text-[11px] text-slate-500"></i>
@@ -202,11 +210,42 @@
                 <i class="fa-solid fa-sliders"></i>
                 <span>Recurring & Settings</span>
             </button>
+            <!-- Tenant Self-Service Portal Guest View Link -->
+            <a href="#tenant-portal" onclick="App.openTenantPortal()" class="ml-auto px-3.5 py-1.5 rounded-xl text-xs font-bold text-sky-700 bg-sky-50 dark:bg-sky-950/40 dark:text-sky-300 border border-sky-200 dark:border-sky-800 hover:bg-sky-100 dark:hover:bg-sky-900/60 flex items-center gap-2 transition cursor-pointer shadow-sm" title="Open Tenant Self-Service Portal (Flat + PIN)">
+                <i class="fa-solid fa-door-open text-sky-500"></i>
+                <span>Tenant Portal</span>
+                <span class="text-[9px] px-1.5 py-0.5 rounded bg-sky-200 dark:bg-sky-800 text-sky-800 dark:text-sky-200 font-black">GUEST</span>
+            </a>
         </div>
     </nav>
 
     <!-- Main Content Container -->
     <main class="max-w-7xl mx-auto px-4 lg:px-8 py-6">
+
+        <!-- Automated Scheduled Backup Reminder Banner (Shown when recurring backup is due) -->
+        <div id="scheduled-backup-banner" class="hidden mb-6 bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 text-white p-4 sm:p-5 rounded-3xl shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-fade-in border border-amber-400/30">
+            <div class="flex items-center gap-3.5">
+                <div class="w-11 h-11 rounded-2xl bg-white/20 backdrop-blur flex items-center justify-center text-xl shrink-0 shadow-inner">
+                    <i class="fa-solid fa-cloud-arrow-up text-amber-100"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <span class="font-black text-sm sm:text-base tracking-tight">Automated Cloud & Email Backup Due</span>
+                        <span class="text-[9px] uppercase font-black tracking-wider px-2 py-0.5 rounded-full bg-white/25 text-white">Scheduled</span>
+                    </div>
+                    <p class="text-xs text-amber-100 font-medium mt-0.5">Protect all building expenses, tenant collections, and deposit ledgers with an encrypted 2-click backup.</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 shrink-0">
+                <button onclick="App.triggerScheduledBackupNow()" class="px-4 py-2.5 bg-white hover:bg-amber-50 text-amber-900 rounded-xl text-xs font-black shadow-md transition flex items-center gap-1.5 cursor-pointer">
+                    <i class="fa-solid fa-bolt text-amber-600"></i>
+                    <span>Backup Now</span>
+                </button>
+                <button onclick="App.dismissScheduledBackupBanner()" class="px-3.5 py-2.5 bg-white/15 hover:bg-white/25 text-white rounded-xl text-xs font-bold transition cursor-pointer" title="Remind me tomorrow">
+                    Dismiss
+                </button>
+            </div>
+        </div>
 
         <!-- ========================================================= -->
         <!-- VIEW 1: DASHBOARD OVERVIEW -->
@@ -1474,6 +1513,49 @@
                 </div>
             </div>
 
+            <!-- THEME & DISPLAY MODE CARD -->
+            <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-700">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                            <i class="fa-solid fa-circle-half-stroke text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-extrabold text-base text-slate-900 dark:text-white">Theme & Display Appearance</h3>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">Select your preferred color scheme across mobile, desktop, and tablets</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-700/60 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-600">
+                        <button onclick="App.setTheme('light')" id="theme-btn-light" class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-sun text-amber-500"></i>
+                            <span>Light</span>
+                        </button>
+                        <button onclick="App.setTheme('dark')" id="theme-btn-dark" class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-moon text-indigo-400"></i>
+                            <span>Dark</span>
+                        </button>
+                        <button onclick="App.setTheme('system')" id="theme-btn-system" class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5">
+                            <i class="fa-solid fa-desktop text-slate-500 dark:text-slate-300"></i>
+                            <span>System</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                    <div class="p-3 bg-slate-50 dark:bg-slate-700/30 rounded-2xl border border-slate-100 dark:border-slate-700 flex items-center gap-2.5">
+                        <i class="fa-solid fa-mobile-screen text-slate-400"></i>
+                        <span class="text-slate-600 dark:text-slate-300">Adaptive Status Bar for iOS & Android</span>
+                    </div>
+                    <div class="p-3 bg-slate-50 dark:bg-slate-700/30 rounded-2xl border border-slate-100 dark:border-slate-700 flex items-center gap-2.5">
+                        <i class="fa-solid fa-eye text-slate-400"></i>
+                        <span class="text-slate-600 dark:text-slate-300">OLED Dark Contrast for Low Eye Strain</span>
+                    </div>
+                    <div class="p-3 bg-slate-50 dark:bg-slate-700/30 rounded-2xl border border-slate-100 dark:border-slate-700 flex items-center gap-2.5">
+                        <i class="fa-solid fa-floppy-disk text-slate-400"></i>
+                        <span class="text-slate-600 dark:text-slate-300">Saved to Local Preferences</span>
+                    </div>
+                </div>
+            </div>
+
             <!-- Excel & Data Backup Cards -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <!-- Guaranteed Excel Export -->
@@ -1507,29 +1589,66 @@
                     </div>
                 </div>
 
-                <!-- JSON Backup & Restore -->
-                <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col justify-between">
+                <!-- Automated Cloud & Email Backup Center -->
+                <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col justify-between">
                     <div>
-                        <div class="w-12 h-12 rounded-2xl bg-blue-100 text-blue-700 flex items-center justify-center mb-3">
-                            <i class="fa-solid fa-cloud-arrow-down text-2xl"></i>
+                        <div class="flex items-start justify-between gap-2 mb-3">
+                            <div class="w-12 h-12 rounded-2xl bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 flex items-center justify-center shrink-0">
+                                <i class="fa-solid fa-cloud-arrow-down text-2xl"></i>
+                            </div>
+                            <button onclick="App.openBackupSettingsModal()" class="px-2.5 py-1.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition flex items-center gap-1 cursor-pointer border border-slate-200 dark:border-slate-600" title="Configure Automated Backup Schedule & Passphrase">
+                                <i class="fa-solid fa-gear"></i>
+                                <span>Schedule</span>
+                            </button>
                         </div>
-                        <h4 class="font-extrabold text-base text-slate-900">Full Data Backup & Restore</h4>
-                        <p class="text-xs text-slate-500 mt-1">Export your database to a secure file to transfer between devices, or restore an earlier backup with 1 click.</p>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <h4 class="font-extrabold text-base text-slate-900 dark:text-white">Google Drive & Email Backup</h4>
+                            <span id="backup-schedule-badge" class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-300">Weekly (Mon)</span>
+                        </div>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">2-Click automated backup packages all building records into an encrypted file and dispatches it straight to Google Drive or Sajida & Jeelani's email.</p>
+                        
+                        <!-- Backup status mini stats -->
+                        <div class="mt-3 p-2.5 bg-slate-50 dark:bg-slate-700/40 rounded-2xl border border-slate-100 dark:border-slate-700 text-[11px] text-slate-600 dark:text-slate-300 space-y-1">
+                            <div class="flex items-center justify-between">
+                                <span>Last Dispatched:</span>
+                                <strong id="backup-last-dispatched-text" class="text-slate-800 dark:text-slate-200">Never</strong>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span>Next Due:</span>
+                                <strong id="backup-next-due-text" class="text-emerald-700 dark:text-emerald-400">Scheduled</strong>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mt-5 flex gap-2">
-                        <button id="btn-export-backup" class="flex-1 py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-2 shadow-sm">
-                            <i class="fa-solid fa-file-export"></i>
-                            <span>Backup (JSON)</span>
+
+                    <div class="mt-4 space-y-2">
+                        <!-- Primary 2-Click Actions -->
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="App.backupToGoogleDrive()" class="py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5 shadow-sm shadow-emerald-600/20 cursor-pointer" title="Save to Google Drive via Direct Link or Share Sheet">
+                                <i class="fa-brands fa-google-drive"></i>
+                                <span>Google Drive</span>
+                            </button>
+                            <button onclick="App.backupToEmail()" class="py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5 shadow-sm shadow-blue-600/20 cursor-pointer" title="Send backup report to Sajida & Jeelani's email">
+                                <i class="fa-solid fa-envelope"></i>
+                                <span>Send Email</span>
+                            </button>
+                        </div>
+
+                        <!-- Secondary Raw File & Restore Actions -->
+                        <div class="flex gap-2">
+                            <button id="btn-export-backup" onclick="App.exportStandardBackup()" class="flex-1 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5 shadow-sm cursor-pointer" title="Download standard JSON database file">
+                                <i class="fa-solid fa-file-export"></i>
+                                <span>Backup File</span>
+                            </button>
+                            <label class="flex-1 py-2.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5 cursor-pointer border border-slate-200 dark:border-slate-600">
+                                <i class="fa-solid fa-file-import"></i>
+                                <span>Restore File</span>
+                                <input type="file" id="file-import-backup" accept=".json,.mhbackup" class="hidden">
+                            </label>
+                        </div>
+                        <button onclick="App.downloadMonthlyPDF('expense')" class="w-full py-2 bg-rose-50 dark:bg-rose-950/40 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60 font-bold text-xs rounded-xl transition flex items-center justify-center gap-2 cursor-pointer">
+                            <i class="fa-solid fa-file-pdf"></i><span>Monthly PDF Report (selected month)</span>
                         </button>
-                        <label class="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition flex items-center justify-center gap-2 cursor-pointer border border-slate-200">
-                            <i class="fa-solid fa-file-import"></i>
-                            <span>Restore File</span>
-                            <input type="file" id="file-import-backup" accept=".json" class="hidden">
-                        </label>
                     </div>
-                    <button onclick="App.downloadMonthlyPDF('expense')" class="mt-2 w-full py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold text-xs rounded-xl transition flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-file-pdf"></i><span>Monthly PDF Report (selected month)</span>
-                    </button>
                 </div>
             </div>
 
@@ -1560,6 +1679,192 @@
                     <i class="fa-solid fa-copy mr-1"></i> Copy current URL
                 </button>
             </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- VIEW 7: TENANT SELF-SERVICE PORTAL (GUEST VIEW) -->
+        <!-- ========================================================= -->
+        <section id="view-tenant-portal" class="app-view hidden space-y-6">
+
+            <!-- Tenant Portal Header / Banner -->
+            <div class="bg-gradient-to-r from-sky-600 via-sky-700 to-indigo-800 text-white rounded-3xl p-6 shadow-xl relative overflow-hidden">
+                <div class="absolute -right-8 -bottom-8 w-40 h-40 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
+                    <div class="flex items-center gap-3.5">
+                        <div class="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur border border-white/30 flex items-center justify-center text-2xl shadow-inner shrink-0">
+                            <i class="fa-solid fa-door-open text-sky-200"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h2 class="text-lg sm:text-xl font-black tracking-tight text-white">Tenant Self-Service Portal</h2>
+                                <span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-white/20 text-sky-100">Guest Access</span>
+                            </div>
+                            <p class="text-xs text-sky-100 mt-0.5">Meera Heights • Instant access to your rent history, payment receipts & deposit balance</p>
+                        </div>
+                    </div>
+                    <!-- Exit Portal / Return to Owner View -->
+                    <button onclick="App.exitTenantPortal()" class="px-4 py-2 bg-white/15 hover:bg-white/25 text-white border border-white/30 rounded-xl text-xs font-bold transition flex items-center gap-2 shrink-0 cursor-pointer" title="Return to Owner Dashboard">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                        <span>Exit to Owner View</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- STATE A: TENANT LOGIN CARD (When not authenticated) -->
+            <div id="tenant-portal-login-card" class="max-w-md mx-auto bg-white dark:bg-slate-800 rounded-3xl p-6 sm:p-8 border border-slate-200 dark:border-slate-700 shadow-xl space-y-6">
+                <div class="text-center space-y-2">
+                    <div class="w-14 h-14 rounded-3xl bg-sky-100 dark:bg-sky-950/60 text-sky-600 dark:text-sky-400 flex items-center justify-center mx-auto text-2xl shadow-sm">
+                        <i class="fa-solid fa-key"></i>
+                    </div>
+                    <h3 class="text-lg font-black text-slate-900 dark:text-white">Resident Flat Sign-In</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 max-w-xs mx-auto">Enter your Flat Number and your 4-digit Portal PIN to view your rent ledger and receipts.</p>
+                </div>
+
+                <form id="form-tenant-portal-login" onsubmit="App.handleTenantPortalLogin(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">Flat Number</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-building text-slate-400 absolute left-3.5 top-3 text-xs"></i>
+                            <input type="text" id="tenant-portal-flat-input" required placeholder="e.g. 101 or Flat 101" class="w-full bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-2xl pl-9 pr-3.5 py-2.5 text-sm font-bold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-sky-500">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">4-Digit Security PIN</label>
+                        <div class="relative">
+                            <i class="fa-solid fa-lock text-slate-400 absolute left-3.5 top-3 text-xs"></i>
+                            <input type="password" id="tenant-portal-pin-input" maxlength="4" required placeholder="••••" class="w-full bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-2xl pl-9 pr-3.5 py-2.5 text-sm font-bold font-mono tracking-widest text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-sky-500">
+                        </div>
+                        <p class="text-[11px] text-slate-400 mt-1">Default PIN is the last 4 digits of your phone number or contact building owners.</p>
+                    </div>
+
+                    <div id="tenant-portal-login-error" class="hidden p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 text-xs font-semibold text-rose-700 dark:text-rose-300 text-center">
+                        Invalid flat or PIN. Please check and try again.
+                    </div>
+
+                    <button type="submit" class="w-full py-3 bg-sky-600 hover:bg-sky-700 text-white font-extrabold text-xs uppercase tracking-wider rounded-2xl transition shadow-md shadow-sky-600/20 flex items-center justify-center gap-2 cursor-pointer">
+                        <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                        <span>Enter Resident Portal</span>
+                    </button>
+                </form>
+
+                <div class="pt-4 border-t border-slate-100 dark:border-slate-700 text-center">
+                    <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                        Need help or forgot your PIN? Contact building management:
+                    </p>
+                    <div class="flex items-center justify-center gap-3 mt-2 text-xs font-bold">
+                        <a href="https://wa.me/919986347895" target="_blank" class="text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1">
+                            <i class="fa-brands fa-whatsapp"></i> Sajida (Fl 1-2)
+                        </a>
+                        <span class="text-slate-300">•</span>
+                        <a href="https://wa.me/919986347895" target="_blank" class="text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">
+                            <i class="fa-brands fa-whatsapp"></i> Jeelani (Fl 3-5)
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STATE B: TENANT AUTHENTICATED DASHBOARD (Hidden until signed in) -->
+            <div id="tenant-portal-auth-dashboard" class="hidden space-y-6">
+
+                <!-- Flat Overview Profile Card -->
+                <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-100 dark:border-slate-700">
+                        <div class="flex items-center gap-3">
+                            <div class="w-12 h-12 rounded-2xl bg-sky-50 dark:bg-sky-950/50 text-sky-600 dark:text-sky-400 flex items-center justify-center text-xl font-black">
+                                <i class="fa-solid fa-house-user"></i>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <h3 id="tp-resident-name" class="font-extrabold text-base sm:text-lg text-slate-900 dark:text-white">-</h3>
+                                    <span id="tp-flat-badge" class="px-2 py-0.5 rounded-full text-xs font-black bg-slate-900 text-white uppercase tracking-wider">-</span>
+                                </div>
+                                <p id="tp-resident-subinfo" class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">-</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="App.logoutTenantPortal()" class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer">
+                                <i class="fa-solid fa-lock"></i>
+                                <span>Sign Out</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Financial Summary Cards for this Flat -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4">
+                        <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-700/40 border border-slate-100 dark:border-slate-700">
+                            <span class="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Monthly Rent</span>
+                            <div class="flex items-baseline gap-1 mt-1">
+                                <strong id="tp-monthly-rent" class="text-lg font-black text-slate-900 dark:text-white">₹0</strong>
+                                <span class="text-[11px] text-slate-400 font-medium">/ month</span>
+                            </div>
+                            <span id="tp-rent-status-pill" class="inline-block mt-2 px-2 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-100 text-emerald-800">Paid Up</span>
+                        </div>
+
+                        <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-700/40 border border-slate-100 dark:border-slate-700">
+                            <span class="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Active Security Deposit</span>
+                            <div class="flex items-baseline gap-1 mt-1">
+                                <strong id="tp-deposit-held" class="text-lg font-black text-emerald-600 dark:text-emerald-400">₹0</strong>
+                            </div>
+                            <span id="tp-deposit-status-text" class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 block">Safely Held in Building Treasury</span>
+                        </div>
+
+                        <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-700/40 border border-slate-100 dark:border-slate-700">
+                            <span class="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Floor Owner Contact</span>
+                            <div class="flex items-baseline gap-1 mt-1">
+                                <strong id="tp-owner-name" class="text-sm font-extrabold text-slate-900 dark:text-white">-</strong>
+                            </div>
+                            <a id="tp-owner-wa-link" href="#" target="_blank" class="inline-flex items-center gap-1 text-[11px] text-emerald-600 dark:text-emerald-400 hover:underline font-bold mt-1">
+                                <i class="fa-brands fa-whatsapp"></i> Chat on WhatsApp
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment History & Past Receipts -->
+                <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
+                    <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-sm font-bold">
+                                <i class="fa-solid fa-receipt"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white">Your Payment History & Receipts</h4>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Download official PDF rent receipts for your records</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payment Records Table / Cards -->
+                    <div id="tp-payments-list-container" class="space-y-2">
+                        <!-- Rendered dynamically -->
+                    </div>
+                </div>
+
+                <!-- Submit Maintenance Note or Query -->
+                <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm space-y-3">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-9 h-9 rounded-xl bg-purple-100 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center text-sm font-bold">
+                            <i class="fa-solid fa-screwdriver-wrench"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white">Need Building Maintenance or Help?</h4>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">Plumbing, electrical, water supply, or parking queries</p>
+                        </div>
+                    </div>
+                    <div class="p-3 bg-purple-50/70 dark:bg-purple-950/30 border border-purple-200/80 dark:border-purple-800/60 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                        <span class="text-purple-950 dark:text-purple-200 font-medium">
+                            Message your assigned floor owner with 1-click via WhatsApp pre-filled with your flat number and details.
+                        </span>
+                        <a id="tp-maintenance-wa-btn" href="#" target="_blank" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold transition flex items-center justify-center gap-1.5 shrink-0 shadow-sm">
+                            <i class="fa-brands fa-whatsapp"></i>
+                            <span>Send Maintenance Request</span>
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+
         </section>
 
     </main>
@@ -2247,9 +2552,15 @@
                     </div>
                 </div>
 
-                <div>
-                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Move-in Date</label>
-                    <input type="date" id="t-date" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 outline-none">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Portal PIN (4 Digits)</label>
+                        <input type="text" id="t-pin" maxlength="4" placeholder="e.g. 1234" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold font-mono tracking-widest text-slate-800 outline-none" title="4-digit PIN for Tenant Self-Service Portal">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Move-in Date</label>
+                        <input type="date" id="t-date" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 outline-none">
+                    </div>
                 </div>
 
                 <div>
@@ -3746,6 +4057,93 @@
                         Done
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: AUTOMATED GOOGLE DRIVE & EMAIL BACKUP SETTINGS -->
+    <div id="modal-backup-settings" style="z-index: 99999; display: none;" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl modal-enter max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-700">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 flex items-center justify-center font-bold">
+                        <i class="fa-solid fa-cloud-arrow-up text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-extrabold text-base text-slate-900 dark:text-white">Automated Backup Settings</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Recurring schedule, recipients & AES encryption</p>
+                    </div>
+                </div>
+                <button onclick="App.hideModal('modal-backup-settings')" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 flex items-center justify-center cursor-pointer">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form id="form-backup-settings" onsubmit="App.saveBackupSettingsForm(event)" class="mt-4 space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1.5">Backup Frequency</label>
+                    <select id="backup-frequency-select" class="w-full bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="weekly">Weekly Reminder (Every Monday)</option>
+                        <option value="monthly">Monthly Reminder (1st of Month)</option>
+                        <option value="manual">Manual Only (No automated reminders)</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1.5">Recipient Emails (Owners)</label>
+                    <input type="text" id="backup-recipients-input" placeholder="e.g. sajida@example.com, jeelani@example.com" class="w-full bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500">
+                    <p class="text-[11px] text-slate-400 mt-1">Comma-separated emails for 1-click email dispatch.</p>
+                </div>
+
+                <!-- Encryption Toggle & Passphrase -->
+                <div class="p-3.5 bg-slate-50 dark:bg-slate-700/30 rounded-2xl border border-slate-200 dark:border-slate-700 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-shield-halved text-emerald-600 text-sm"></i>
+                            <div>
+                                <strong class="block text-xs font-bold text-slate-900 dark:text-white">AES Passphrase Protection</strong>
+                                <span class="text-[11px] text-slate-500 dark:text-slate-400">Encrypts backup files (.mhbackup) with password</span>
+                            </div>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer shrink-0 ml-2">
+                            <input type="checkbox" id="backup-encrypt-toggle" onchange="App.onBackupEncryptionToggled(this.checked)" class="sr-only peer">
+                            <div class="w-10 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
+                        </label>
+                    </div>
+
+                    <div id="backup-passphrase-container" class="hidden space-y-1.5 pt-2 border-t border-slate-200 dark:border-slate-600">
+                        <label class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 uppercase">Encryption Passphrase</label>
+                        <input type="password" id="backup-passphrase-input" placeholder="Enter secure passphrase" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-xs font-mono text-slate-800 dark:text-white outline-none">
+                        <p class="text-[10px] text-amber-600 dark:text-amber-400 font-medium">⚠️ Remember this passphrase. It will be required to restore the backup file.</p>
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl transition shadow-md flex items-center justify-center gap-2 cursor-pointer">
+                        <i class="fa-solid fa-check"></i>
+                        <span>Save Backup Settings</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: RESTORE ENCRYPTED BACKUP PASSPHRASE PROMPT -->
+    <div id="modal-restore-passphrase" style="z-index: 99999; display: none;" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-sm w-full p-6 shadow-2xl modal-enter text-center">
+            <div class="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-950/60 text-amber-600 flex items-center justify-center mx-auto text-xl mb-3">
+                <i class="fa-solid fa-key"></i>
+            </div>
+            <h3 class="font-extrabold text-base text-slate-900 dark:text-white">Encrypted Backup File</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-4">This file is protected with AES encryption. Please enter the passphrase to decrypt and restore.</p>
+            <input type="password" id="restore-passphrase-input" placeholder="Enter Passphrase" class="w-full bg-slate-50 dark:bg-slate-700/50 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2.5 text-sm font-mono text-center text-slate-800 dark:text-white outline-none mb-4">
+            <div class="flex gap-2">
+                <button onclick="App.cancelRestorePassphrase()" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition cursor-pointer">
+                    Cancel
+                </button>
+                <button onclick="App.confirmRestorePassphrase()" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition cursor-pointer">
+                    Decrypt & Restore
+                </button>
             </div>
         </div>
     </div>

@@ -6,7 +6,9 @@
 
 const STORAGE_KEYS = {
     APP_DATA: 'meera_heights_data_v4', // v4: Floor ownership & Advance settlement architecture
-    SETTINGS: 'meera_heights_settings_v4'
+    SETTINGS: 'meera_heights_settings_v4',
+    BACKUP_SETTINGS: 'meera_backup_settings_v1',
+    THEME: 'meera_theme_v1'
 };
 
 // Floor ownership definition requested by user
@@ -349,6 +351,14 @@ class StorageManager {
                 }
             });
 
+            // Ensure tenants have a portalPin for Tenant Self-Service Portal
+            (parsed.tenants || []).forEach(t => {
+                if (!t.portalPin) {
+                    const phoneClean = (t.phone || '').replace(/\D/g, '');
+                    t.portalPin = phoneClean.length >= 4 ? phoneClean.slice(-4) : '1234';
+                }
+            });
+
             return parsed;
         } catch (e) {
             console.error('Error reading localStorage:', e);
@@ -426,6 +436,34 @@ class StorageManager {
     static resetToDefault() {
         this.saveData(INITIAL_DATA);
         return JSON.parse(JSON.stringify(INITIAL_DATA));
+    }
+
+    static getBackupSettings() {
+        const defaults = {
+            frequency: 'weekly', // 'none', 'weekly', 'biweekly', 'monthly'
+            lastBackupDate: null,
+            emailSajida: '',
+            emailJeelani: '',
+            autoPrompt: true,
+            encrypted: false,
+            passphraseHint: ''
+        };
+        try {
+            const raw = localStorage.getItem(STORAGE_KEYS.BACKUP_SETTINGS);
+            return raw ? { ...defaults, ...JSON.parse(raw) } : defaults;
+        } catch (e) {
+            return defaults;
+        }
+    }
+
+    static saveBackupSettings(settings) {
+        try {
+            localStorage.setItem(STORAGE_KEYS.BACKUP_SETTINGS, JSON.stringify(settings));
+            return true;
+        } catch (e) {
+            console.error('Error saving backup settings:', e);
+            return false;
+        }
     }
 }
 

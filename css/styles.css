@@ -424,3 +424,88 @@ label {
     color: #b91c1c;
 }
 
+/* -------------------------------------------------------------
+   DARK MODE UNIVERSAL STYLING
+   ------------------------------------------------------------- */
+html.dark {
+    color-scheme: dark;
+}
+
+html.dark body {
+    background-color: #071223;
+    color: #f1f5f9;
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+    background: #334155;
+}
+
+html.dark ::-webkit-scrollbar-thumb:hover {
+    background: #475569;
+}
+
+html.dark .expense-preset-chip {
+    background: #1e293b;
+    color: #94a3b8;
+    border-color: #334155;
+}
+
+html.dark .expense-preset-chip:hover {
+    background: #334155;
+    color: #f8fafc;
+}
+
+html.dark .expense-preset-chip.active {
+    background: #059669;
+    color: #ffffff;
+    border-color: #059669;
+}
+
+html.dark .date-mode-btn {
+    background: #1e293b;
+    color: #94a3b8;
+    border-color: #334155;
+}
+
+html.dark .date-mode-btn:hover {
+    background: #334155;
+}
+
+html.dark .date-mode-btn.active {
+    background: #059669;
+    color: #ffffff;
+    border-color: #059669;
+}
+
+html.dark .category-export-btn.excel {
+    background: #064e3b;
+    color: #6ee7b7;
+    border-color: #047857;
+}
+
+html.dark .category-export-btn.csv {
+    background: #1e293b;
+    color: #34d399;
+    border-color: #334155;
+}
+
+html.dark .category-export-btn.pdf {
+    background: #881337;
+    color: #fecdd3;
+    border-color: #9f1239;
+}
+
+html.dark .category-export-btn.period {
+    background: #134e4a;
+    color: #5eead4;
+    border-color: #0f766e;
+}
+
+/* Tenant Portal Masked PIN Input */
+.tenant-pin-input {
+    letter-spacing: 0.45em;
+    text-align: center;
+    font-size: 1.35rem;
+    font-weight: 800;
+}
+

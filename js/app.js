@@ -68,6 +68,7 @@ const App = {
     },
 
     init() {
+        this.initTheme();
         this.data = StorageManager.getData();
         this.setupEventListeners();
         this.populateMonthFilter();
@@ -79,7 +80,14 @@ const App = {
         // Initialize Real-Time Cloud Sync Engine (Firebase)
         this.initCloudSync();
 
+        // Initialize Automated Backup Scheduler & Monitor
+        this.initBackupScheduler();
+
         this.renderAll();
+
+        // Check URL hash route (e.g. #tenant-portal)
+        this.checkHashRoute();
+
         console.log('Meera Heights App Initialized with Floor Ownership & Advance Management.');
     },
 
@@ -4179,9 +4187,13 @@ const App = {
                                 <i class="fa-solid fa-phone text-slate-400"></i>
                                 <a href="tel:${tenant.phone}" class="hover:underline text-slate-700 dark:text-slate-300 font-medium">${tenant.phone}</a>
                             </div>
-                            <div class="text-[10px] text-slate-400">
-                                Move-in: ${tenant.moveInDate || 'N/A'}
+                            <div class="flex items-center gap-1 text-[11px] font-mono font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700/60 px-2 py-0.5 rounded-md" title="Tenant Portal Sign-In PIN">
+                                <i class="fa-solid fa-key text-[9px] text-amber-500"></i>
+                                <span>PIN: ${tenant.portalPin || (tenant.phone ? tenant.phone.slice(-4) : '1234')}</span>
                             </div>
+                        </div>
+                        <div class="mt-1 text-[10px] text-slate-400">
+                            Move-in: ${tenant.moveInDate || 'N/A'}
                         </div>
                         ${unpaidMonths.length > 1 ? `
                             <div class="mt-2 text-[10px] font-semibold text-rose-600 bg-rose-50 px-2.5 py-1 rounded-lg border border-rose-100">
@@ -4209,6 +4221,10 @@ const App = {
                            title="${paidThisMonth ? 'Send WhatsApp Receipt' : 'Send WhatsApp Reminder'}">
                             <i class="fa-brands fa-whatsapp text-base"></i>
                         </a>
+
+                        <button onclick="App.shareTenantPortalInvite('${tenant.id}')" class="p-2 bg-sky-50 dark:bg-sky-950/50 text-sky-600 dark:text-sky-400 hover:bg-sky-100 rounded-xl text-xs font-semibold transition flex items-center justify-center" title="Send Tenant Portal Link & PIN via WhatsApp">
+                            <i class="fa-solid fa-key text-base"></i>
+                        </button>
 
                         <button onclick="App.editTenant('${tenant.id}')" class="p-2 text-slate-400 hover:text-slate-600 transition" title="Edit Tenant">
                             <i class="fa-solid fa-pen"></i>
@@ -6127,6 +6143,8 @@ const App = {
                 document.getElementById('t-rent').value = t.monthlyRent || '';
                 document.getElementById('t-date').value = t.moveInDate || '';
                 document.getElementById('t-notes').value = t.notes || '';
+                const pinInput = document.getElementById('t-pin');
+                if (pinInput) pinInput.value = t.portalPin || (t.phone ? t.phone.slice(-4) : '1234');
                 
                 if (adjustSection) {
                     adjustSection.classList.remove('hidden');
@@ -6150,6 +6168,8 @@ const App = {
             document.getElementById('t-rent').value = '';
             document.getElementById('t-date').value = new Date().toISOString().slice(0, 10);
             document.getElementById('t-notes').value = '';
+            const pinInput = document.getElementById('t-pin');
+            if (pinInput) pinInput.value = '1234';
 
             if (adjustSection) {
                 adjustSection.classList.add('hidden');
@@ -6196,6 +6216,8 @@ const App = {
         const monthlyRent = parseFloat(document.getElementById('t-rent').value) || 0;
         const moveInDate = document.getElementById('t-date').value;
         const notes = document.getElementById('t-notes').value.trim();
+        const rawPin = document.getElementById('t-pin') ? document.getElementById('t-pin').value.trim() : '';
+        const portalPin = rawPin.replace(/\D/g, '').slice(0, 4) || (phone ? phone.slice(-4) : '1234');
 
         if (!name || !flat) {
             alert('Please enter tenant name and flat number.');
@@ -6222,7 +6244,8 @@ const App = {
                     advanceRefunded,
                     monthlyRent,
                     moveInDate,
-                    notes
+                    notes,
+                    portalPin
                 };
             }
         } else {
@@ -6241,7 +6264,8 @@ const App = {
                 status: 'active',
                 monthlyRent,
                 moveInDate,
-                notes
+                notes,
+                portalPin
             };
             this.data.tenants.push(newT);
         }
@@ -7940,6 +7964,7 @@ const App = {
     // -------------------------------------------------------------
     switchTab(tabId) {
         this.activeTab = tabId;
+        this.setOwnerLayoutVisible(true);
 
         document.querySelectorAll('.app-view').forEach(view => {
             view.classList.add('hidden');
@@ -7988,9 +8013,7 @@ const App = {
         const modal = document.getElementById(modalId);
         if (modal) {
             modal.classList.remove('hidden');
-            modal.classList.add('flex');
             modal.style.display = 'flex';
-            modal.style.zIndex = '99999';
         }
     },
 
@@ -7998,7 +8021,6 @@ const App = {
         const modal = document.getElementById(modalId);
         if (modal) {
             modal.classList.add('hidden');
-            modal.classList.remove('flex');
             modal.style.display = 'none';
         }
     },
@@ -8051,6 +8073,10 @@ const App = {
     },
 
     renderSettingsPage() {
+        const backupSettings = StorageManager.getBackupSettings();
+        this.updateBackupSettingsUI(backupSettings);
+        this.applyTheme(StorageManager.getTheme(), false);
+
         const container = document.getElementById('settings-categories-list');
         if (!container) return;
 
@@ -8352,31 +8378,18 @@ const App = {
             monthFilterDesktop.addEventListener('change', e => this.onMonthFilterChange(e.target.value));
         }
 
+        // URL Hash routing listener
+        window.addEventListener('hashchange', () => this.checkHashRoute());
+
         // Backup & Restore
         const btnBackup = document.getElementById('btn-export-backup');
         if (btnBackup) {
-            btnBackup.addEventListener('click', () => StorageManager.exportJsonBackup());
+            btnBackup.addEventListener('click', () => this.exportStandardBackup());
         }
 
         const fileRestore = document.getElementById('file-import-backup');
         if (fileRestore) {
-            fileRestore.addEventListener('change', e => {
-                if (e.target.files && e.target.files[0]) {
-                    if (!confirm('Restore this backup and replace the current browser data? Export a backup first if you need the current data.')) {
-                        e.target.value = '';
-                        return;
-                    }
-                    StorageManager.importJsonBackup(e.target.files[0], (success, msg) => {
-                        this.showToast(msg, success ? 'success' : 'error');
-                        if (success) {
-                            this.data = StorageManager.getData();
-                            this.activeTab = 'dashboard';
-                            this.selectedMonthFilter = 'all';
-                            this.renderAll();
-                        }
-                    });
-                }
-            });
+            fileRestore.addEventListener('change', e => this.handleBackupFileRestore(e.target));
         }
 
         // Reset clean slate button
@@ -8414,6 +8427,759 @@ const App = {
                 e.preventDefault();
                 this.openCloudPairQrModal();
             });
+        }
+    },
+
+    // =============================================================
+    // THEME MANAGEMENT (Universal Light / Dark Mode)
+    // =============================================================
+    initTheme() {
+        const theme = StorageManager.getTheme(); // 'light', 'dark', or 'system'
+        this.applyTheme(theme, false);
+
+        // Listen to system preference changes if system mode is selected
+        if (window.matchMedia) {
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+                if (StorageManager.getTheme() === 'system') {
+                    this.applyTheme('system', false);
+                }
+            });
+        }
+
+        // Global keyboard shortcut: Ctrl + Shift + D to toggle theme
+        window.addEventListener('keydown', e => {
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'D' || e.key === 'd')) {
+                e.preventDefault();
+                this.toggleTheme();
+            }
+        });
+    },
+
+    setTheme(mode) {
+        StorageManager.saveTheme(mode);
+        this.applyTheme(mode, true);
+    },
+
+    toggleTheme() {
+        const currentIsDark = document.documentElement.classList.contains('dark');
+        const nextMode = currentIsDark ? 'light' : 'dark';
+        this.setTheme(nextMode);
+    },
+
+    applyTheme(mode, showNotification = false) {
+        let isDark = false;
+        if (mode === 'dark') {
+            isDark = true;
+        } else if (mode === 'light') {
+            isDark = false;
+        } else {
+            // 'system'
+            isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        }
+
+        if (isDark) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+
+        // Update meta theme-color for native mobile status bar tinting
+        const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+        if (metaThemeColor) {
+            metaThemeColor.setAttribute('content', isDark ? '#071223' : '#ffffff');
+        }
+
+        // Update desktop and mobile toggle icons
+        const iconDesktop = document.getElementById('theme-toggle-icon-desktop');
+        const iconMobile = document.getElementById('theme-toggle-icon-mobile');
+        if (iconDesktop) {
+            iconDesktop.className = isDark ? 'fa-solid fa-sun text-amber-400 text-sm' : 'fa-solid fa-moon text-slate-700 text-sm';
+        }
+        if (iconMobile) {
+            iconMobile.className = isDark ? 'fa-solid fa-sun text-amber-400' : 'fa-solid fa-moon text-slate-700';
+        }
+
+        // Update settings appearance buttons
+        const currentSetting = StorageManager.getTheme();
+        ['light', 'dark', 'system'].forEach(m => {
+            const btn = document.getElementById(`theme-btn-${m}`);
+            if (btn) {
+                if (m === currentSetting) {
+                    btn.className = 'px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm border border-slate-200 dark:border-slate-600';
+                } else {
+                    btn.className = 'px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200';
+                }
+            }
+        });
+
+        if (showNotification) {
+            const label = mode === 'system' ? 'System theme applied' : (isDark ? 'Dark mode enabled' : 'Light mode enabled');
+            this.showToast(label, 'info');
+        }
+    },
+
+    // =============================================================
+    // TENANT SELF-SERVICE PORTAL (Lightweight Guest View)
+    // =============================================================
+    checkHashRoute() {
+        if (window.location.hash === '#tenant-portal') {
+            this.openTenantPortal();
+        }
+    },
+
+    setOwnerLayoutVisible(visible) {
+        const header = document.querySelector('header');
+        const desktopNav = document.querySelector('nav.hidden.md\\:block');
+        const mobileNav = document.querySelector('nav.md\\:hidden');
+        if (header) header.style.display = visible ? '' : 'none';
+        if (desktopNav) desktopNav.style.display = visible ? '' : 'none';
+        if (mobileNav) mobileNav.style.display = visible ? '' : 'none';
+        const banner = document.getElementById('scheduled-backup-banner');
+        if (banner && !visible) banner.classList.add('hidden');
+    },
+
+    openTenantPortal() {
+        this.setOwnerLayoutVisible(false);
+        document.querySelectorAll('.app-view').forEach(view => view.classList.add('hidden'));
+        const portalView = document.getElementById('view-tenant-portal');
+        if (portalView) portalView.classList.remove('hidden');
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+
+        const sessionTenantId = sessionStorage.getItem('meera_tenant_session');
+        if (sessionTenantId && (this.data.tenants || []).some(t => t.id === sessionTenantId)) {
+            this.renderTenantPortalDashboard(sessionTenantId);
+        } else {
+            const loginCard = document.getElementById('tenant-portal-login-card');
+            const authDashboard = document.getElementById('tenant-portal-auth-dashboard');
+            if (loginCard) loginCard.classList.remove('hidden');
+            if (authDashboard) authDashboard.classList.add('hidden');
+        }
+    },
+
+    exitTenantPortal() {
+        this.setOwnerLayoutVisible(true);
+        if (window.location.hash === '#tenant-portal') {
+            history.pushState("", document.title, window.location.pathname + window.location.search);
+        }
+        this.switchTab('dashboard');
+    },
+
+    handleTenantPortalLogin(e) {
+        e.preventDefault();
+        const flatInput = (document.getElementById('tenant-portal-flat-input')?.value || '').trim();
+        const pinInput = (document.getElementById('tenant-portal-pin-input')?.value || '').trim();
+        const errorEl = document.getElementById('tenant-portal-login-error');
+
+        if (!flatInput || !pinInput) {
+            if (errorEl) {
+                errorEl.textContent = 'Please enter both your Flat number and 4-digit PIN.';
+                errorEl.classList.remove('hidden');
+            }
+            return;
+        }
+
+        const cleanFlatQuery = flatInput.toLowerCase().replace(/^(flat|unit|flt|apt)\s*/i, '').trim();
+
+        const tenant = (this.data.tenants || []).find(t => {
+            const tFlatClean = (t.flat || '').toLowerCase().replace(/^(flat|unit|flt|apt)\s*/i, '').trim();
+            const flatMatches = (tFlatClean === cleanFlatQuery || 
+                                 (t.flat || '').toLowerCase() === flatInput.toLowerCase() ||
+                                 (t.flat || '').toLowerCase().includes(cleanFlatQuery));
+            const expectedPin = t.portalPin || (t.phone ? t.phone.slice(-4) : '1234');
+            return flatMatches && expectedPin === pinInput;
+        });
+
+        if (tenant) {
+            if (errorEl) errorEl.classList.add('hidden');
+            sessionStorage.setItem('meera_tenant_session', tenant.id);
+            this.renderTenantPortalDashboard(tenant.id);
+            this.showToast(`Welcome, ${tenant.name}!`, 'success');
+        } else {
+            if (errorEl) {
+                errorEl.textContent = 'Invalid Flat Number or PIN. Please verify or contact building owners.';
+                errorEl.classList.remove('hidden');
+            }
+        }
+    },
+
+    logoutTenantPortal() {
+        sessionStorage.removeItem('meera_tenant_session');
+        const loginCard = document.getElementById('tenant-portal-login-card');
+        const authDashboard = document.getElementById('tenant-portal-auth-dashboard');
+        if (loginCard) loginCard.classList.remove('hidden');
+        if (authDashboard) authDashboard.classList.add('hidden');
+        const pinInput = document.getElementById('tenant-portal-pin-input');
+        if (pinInput) pinInput.value = '';
+        this.showToast('Signed out of resident portal.', 'info');
+    },
+
+    renderTenantPortalDashboard(tenantId) {
+        const tenant = (this.data.tenants || []).find(t => t.id === tenantId);
+        if (!tenant) {
+            this.logoutTenantPortal();
+            return;
+        }
+
+        const loginCard = document.getElementById('tenant-portal-login-card');
+        const authDashboard = document.getElementById('tenant-portal-auth-dashboard');
+        if (loginCard) loginCard.classList.add('hidden');
+        if (authDashboard) authDashboard.classList.remove('hidden');
+
+        const floor = parseInt(tenant.floor) || this.detectFloorFromFlat(tenant.flat);
+        const ownerInfo = this.getFloorOwner(floor);
+
+        const depositPaid = parseFloat(tenant.advanceDeposit) || 0;
+        const depositRefunded = parseFloat(tenant.advanceRefunded) || 0;
+        const depositDeductions = parseFloat(tenant.advanceDeductions) || 0;
+        const activeHeld = Math.max(0, depositPaid - depositRefunded - depositDeductions);
+
+        const currentMonth = this.getCurrentMonthKey();
+        const billingMonths = this.getTenantBillingMonths(tenant);
+        const unpaidMonths = billingMonths.filter(b => !b.isPaid);
+        const isPaidUp = unpaidMonths.length === 0;
+
+        // Profile fields
+        const nameEl = document.getElementById('tp-resident-name');
+        if (nameEl) nameEl.textContent = tenant.name;
+        const flatBadgeEl = document.getElementById('tp-flat-badge');
+        if (flatBadgeEl) flatBadgeEl.textContent = `Flat ${tenant.flat}`;
+        const subinfoEl = document.getElementById('tp-resident-subinfo');
+        if (subinfoEl) subinfoEl.textContent = `Floor ${floor} • Phone: ${tenant.phone || 'N/A'} • Move-in: ${tenant.moveInDate || 'N/A'}`;
+
+        // Monthly rent
+        const rentEl = document.getElementById('tp-monthly-rent');
+        if (rentEl) rentEl.textContent = `₹${(parseFloat(tenant.monthlyRent) || 0).toLocaleString('en-IN')}`;
+
+        // Rent status pill
+        const rentStatusPill = document.getElementById('tp-rent-status-pill');
+        if (rentStatusPill) {
+            if (isPaidUp) {
+                rentStatusPill.className = 'inline-block mt-2 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-emerald-100 text-emerald-800';
+                rentStatusPill.textContent = 'Paid Up (No Dues)';
+            } else if (unpaidMonths.length === 1 && unpaidMonths[0].month === currentMonth) {
+                rentStatusPill.className = 'inline-block mt-2 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-amber-100 text-amber-800';
+                rentStatusPill.textContent = 'Current Month Due';
+            } else {
+                rentStatusPill.className = 'inline-block mt-2 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-rose-100 text-rose-800';
+                rentStatusPill.textContent = `${unpaidMonths.length} Months Due`;
+            }
+        }
+
+        // Deposit held
+        const depEl = document.getElementById('tp-deposit-held');
+        if (depEl) depEl.textContent = `₹${activeHeld.toLocaleString('en-IN')}`;
+
+        // Floor owner info & WhatsApp links
+        const ownerEl = document.getElementById('tp-owner-name');
+        if (ownerEl) ownerEl.textContent = `${ownerInfo.name} (${ownerInfo.floors})`;
+
+        const ownerPhone = '9986347895'; // Management phone
+        const ownerWaLink = document.getElementById('tp-owner-wa-link');
+        if (ownerWaLink) {
+            const queryMsg = encodeURIComponent(`Hello ${ownerInfo.name},\nI am ${tenant.name} from Flat ${tenant.flat} (Meera Heights). I have a query regarding my tenancy.`);
+            ownerWaLink.href = `https://wa.me/91${ownerPhone}?text=${queryMsg}`;
+        }
+
+        // Maintenance WhatsApp button
+        const maintBtn = document.getElementById('tp-maintenance-wa-btn');
+        if (maintBtn) {
+            const maintMsg = encodeURIComponent(`Hello ${ownerInfo.name},\n*Maintenance Request*\nTenant: ${tenant.name}\nFlat: ${tenant.flat} (Floor ${floor})\nIssue Description: `);
+            maintBtn.href = `https://wa.me/91${ownerPhone}?text=${maintMsg}`;
+        }
+
+        // Past Rent Collections & Receipts
+        const paymentsContainer = document.getElementById('tp-payments-list-container');
+        if (paymentsContainer) {
+            const tenantPayments = (this.data.rentCollections || [])
+                .filter(r => r.tenantId === tenant.id)
+                .sort((a, b) => (b.paymentDate || '').localeCompare(a.paymentDate || ''));
+
+            if (tenantPayments.length === 0) {
+                paymentsContainer.innerHTML = `
+                    <div class="p-6 text-center text-slate-400 bg-slate-50 dark:bg-slate-700/30 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
+                        <i class="fa-solid fa-receipt text-2xl mb-1.5 opacity-50"></i>
+                        <p class="text-xs">No payment records found yet for this flat.</p>
+                    </div>
+                `;
+            } else {
+                paymentsContainer.innerHTML = tenantPayments.map(r => `
+                    <div class="flex items-center justify-between p-3.5 bg-slate-50 dark:bg-slate-700/40 rounded-2xl border border-slate-100 dark:border-slate-700 hover:border-sky-300 dark:hover:border-sky-700 transition">
+                        <div class="flex items-center gap-3">
+                            <div class="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 flex items-center justify-center font-bold text-xs shrink-0">
+                                <i class="fa-solid fa-check"></i>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <strong class="text-sm font-bold text-slate-900 dark:text-white">₹${(parseFloat(r.amount) || 0).toLocaleString('en-IN')}</strong>
+                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-200">${r.month || 'Rent'}</span>
+                                </div>
+                                <span class="text-[11px] text-slate-500 dark:text-slate-400 block mt-0.5">
+                                    Paid on ${r.paymentDate || '-'} • Mode: ${r.paymentMode || r.mode || 'UPI / Cash'}
+                                </span>
+                            </div>
+                        </div>
+                        <button onclick="App.downloadRentReceiptPDF('${r.id}')" class="px-3 py-1.5 bg-rose-50 dark:bg-rose-950/50 hover:bg-rose-100 dark:hover:bg-rose-900/60 text-rose-700 dark:text-rose-300 rounded-xl text-xs font-bold transition flex items-center gap-1.5 shrink-0 border border-rose-200 dark:border-rose-800/60 cursor-pointer shadow-sm" title="Download Official PDF Receipt">
+                            <i class="fa-solid fa-file-pdf"></i>
+                            <span class="hidden sm:inline">Receipt PDF</span>
+                        </button>
+                    </div>
+                `).join('');
+            }
+        }
+    },
+
+    shareTenantPortalInvite(tenantId) {
+        const tenant = (this.data.tenants || []).find(t => t.id === tenantId);
+        if (!tenant) return;
+
+        const pin = tenant.portalPin || (tenant.phone ? tenant.phone.slice(-4) : '1234');
+        const portalUrl = `${window.location.origin}${window.location.pathname}#tenant-portal`;
+
+        const msg = encodeURIComponent(
+            `Hello ${tenant.name},\n\nYou can now view your rent payment receipts, payment ledger, and active security deposit balance anytime on the *Meera Heights Tenant Portal*:\n\n🔗 ${portalUrl}\n\n*Your Login Details:*\n🏢 Flat Number: *${tenant.flat}*\n🔑 4-Digit PIN: *${pin}*\n\nWarm regards,\nManagement, Meera Heights`
+        );
+
+        if (tenant.phone) {
+            window.open(`https://wa.me/91${tenant.phone}?text=${msg}`, '_blank');
+        } else {
+            navigator.clipboard.writeText(decodeURIComponent(msg)).then(() => {
+                this.showToast('Tenant portal invite copied to clipboard!', 'success');
+            }).catch(() => {
+                prompt('Copy Tenant Portal Invite:', decodeURIComponent(msg));
+            });
+        }
+    },
+
+    // =============================================================
+    // AUTOMATED GOOGLE DRIVE & EMAIL BACKUP ENGINE
+    // =============================================================
+    initBackupScheduler() {
+        const settings = StorageManager.getBackupSettings();
+        this.updateBackupSettingsUI(settings);
+        this.checkScheduledBackupDue(settings);
+    },
+
+    updateBackupSettingsUI(settings) {
+        const badge = document.getElementById('backup-schedule-badge');
+        if (badge) {
+            if (settings.frequency === 'weekly') badge.textContent = 'Weekly (Mon)';
+            else if (settings.frequency === 'monthly') badge.textContent = 'Monthly (1st)';
+            else badge.textContent = 'Manual Only';
+        }
+
+        const lastDispatchedText = document.getElementById('backup-last-dispatched-text');
+        if (lastDispatchedText) {
+            lastDispatchedText.textContent = settings.lastRunTimestamp ? new Date(settings.lastRunTimestamp).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Never';
+        }
+
+        const nextDueText = document.getElementById('backup-next-due-text');
+        if (nextDueText) {
+            if (settings.frequency === 'manual') {
+                nextDueText.textContent = 'Disabled';
+            } else {
+                nextDueText.textContent = this.isBackupDue(settings) ? 'Due Today!' : 'Scheduled';
+            }
+        }
+    },
+
+    isBackupDue(settings) {
+        if (!settings || settings.frequency === 'manual') return false;
+        const now = new Date();
+        const lastRun = settings.lastRunTimestamp ? new Date(settings.lastRunTimestamp) : null;
+
+        if (settings.frequency === 'weekly') {
+            const isMonday = now.getDay() === 1;
+            const daysSinceLast = lastRun ? (now - lastRun) / (1000 * 60 * 60 * 24) : 999;
+            return (isMonday && daysSinceLast >= 1) || daysSinceLast >= 7;
+        }
+
+        if (settings.frequency === 'monthly') {
+            const isFirst = now.getDate() === 1;
+            const daysSinceLast = lastRun ? (now - lastRun) / (1000 * 60 * 60 * 24) : 999;
+            return (isFirst && daysSinceLast >= 1) || daysSinceLast >= 30;
+        }
+
+        return false;
+    },
+
+    checkScheduledBackupDue(settings = null) {
+        const s = settings || StorageManager.getBackupSettings();
+        if (!this.isBackupDue(s)) return;
+
+        const dismissed = sessionStorage.getItem('meera_backup_banner_dismissed');
+        if (dismissed) return;
+
+        const banner = document.getElementById('scheduled-backup-banner');
+        if (banner) {
+            banner.classList.remove('hidden');
+        }
+    },
+
+    dismissScheduledBackupBanner() {
+        sessionStorage.setItem('meera_backup_banner_dismissed', 'true');
+        const banner = document.getElementById('scheduled-backup-banner');
+        if (banner) banner.classList.add('hidden');
+    },
+
+    triggerScheduledBackupNow() {
+        this.dismissScheduledBackupBanner();
+        this.backupToGoogleDrive();
+    },
+
+    openBackupSettingsModal() {
+        const settings = StorageManager.getBackupSettings();
+        const freqSelect = document.getElementById('backup-frequency-select');
+        if (freqSelect) freqSelect.value = settings.frequency || 'weekly';
+
+        const recipInput = document.getElementById('backup-recipients-input');
+        if (recipInput) recipInput.value = (settings.recipients || []).join(', ');
+
+        const encryptToggle = document.getElementById('backup-encrypt-toggle');
+        if (encryptToggle) encryptToggle.checked = !!settings.encryptWithPassphrase;
+
+        const passContainer = document.getElementById('backup-passphrase-container');
+        if (passContainer) passContainer.classList.toggle('hidden', !settings.encryptWithPassphrase);
+
+        const passInput = document.getElementById('backup-passphrase-input');
+        if (passInput) passInput.value = settings.passphrase || '';
+
+        this.showModal('modal-backup-settings');
+    },
+
+    onBackupEncryptionToggled(checked) {
+        const passContainer = document.getElementById('backup-passphrase-container');
+        if (passContainer) passContainer.classList.toggle('hidden', !checked);
+    },
+
+    saveBackupSettingsForm(e) {
+        e.preventDefault();
+        const frequency = document.getElementById('backup-frequency-select')?.value || 'weekly';
+        const rawRecipients = document.getElementById('backup-recipients-input')?.value || '';
+        const recipients = rawRecipients.split(',').map(s => s.trim()).filter(Boolean);
+        const encryptWithPassphrase = !!document.getElementById('backup-encrypt-toggle')?.checked;
+        const passphrase = (document.getElementById('backup-passphrase-input')?.value || '').trim();
+
+        if (encryptWithPassphrase && !passphrase) {
+            alert('Please enter an encryption passphrase or turn off passphrase protection.');
+            return;
+        }
+
+        const currentSettings = StorageManager.getBackupSettings();
+        const newSettings = {
+            ...currentSettings,
+            frequency,
+            recipients,
+            encryptWithPassphrase,
+            passphrase: encryptWithPassphrase ? passphrase : ''
+        };
+
+        StorageManager.saveBackupSettings(newSettings);
+        this.updateBackupSettingsUI(newSettings);
+        this.hideModal('modal-backup-settings');
+        this.showToast('Automated backup settings saved successfully!', 'success');
+    },
+
+    async generateBackupPayload() {
+        const rawPayload = JSON.stringify({
+            app: 'Meera Heights Building Management',
+            exportDate: new Date().toISOString(),
+            version: '4.7.0',
+            data: this.data
+        }, null, 2);
+
+        const settings = StorageManager.getBackupSettings();
+        const dateStr = new Date().toISOString().slice(0, 10);
+
+        if (settings.encryptWithPassphrase && settings.passphrase) {
+            const encryptedBytes = await this.encryptWithPassphrase(rawPayload, settings.passphrase);
+            const blob = new Blob([encryptedBytes], { type: 'application/octet-stream' });
+            return {
+                blob,
+                filename: `meera_heights_encrypted_backup_${dateStr}.mhbackup`,
+                isEncrypted: true
+            };
+        } else {
+            const blob = new Blob([rawPayload], { type: 'application/json' });
+            return {
+                blob,
+                filename: `meera_heights_backup_${dateStr}.json`,
+                isEncrypted: false
+            };
+        }
+    },
+
+    // Web Crypto AES-GCM (PBKDF2 100,000 rounds)
+    async encryptWithPassphrase(plaintext, password) {
+        const enc = new TextEncoder();
+        const salt = window.crypto.getRandomValues(new Uint8Array(16));
+        const iv = window.crypto.getRandomValues(new Uint8Array(12));
+
+        const keyMaterial = await window.crypto.subtle.importKey(
+            'raw',
+            enc.encode(password),
+            'PBKDF2',
+            false,
+            ['deriveKey']
+        );
+
+        const key = await window.crypto.subtle.deriveKey(
+            {
+                name: 'PBKDF2',
+                salt: salt,
+                iterations: 100000,
+                hash: 'SHA-256'
+            },
+            keyMaterial,
+            { name: 'AES-GCM', length: 256 },
+            false,
+            ['encrypt']
+        );
+
+        const ciphertext = await window.crypto.subtle.encrypt(
+            { name: 'AES-GCM', iv: iv },
+            key,
+            enc.encode(plaintext)
+        );
+
+        // Header format: [4 bytes magic 'MH01'] + [16 bytes salt] + [12 bytes iv] + [ciphertext]
+        const magic = new Uint8Array([0x4D, 0x48, 0x30, 0x31]); // 'MH01'
+        const totalLen = magic.length + salt.length + iv.length + ciphertext.byteLength;
+        const result = new Uint8Array(totalLen);
+
+        let offset = 0;
+        result.set(magic, offset); offset += magic.length;
+        result.set(salt, offset); offset += salt.length;
+        result.set(iv, offset); offset += iv.length;
+        result.set(new Uint8Array(ciphertext), offset);
+
+        return result;
+    },
+
+    async decryptWithPassphrase(encryptedArrayBuffer, password) {
+        const bytes = new Uint8Array(encryptedArrayBuffer);
+        // Verify magic 'MH01'
+        if (bytes[0] !== 0x4D || bytes[1] !== 0x48 || bytes[2] !== 0x30 || bytes[3] !== 0x31) {
+            throw new Error('Invalid backup file format.');
+        }
+
+        const salt = bytes.slice(4, 20);
+        const iv = bytes.slice(20, 32);
+        const ciphertext = bytes.slice(32);
+
+        const enc = new TextEncoder();
+        const dec = new TextDecoder();
+
+        const keyMaterial = await window.crypto.subtle.importKey(
+            'raw',
+            enc.encode(password),
+            'PBKDF2',
+            false,
+            ['deriveKey']
+        );
+
+        const key = await window.crypto.subtle.deriveKey(
+            {
+                name: 'PBKDF2',
+                salt: salt,
+                iterations: 100000,
+                hash: 'SHA-256'
+            },
+            keyMaterial,
+            { name: 'AES-GCM', length: 256 },
+            false,
+            ['decrypt']
+        );
+
+        const decrypted = await window.crypto.subtle.decrypt(
+            { name: 'AES-GCM', iv: iv },
+            key,
+            ciphertext
+        );
+
+        return dec.decode(decrypted);
+    },
+
+    async backupToGoogleDrive() {
+        try {
+            const { blob, filename, isEncrypted } = await this.generateBackupPayload();
+
+            // Record last run
+            const settings = StorageManager.getBackupSettings();
+            settings.lastRunTimestamp = new Date().toISOString();
+            StorageManager.saveBackupSettings(settings);
+            this.updateBackupSettingsUI(settings);
+
+            // Attempt Native Web Share API if supported
+            if (navigator.canShare) {
+                const file = new File([blob], filename, { type: blob.type });
+                if (navigator.canShare({ files: [file] })) {
+                    await navigator.share({
+                        files: [file],
+                        title: 'Meera Heights Database Backup',
+                        text: `Automated building backup (${isEncrypted ? 'AES Encrypted' : 'JSON'}). Save directly to Google Drive or iCloud.`
+                    });
+                    this.showToast('Backup shared successfully!', 'success');
+                    return;
+                }
+            }
+
+            // Standard browser download + Direct Google Drive prompt
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            this.showToast(`Backup downloaded: ${filename}`, 'success');
+
+            // Open Google Drive upload page
+            setTimeout(() => {
+                if (confirm('Backup file downloaded! Would you like to open Google Drive now to upload it?')) {
+                    window.open('https://drive.google.com/drive/u/0/my-drive', '_blank');
+                }
+            }, 500);
+        } catch (err) {
+            console.error('Drive backup failed:', err);
+            this.showToast('Backup failed: ' + err.message, 'error');
+        }
+    },
+
+    async backupToEmail() {
+        try {
+            const { blob, filename, isEncrypted } = await this.generateBackupPayload();
+
+            // Record last run
+            const settings = StorageManager.getBackupSettings();
+            settings.lastRunTimestamp = new Date().toISOString();
+            StorageManager.saveBackupSettings(settings);
+            this.updateBackupSettingsUI(settings);
+
+            // Trigger file download
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            // Compose email
+            const recipients = (settings.recipients && settings.recipients.length > 0)
+                ? settings.recipients.join(',')
+                : 'sajida@meeraheights.com,jeelani@meeraheights.com';
+
+            const stats = this.getStats();
+            const dateStr = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+            const subject = encodeURIComponent(`[Meera Heights] Database Backup & Financial Summary - ${dateStr}`);
+            const body = encodeURIComponent(
+                `Hello Sajida & Jeelani,\n\nPlease find the latest automated database backup for Meera Heights Residential Apartments attached.\n\n` +
+                `📊 Executive Financial Summary:\n` +
+                `• Treasury Balance: ₹${stats.treasuryBalance.toLocaleString('en-IN')}\n` +
+                `• Sajida Advance Wallet: ₹${stats.sajidaAdvanceBalance.toLocaleString('en-IN')}\n` +
+                `• Sajida Rent Wallet: ₹${stats.sajidaRentBalance.toLocaleString('en-IN')}\n` +
+                `• Jeelani Advance Wallet: ₹${stats.jeelaniAdvanceBalance.toLocaleString('en-IN')}\n` +
+                `• Jeelani Rent Wallet: ₹${stats.jeelaniRentBalance.toLocaleString('en-IN')}\n` +
+                `• Active Tenants: ${this.data.tenants.filter(t => t.status !== 'vacated').length}\n` +
+                `• Total Expenses Recorded: ${this.data.expenses.length}\n\n` +
+                `📁 Backup File: ${filename} (${isEncrypted ? 'AES Password-Protected' : 'Standard JSON'})\n\n` +
+                `Please attach the downloaded file "${filename}" to this email for your records.\n\n` +
+                `Best regards,\nMeera Heights Building Management App`
+            );
+
+            window.location.href = `mailto:${recipients}?subject=${subject}&body=${body}`;
+            this.showToast('Backup file downloaded & email composer opened!', 'success');
+        } catch (err) {
+            console.error('Email backup failed:', err);
+            this.showToast('Email backup failed: ' + err.message, 'error');
+        }
+    },
+
+    exportStandardBackup() {
+        StorageManager.exportJsonBackup();
+    },
+
+    handleBackupFileRestore(input) {
+        if (!input.files || !input.files[0]) return;
+        const file = input.files[0];
+
+        if (file.name.endsWith('.mhbackup')) {
+            // Encrypted backup file
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                this.pendingEncryptedBackupBuffer = e.target.result;
+                const modal = document.getElementById('modal-restore-passphrase');
+                const passInput = document.getElementById('restore-passphrase-input');
+                if (passInput) passInput.value = '';
+                this.showModal('modal-restore-passphrase');
+            };
+            reader.readAsArrayBuffer(file);
+        } else {
+            // Standard JSON backup
+            if (!confirm('Restore this backup and replace current data? Export an existing backup first if you need it.')) {
+                input.value = '';
+                return;
+            }
+            StorageManager.importJsonBackup(file, (success, msg) => {
+                this.showToast(msg, success ? 'success' : 'error');
+                if (success) {
+                    this.data = StorageManager.getData();
+                    this.activeTab = 'dashboard';
+                    this.selectedMonthFilter = 'all';
+                    this.renderAll();
+                }
+            });
+        }
+        input.value = '';
+    },
+
+    cancelRestorePassphrase() {
+        this.pendingEncryptedBackupBuffer = null;
+        this.hideModal('modal-restore-passphrase');
+    },
+
+    async confirmRestorePassphrase() {
+        const passInput = document.getElementById('restore-passphrase-input');
+        const password = (passInput?.value || '').trim();
+        if (!password) {
+            alert('Please enter the encryption passphrase.');
+            return;
+        }
+
+        if (!this.pendingEncryptedBackupBuffer) {
+            this.hideModal('modal-restore-passphrase');
+            return;
+        }
+
+        try {
+            const jsonText = await this.decryptWithPassphrase(this.pendingEncryptedBackupBuffer, password);
+            const parsed = JSON.parse(jsonText);
+            const dataToRestore = parsed.data || parsed;
+
+            if (!dataToRestore.expenses || !dataToRestore.tenants) {
+                throw new Error('Backup format missing critical tables.');
+            }
+
+            if (!confirm('Passphrase verified! Replace current database with this restored backup?')) {
+                this.hideModal('modal-restore-passphrase');
+                return;
+            }
+
+            StorageManager.saveData(dataToRestore);
+            this.data = StorageManager.getData();
+            this.activeTab = 'dashboard';
+            this.selectedMonthFilter = 'all';
+            this.renderAll();
+            this.hideModal('modal-restore-passphrase');
+            this.pendingEncryptedBackupBuffer = null;
+            this.showToast('Encrypted backup successfully decrypted and restored!', 'success');
+        } catch (err) {
+            console.error('Decryption failed:', err);
+            alert('Decryption failed: Incorrect passphrase or damaged backup file.');
         }
     }
 };

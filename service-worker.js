@@ -1,9 +1,14 @@
 // service-worker.js - Caching for offline capability
-const CACHE_NAME = 'meera-heights-cache-v7';
+const CACHE_NAME = 'meera-heights-cache-v8';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './logo.png',
+  './icon-192.png',
+  './icon-512.png',
+  './icon-maskable-192.png',
+  './icon-maskable-512.png',
+  './apple-touch-icon.png',
   './css/styles.css',
   './js/storage.js?v=4.4.0',
   './js/excel-export.js?v=4.4.0',

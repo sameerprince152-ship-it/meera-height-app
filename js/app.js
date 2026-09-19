@@ -58,6 +58,9 @@ const App = {
         // Auto-post recurring expenses if enabled
         this.checkAndAutoPostRecurring();
 
+        // Initialize Real-Time Cloud Sync Engine (Firebase)
+        this.initCloudSync();
+
         this.renderAll();
         console.log('Meera Heights App Initialized with Floor Ownership & Advance Management.');
     },
@@ -164,6 +167,240 @@ const App = {
         } else {
             window.prompt('Copy this mobile URL:', url);
         }
+    },
+
+    // -------------------------------------------------------------
+    // REAL-TIME CLOUD SYNC (FIREBASE FIRESTORE) METHODS
+    // -------------------------------------------------------------
+    initCloudSync() {
+        if (typeof CloudSyncManager === 'undefined') return;
+
+        CloudSyncManager.onStatusChange((status, detail) => {
+            this.updateCloudSyncUI(status, detail);
+        });
+
+        CloudSyncManager.onDataUpdated((newData, meta) => {
+            this.handleCloudDataUpdated(newData, meta);
+        });
+
+        CloudSyncManager.init();
+    },
+
+    updateCloudSyncUI(status, detail = '') {
+        // Top Navbar Pill Indicators
+        const dot = document.getElementById('nav-cloud-sync-dot');
+        const text = document.getElementById('nav-cloud-sync-text');
+        const badge = document.getElementById('cloud-sync-status-badge');
+        const statusText = document.getElementById('cloud-sync-status-text');
+        const lastTime = document.getElementById('cloud-sync-last-time');
+
+        // Modal elements
+        const modalDot = document.getElementById('modal-cloud-status-dot');
+        const modalLabel = document.getElementById('modal-cloud-status-label');
+        const modalDetails = document.getElementById('modal-cloud-status-details');
+        const btnDisconnect = document.getElementById('btn-cloud-disconnect');
+
+        const cfg = typeof CloudSyncManager !== 'undefined' ? CloudSyncManager.getConfig() : null;
+        if (btnDisconnect) {
+            btnDisconnect.classList.toggle('hidden', !cfg);
+        }
+
+        // Format last synced time
+        let formattedLast = 'Never';
+        if (typeof CloudSyncManager !== 'undefined') {
+            const rawLast = CloudSyncManager.getLastSynced();
+            if (rawLast) {
+                const d = new Date(rawLast);
+                formattedLast = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' (' + d.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ')';
+            }
+        }
+        if (lastTime) lastTime.textContent = formattedLast;
+
+        if (status === 'connected') {
+            if (dot) dot.className = 'w-2 h-2 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50';
+            if (text) text.textContent = 'Sync Live';
+            if (badge) {
+                badge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
+                badge.textContent = 'Connected (Live)';
+            }
+            if (statusText) statusText.textContent = 'Connected & Listening';
+            if (modalDot) modalDot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0';
+            if (modalLabel) modalLabel.textContent = 'Connected & Syncing';
+            if (modalDetails) modalDetails.textContent = detail || 'Firestore real-time listener active';
+        } else if (status === 'syncing') {
+            if (dot) dot.className = 'w-2 h-2 rounded-full bg-blue-500 animate-pulse';
+            if (text) text.textContent = 'Syncing...';
+            if (badge) {
+                badge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-blue-500/20 text-blue-300 border border-blue-500/30';
+                badge.textContent = 'Syncing...';
+            }
+            if (statusText) statusText.textContent = detail || 'Synchronizing with cloud...';
+            if (modalDot) modalDot.className = 'w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse shrink-0';
+            if (modalLabel) modalLabel.textContent = 'Syncing...';
+            if (modalDetails) modalDetails.textContent = detail;
+        } else if (status === 'offline') {
+            if (dot) dot.className = 'w-2 h-2 rounded-full bg-amber-500';
+            if (text) text.textContent = 'Offline';
+            if (badge) {
+                badge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-amber-500/20 text-amber-300 border border-amber-500/30';
+                badge.textContent = 'Offline';
+            }
+            if (statusText) statusText.textContent = 'Offline (Local persistence active)';
+            if (modalDot) modalDot.className = 'w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0';
+            if (modalLabel) modalLabel.textContent = 'Device Offline';
+            if (modalDetails) modalDetails.textContent = detail || 'Changes queued locally';
+        } else if (status === 'error') {
+            if (dot) dot.className = 'w-2 h-2 rounded-full bg-rose-500';
+            if (text) text.textContent = 'Sync Error';
+            if (badge) {
+                badge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-rose-500/20 text-rose-300 border border-rose-500/30';
+                badge.textContent = 'Sync Error';
+            }
+            if (statusText) statusText.textContent = detail || 'Database error';
+            if (modalDot) modalDot.className = 'w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0';
+            if (modalLabel) modalLabel.textContent = 'Connection Error';
+            if (modalDetails) modalDetails.textContent = detail;
+        } else {
+            // Disconnected
+            if (dot) dot.className = 'w-2 h-2 rounded-full bg-slate-400';
+            if (text) text.textContent = 'Sync Off';
+            if (badge) {
+                badge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-slate-700 text-slate-300';
+                badge.textContent = 'Not Configured';
+            }
+            if (statusText) statusText.textContent = 'Disconnected';
+            if (modalDot) modalDot.className = 'w-2.5 h-2.5 rounded-full bg-slate-400 shrink-0';
+            if (modalLabel) modalLabel.textContent = 'Not Connected';
+            if (modalDetails) modalDetails.textContent = 'Cloud sync not configured';
+        }
+    },
+
+    handleCloudDataUpdated(newData, meta) {
+        if (!newData) return;
+        this.data = newData;
+        this.renderAll();
+
+        const platform = meta && meta.clientPlatform ? meta.clientPlatform : 'paired device';
+        this.showToast(`Cloud data updated from ${platform}! Synchronized successfully.`, 'info');
+    },
+
+    openCloudSyncModal() {
+        const textarea = document.getElementById('cloud-sync-config-input');
+        if (textarea && typeof CloudSyncManager !== 'undefined') {
+            const currentCfg = CloudSyncManager.getConfig();
+            if (currentCfg) {
+                textarea.value = JSON.stringify(currentCfg, null, 2);
+            } else {
+                textarea.value = '';
+            }
+        }
+        if (typeof CloudSyncManager !== 'undefined') {
+            this.updateCloudSyncUI(CloudSyncManager.syncStatus, CloudSyncManager.lastStatusDetail);
+        }
+        this.showModal('modal-cloud-sync-setup');
+    },
+
+    saveCloudSyncConfig() {
+        const textarea = document.getElementById('cloud-sync-config-input');
+        if (!textarea) return;
+        const val = textarea.value.trim();
+        if (!val) {
+            alert('Please paste your Firebase configuration snippet or JSON.');
+            return;
+        }
+
+        const parsed = CloudSyncManager.parseFirebaseSnippet(val);
+        if (!parsed) {
+            alert('Invalid Firebase configuration! Please ensure you paste the full Firebase credentials (including apiKey and projectId).');
+            return;
+        }
+
+        const connected = CloudSyncManager.connect(parsed, true);
+        if (connected) {
+            // Seed cloud with current local dataset
+            CloudSyncManager.pushToCloud(this.data, true);
+            this.hideModal('modal-cloud-sync-setup');
+            this.showToast('Cloud Sync connected! Your building data is now synced.', 'success');
+        } else {
+            this.showToast('Could not initialize Firebase. Check browser console.', 'error');
+        }
+    },
+
+    disconnectCloudSync() {
+        if (!confirm('Are you sure you want to disconnect Cloud Sync? Your current building records on this device will stay saved locally, but real-time multi-device sync will stop.')) {
+            return;
+        }
+        CloudSyncManager.disconnect();
+        const textarea = document.getElementById('cloud-sync-config-input');
+        if (textarea) textarea.value = '';
+        this.hideModal('modal-cloud-sync-setup');
+        this.showToast('Cloud Sync disconnected.', 'info');
+    },
+
+    openCloudPairQrModal() {
+        if (typeof CloudSyncManager === 'undefined' || !CloudSyncManager.getConfig() || !CloudSyncManager.isEnabled()) {
+            alert('Please configure and connect Cloud Sync on this computer first before pairing a mobile device.');
+            this.openCloudSyncModal();
+            return;
+        }
+
+        const pairingUrl = CloudSyncManager.generatePairingUrl();
+        if (!pairingUrl) {
+            alert('Could not generate pairing URL. Please re-check your Cloud Sync configuration.');
+            return;
+        }
+
+        const urlInput = document.getElementById('cloud-pair-url-input');
+        if (urlInput) urlInput.value = pairingUrl;
+
+        const qrContainer = document.getElementById('cloud-sync-qrcode');
+        if (qrContainer) {
+            qrContainer.innerHTML = '';
+            if (typeof QRCode !== 'undefined') {
+                try {
+                    new QRCode(qrContainer, {
+                        text: pairingUrl,
+                        width: 220,
+                        height: 220,
+                        colorDark: "#0f172a",
+                        colorLight: "#ffffff",
+                        correctLevel: QRCode.CorrectLevel.M
+                    });
+                } catch (err) {
+                    console.error('QRCode generation error:', err);
+                    qrContainer.innerHTML = '<p class="text-xs text-rose-500">QR code failed to render. Use the copy link below.</p>';
+                }
+            } else {
+                qrContainer.innerHTML = '<p class="text-xs text-slate-500">QRCode library loading... Use the copy link below.</p>';
+            }
+        }
+
+        this.showModal('modal-cloud-sync-qr');
+    },
+
+    copyCloudPairUrl() {
+        const urlInput = document.getElementById('cloud-pair-url-input');
+        if (!urlInput || !urlInput.value) return;
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(urlInput.value)
+                .then(() => this.showToast('Mobile pairing link copied to clipboard! Open it on your phone.', 'success'))
+                .catch(() => window.prompt('Copy pairing URL:', urlInput.value));
+        } else {
+            urlInput.select();
+            document.execCommand('copy');
+            this.showToast('Mobile pairing link copied to clipboard!', 'success');
+        }
+    },
+
+    forceSyncNow() {
+        if (typeof CloudSyncManager === 'undefined' || !CloudSyncManager.getConfig() || !CloudSyncManager.isEnabled()) {
+            this.showToast('Cloud Sync is not configured yet. Click Configure to set it up.', 'warning');
+            this.openCloudSyncModal();
+            return;
+        }
+        this.showToast('Uploading latest data to cloud...', 'info');
+        CloudSyncManager.pushToCloud(this.data, true);
     },
 
     // -------------------------------------------------------------

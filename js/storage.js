@@ -785,7 +785,8 @@ class StorageManager {
             emailJeelani: '',
             autoPrompt: true,
             encrypted: false,
-            passphraseHint: ''
+            passphraseHint: '',
+            webhookUrl: ''
         };
         try {
             const raw = localStorage.getItem(STORAGE_KEYS.BACKUP_SETTINGS);

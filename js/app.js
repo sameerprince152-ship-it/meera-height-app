@@ -8695,6 +8695,9 @@ const App = {
         const passInput = document.getElementById('backup-passphrase-input');
         if (passInput) passInput.value = settings.passphrase || '';
 
+        const webhookInput = document.getElementById('backup-webhook-url-input');
+        if (webhookInput) webhookInput.value = settings.webhookUrl || '';
+
         this.showModal('modal-backup-settings');
     },
 
@@ -8710,6 +8713,7 @@ const App = {
         const recipients = rawRecipients.split(',').map(s => s.trim()).filter(Boolean);
         const encryptWithPassphrase = !!document.getElementById('backup-encrypt-toggle')?.checked;
         const passphrase = (document.getElementById('backup-passphrase-input')?.value || '').trim();
+        const webhookUrl = (document.getElementById('backup-webhook-url-input')?.value || '').trim();
 
         if (encryptWithPassphrase && !passphrase) {
             alert('Please enter an encryption passphrase or turn off passphrase protection.');
@@ -8722,7 +8726,8 @@ const App = {
             frequency,
             recipients,
             encryptWithPassphrase,
-            passphrase: encryptWithPassphrase ? passphrase : ''
+            passphrase: encryptWithPassphrase ? passphrase : '',
+            webhookUrl
         };
 
         StorageManager.saveBackupSettings(newSettings);
@@ -8861,7 +8866,30 @@ const App = {
             StorageManager.saveBackupSettings(settings);
             this.updateBackupSettingsUI(settings);
 
-            // Attempt Native Web Share API if supported
+            // 1. If user configured an automated Google Apps Script Webhook, upload directly to Drive!
+            if (settings.webhookUrl) {
+                this.showToast('Uploading backup directly to your Google Drive...', 'info');
+                try {
+                    const rawText = await blob.text();
+                    await fetch(settings.webhookUrl, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'drive',
+                            filename,
+                            content: rawText,
+                            isEncrypted
+                        })
+                    });
+                    this.showToast(`Backup successfully uploaded to Google Drive folder 'Meera Heights App Backups'!`, 'success');
+                    return;
+                } catch (webErr) {
+                    console.warn('Webhook upload error, falling back to download:', webErr);
+                }
+            }
+
+            // 2. Attempt Native Web Share API if supported (works on Android & iOS to save directly to Drive)
             if (navigator.canShare && navigator.share) {
                 try {
                     const file = new File([blob], filename, { type: blob.type });
@@ -8871,7 +8899,7 @@ const App = {
                             title: 'Meera Heights Database Backup',
                             text: `Meera Heights automated backup (${isEncrypted ? 'AES Encrypted' : 'JSON'}). Save directly to Google Drive or files.`
                         });
-                        this.showToast('Backup shared successfully!', 'success');
+                        this.showToast('Backup shared successfully! Choose Google Drive from the menu.', 'success');
                         return;
                     }
                 } catch (shareErr) {
@@ -8879,20 +8907,33 @@ const App = {
                 }
             }
 
-            // Standard browser download
+            // 3. Standard browser download for desktop / unsupported share
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
+            a.style.position = 'fixed';
+            a.style.left = '-9999px';
+            a.style.opacity = '0';
             a.href = url;
             a.download = filename;
             document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            setTimeout(() => URL.revokeObjectURL(url), 1500);
+            try {
+                a.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+            } catch (e) {
+                a.click();
+            }
+            setTimeout(() => {
+                try {
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                } catch (e) {}
+            }, 10000);
 
-            this.showToast(`Backup downloaded: ${filename}. Opening Google Drive...`, 'success');
+            this.showToast(`Backup downloaded: ${filename}. Opening Google Drive to upload...`, 'success');
 
-            // Open Google Drive upload page directly in new tab
-            window.open('https://drive.google.com/drive/u/0/my-drive', '_blank');
+            // Open Google Drive upload page in new tab
+            try {
+                window.open('https://drive.google.com/drive/u/0/my-drive', '_blank');
+            } catch (e) {}
         } catch (err) {
             console.error('Drive backup failed:', err);
             this.showToast('Backup failed: ' + err.message, 'error');
@@ -8909,22 +8950,58 @@ const App = {
             StorageManager.saveBackupSettings(settings);
             this.updateBackupSettingsUI(settings);
 
-            // Trigger file download
+            const recipients = (settings.recipients && settings.recipients.length > 0)
+                ? settings.recipients
+                : ['mahaboob.1411ali@gmail.com'];
+
+            // 1. If user configured an automated Google Apps Script Webhook, send email with attachment directly!
+            if (settings.webhookUrl) {
+                this.showToast('Sending automated email with backup attachment...', 'info');
+                try {
+                    const rawText = await blob.text();
+                    await fetch(settings.webhookUrl, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            action: 'email',
+                            recipients,
+                            filename,
+                            content: rawText,
+                            isEncrypted
+                        })
+                    });
+                    this.showToast(`Backup email with attachment sent successfully to ${recipients.join(', ')}!`, 'success');
+                    return;
+                } catch (webErr) {
+                    console.warn('Webhook email error, falling back to mailto:', webErr);
+                }
+            }
+
+            // 2. Trigger file download so user has the file
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
+            a.style.position = 'fixed';
+            a.style.left = '-9999px';
+            a.style.opacity = '0';
             a.href = url;
             a.download = filename;
             document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            setTimeout(() => URL.revokeObjectURL(url), 1500);
+            try {
+                a.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+            } catch (e) {
+                a.click();
+            }
+            setTimeout(() => {
+                try {
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                } catch (e) {}
+            }, 10000);
 
             // Compose email after small delay so download is not aborted
             setTimeout(() => {
-                const recipients = (settings.recipients && settings.recipients.length > 0)
-                    ? settings.recipients.join(',')
-                    : 'sajida@meeraheights.com,jeelani@meeraheights.com';
-
+                const recipStr = recipients.join(',');
                 const stats = this.getStats();
                 const dateStr = new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
                 const subject = encodeURIComponent(`[Meera Heights] Database Backup & Financial Summary - ${dateStr}`);
@@ -8939,14 +9016,14 @@ const App = {
                     `• Active Tenants: ${this.data.tenants.filter(t => t.status !== 'vacated').length}\n` +
                     `• Total Expenses Recorded: ${this.data.expenses.length}\n\n` +
                     `📁 Backup File: ${filename} (${isEncrypted ? 'AES Password-Protected' : 'Standard JSON'})\n\n` +
-                    `Please attach the downloaded file "${filename}" to this email for your records.\n\n` +
+                    `Please attach the downloaded file "${filename}" from your Downloads folder to this email for your records.\n\n` +
                     `Best regards,\nMeera Heights Building Management App`
                 );
 
-                window.location.href = `mailto:${recipients}?subject=${subject}&body=${body}`;
+                window.location.href = `mailto:${recipStr}?subject=${subject}&body=${body}`;
             }, 350);
 
-            this.showToast('Backup file downloaded & email composer opening...', 'success');
+            this.showToast(`Backup downloaded: ${filename}. Please attach it to your email composer.`, 'info');
         } catch (err) {
             console.error('Email backup failed:', err);
             this.showToast('Email backup failed: ' + err.message, 'error');

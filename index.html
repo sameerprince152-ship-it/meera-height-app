@@ -3937,6 +3937,37 @@
                         <input type="password" id="backup-passphrase-input" placeholder="Enter secure passphrase" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-xs font-mono text-slate-800 dark:text-white outline-none">
                         <p class="text-[10px] text-amber-600 dark:text-amber-400 font-medium">⚠️ Remember this passphrase. It will be required to restore the backup file.</p>
                     </div>
+                <!-- Google Drive & Email Direct Webhook (Optional) -->
+                <div class="p-3.5 bg-blue-50/70 dark:bg-blue-950/30 rounded-2xl border border-blue-200/80 dark:border-blue-900/50 space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-brands fa-google-drive text-emerald-600 dark:text-emerald-400 text-base"></i>
+                            <div>
+                                <strong class="block text-xs font-bold text-slate-900 dark:text-white">Google Apps Script Webhook</strong>
+                                <span class="text-[10px] text-slate-500 dark:text-slate-400">Enables 100% automated Drive uploads & email attachments</span>
+                            </div>
+                        </div>
+                        <span class="px-2 py-0.5 rounded-full text-[9px] font-bold bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-300 uppercase">Optional</span>
+                    </div>
+
+                    <div>
+                        <input type="url" id="backup-webhook-url-input" placeholder="https://script.google.com/macros/s/.../exec" class="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-xl px-3 py-2 text-xs font-mono text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+
+                    <div class="text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-between">
+                        <span>Without a webhook, backups download to your device.</span>
+                        <button type="button" onclick="document.getElementById('webhook-guide-details').classList.toggle('hidden')" class="text-blue-600 dark:text-blue-400 font-bold underline cursor-pointer hover:text-blue-700">Setup Guide</button>
+                    </div>
+
+                    <div id="webhook-guide-details" class="hidden text-[10px] text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1.5 leading-relaxed">
+                        <p class="font-bold text-slate-800 dark:text-white">Quick 2-Minute Google Setup:</p>
+                        <ol class="list-decimal list-inside space-y-0.5">
+                            <li>Go to <a href="https://script.google.com" target="_blank" class="text-blue-600 underline">script.google.com</a> with your Google account.</li>
+                            <li>Click <strong>New Project</strong> and paste the Meera Heights Backup script.</li>
+                            <li>Click <strong>Deploy &rarr; New deployment &rarr; Web app</strong> (Access: <em>Anyone</em>).</li>
+                            <li>Copy the resulting Web App URL and paste it above!</li>
+                        </ol>
+                    </div>
                 </div>
 
                 <div class="pt-2">

@@ -1,12 +1,12 @@
 // service-worker.js - Caching for offline capability
-const CACHE_NAME = 'meera-heights-cache-v1';
+const CACHE_NAME = 'meera-heights-cache-v4';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './css/styles.css',
-  './js/storage.js',
-  './js/excel-export.js',
-  './js/app.js',
+  './js/storage.js?v=4.2.2',
+  './js/excel-export.js?v=4.2.2',
+  './js/app.js?v=4.2.2',
   './manifest.json'
 ];
 
@@ -29,9 +29,18 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
-  // Network first, fallback to cache for offline usage
+  // Network first with dynamic cache refresh, fallback to cache for offline
+  if (event.request.method !== 'GET') return;
   event.respondWith(
-    fetch(event.request).catch(() => {
+    fetch(event.request).then(response => {
+      if (response && response.status === 200 && response.type === 'basic') {
+        const responseClone = response.clone();
+        caches.open(CACHE_NAME).then(cache => {
+          cache.put(event.request, responseClone);
+        });
+      }
+      return response;
+    }).catch(() => {
       return caches.match(event.request);
     })
   );

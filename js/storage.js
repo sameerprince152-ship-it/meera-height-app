@@ -357,6 +357,17 @@ const CLOUD_SYNC_KEYS = {
     DEVICE_ID: 'meera_device_id_v1'
 };
 
+// Default pre-configured cloud database for Meera Heights (Firebase Firestore)
+const DEFAULT_FIREBASE_CONFIG = {
+    apiKey: "AIzaSyAT3MBVdwg-D2q5bGt-LX7thbm2fyz5RgA",
+    authDomain: "meera-heights.firebaseapp.com",
+    projectId: "meera-heights",
+    storageBucket: "meera-heights.firebasestorage.app",
+    messagingSenderId: "75973275632",
+    appId: "1:75973275632:web:7d23c4a6c351c6dce1f735",
+    measurementId: "G-JSMZB43NTZ"
+};
+
 class CloudSyncManager {
     static isInitialized = false;
     static db = null;
@@ -380,7 +391,10 @@ class CloudSyncManager {
     }
 
     static isEnabled() {
-        return localStorage.getItem(CLOUD_SYNC_KEYS.SYNC_ENABLED) === 'true';
+        const val = localStorage.getItem(CLOUD_SYNC_KEYS.SYNC_ENABLED);
+        if (val === 'false') return false;
+        // Enabled by default so cross-device sync operates seamlessly
+        return true;
     }
 
     static setEnabled(val) {
@@ -390,10 +404,12 @@ class CloudSyncManager {
     static getConfig() {
         try {
             const raw = localStorage.getItem(CLOUD_SYNC_KEYS.FIREBASE_CONFIG);
-            return raw ? JSON.parse(raw) : null;
-        } catch (e) {
-            return null;
-        }
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                if (parsed && parsed.apiKey && parsed.projectId) return parsed;
+            }
+        } catch (e) {}
+        return DEFAULT_FIREBASE_CONFIG;
     }
 
     static setConfig(config) {

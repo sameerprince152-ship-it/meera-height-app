@@ -5953,6 +5953,7 @@ const App = {
         if (modal) {
             modal.classList.remove('hidden');
             modal.classList.add('flex');
+            modal.style.display = 'flex';
         }
     },
 
@@ -5961,6 +5962,7 @@ const App = {
         if (modal) {
             modal.classList.add('hidden');
             modal.classList.remove('flex');
+            modal.style.display = 'none';
         }
     },
 
@@ -6330,8 +6332,37 @@ const App = {
                 }
             });
         }
+
+        // Cloud Sync direct event listeners
+        const btnCloudNav = document.getElementById('nav-cloud-sync-btn');
+        if (btnCloudNav) {
+            btnCloudNav.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.openCloudSyncModal();
+            });
+        }
+
+        const btnCloudCfg = document.getElementById('btn-cloud-configure');
+        if (btnCloudCfg) {
+            btnCloudCfg.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.openCloudSyncModal();
+            });
+        }
+
+        const btnCloudPair = document.getElementById('btn-cloud-pair-mobile');
+        if (btnCloudPair) {
+            btnCloudPair.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.openCloudPairQrModal();
+            });
+        }
     }
 };
+
+// Global helper access
+window.openCloudSyncModal = () => App.openCloudSyncModal();
+window.openCloudPairQrModal = () => App.openCloudPairQrModal();
 
 // Bootstrap app on DOM Ready
 document.addEventListener('DOMContentLoaded', () => {

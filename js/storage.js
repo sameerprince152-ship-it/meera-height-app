@@ -826,6 +826,28 @@ class StorageManager {
             return false;
         }
     }
+
+    static getAuthCredentials() {
+        try {
+            const raw = localStorage.getItem(STORAGE_KEYS.AUTH_CREDENTIALS);
+            return raw ? JSON.parse(raw) : null;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    static setAuthCredentials(creds) {
+        try {
+            if (creds && creds.hash && creds.salt) {
+                localStorage.setItem(STORAGE_KEYS.AUTH_CREDENTIALS, JSON.stringify(creds));
+                return true;
+            }
+            return false;
+        } catch (e) {
+            console.error('Error saving auth credentials:', e);
+            return false;
+        }
+    }
 }
 
 // -------------------------------------------------------------
@@ -926,11 +948,17 @@ class AuthManager {
         return hash === this._AUTH_R;
     }
 
+    static getCredentials() {
+        return StorageManager.getAuthCredentials();
+    }
+
+    static setCredentials(creds) {
+        return StorageManager.setAuthCredentials(creds);
+    }
+
     static isPasswordConfigured() {
         try {
-            const raw = localStorage.getItem(STORAGE_KEYS.AUTH_CREDENTIALS);
-            if (!raw) return false;
-            const creds = JSON.parse(raw);
+            const creds = StorageManager.getAuthCredentials();
             return !!(creds && creds.hash && creds.salt);
         } catch (e) {
             return false;
@@ -955,16 +983,19 @@ class AuthManager {
             hash: saltedHash,
             configuredAt: new Date().toISOString()
         };
-        localStorage.setItem(STORAGE_KEYS.AUTH_CREDENTIALS, JSON.stringify(creds));
+        StorageManager.setAuthCredentials(creds);
         this.setAuthenticated(true);
-        return true;
+
+        // Sync to cloud Firestore immediately if active
+        if (typeof CloudSyncManager !== 'undefined' && CloudSyncManager.isEnabled()) {
+            CloudSyncManager.pushAuthSecurity(creds);
+        }
+        return creds;
     }
 
     static async verifyPassword(password) {
         try {
-            const raw = localStorage.getItem(STORAGE_KEYS.AUTH_CREDENTIALS);
-            if (!raw) return false;
-            const creds = JSON.parse(raw);
+            const creds = StorageManager.getAuthCredentials();
             if (!creds || !creds.salt || !creds.hash) return false;
             const calculated = await this.sha256(creds.salt + ':' + password);
             return calculated === creds.hash;
@@ -1111,6 +1142,28 @@ class ActivityLogger {
             `"${(l.device || '').replace(/"/g, '""')}"`
         ]);
         return [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    }
+
+    static mergeRemoteLogs(remoteLogs) {
+        if (!Array.isArray(remoteLogs) || !remoteLogs.length) return;
+        try {
+            const localLogs = this.getLogs('all');
+            const idMap = new Map();
+            localLogs.forEach(l => { if (l && l.id) idMap.set(l.id, l); });
+            let hasNew = false;
+            remoteLogs.forEach(l => {
+                if (l && l.id && !idMap.has(l.id)) {
+                    idMap.set(l.id, l);
+                    hasNew = true;
+                }
+            });
+            if (hasNew) {
+                const merged = Array.from(idMap.values()).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, this.MAX_RECORDS);
+                localStorage.setItem(STORAGE_KEYS.ACTIVITY_LOG, JSON.stringify(merged));
+            }
+        } catch (e) {
+            console.warn('Error merging remote activity logs:', e);
+        }
     }
 }
 
@@ -1419,11 +1472,33 @@ class CloudSyncManager {
                 return;
             }
 
+            // Cross-device Auth Security Sync: Ingest master password credentials
+            if (cloudPayload.authSecurity && cloudPayload.authSecurity.hash && cloudPayload.authSecurity.salt) {
+                const localCreds = StorageManager.getAuthCredentials();
+                const isNewer = !localCreds || !localCreds.hash || (cloudPayload.authSecurity.configuredAt && (!localCreds.configuredAt || new Date(cloudPayload.authSecurity.configuredAt) > new Date(localCreds.configuredAt)));
+                if (isNewer) {
+                    StorageManager.setAuthCredentials(cloudPayload.authSecurity);
+                    if (typeof App !== 'undefined' && App.onAuthCredentialsSynced) {
+                        App.onAuthCredentialsSynced();
+                    }
+                }
+            }
+
+            // Cross-device Activity Logs Sync: Merge remote audit events
+            if (Array.isArray(cloudPayload.activityLogs) && cloudPayload.activityLogs.length > 0) {
+                ActivityLogger.mergeRemoteLogs(cloudPayload.activityLogs);
+                if (typeof App !== 'undefined' && document.getElementById('modal-activity-history') && document.getElementById('modal-activity-history').style.display !== 'none') {
+                    App.renderActivityHistory();
+                }
+            }
+
             // Ingest cloud update into local storage and notify UI
             this.isSyncingFromCloud = true;
             try {
                 const cleaned = { ...cloudPayload };
                 delete cleaned._cloudMeta;
+                delete cleaned.authSecurity;
+                delete cleaned.activityLogs;
 
                 // Ensure core collections are never null or empty
                 if (!cleaned.tenants || cleaned.tenants.length === 0) {
@@ -1467,6 +1542,66 @@ class CloudSyncManager {
         });
     }
 
+    static pushLocalDataToCloud(data, immediate = false) {
+        return this.pushToCloud(data, immediate);
+    }
+
+    static async pushAuthSecurity(creds) {
+        if (!creds || !creds.hash) return false;
+        try {
+            if (!this.db) {
+                const config = this.getConfig();
+                if (config) this.connect(config);
+            }
+            if (this.db) {
+                const docRef = this.db.collection('buildings').doc('meera_heights');
+                const myDevId = this.getDeviceId();
+                await docRef.set({
+                    authSecurity: creds,
+                    _cloudMeta: {
+                        senderDeviceId: myDevId,
+                        lastUpdated: Date.now(),
+                        updatedAt: new Date().toISOString(),
+                        clientPlatform: navigator.platform || 'web'
+                    }
+                }, { merge: true });
+                console.log('Master password security credentials synced to Firestore cloud.');
+                return true;
+            }
+        } catch (e) {
+            console.warn('Could not push authSecurity to cloud:', e);
+        }
+        return false;
+    }
+
+    static async fetchRemoteAuthSecurity() {
+        try {
+            if (!this.db) {
+                const config = this.getConfig();
+                if (config && typeof firebase !== 'undefined' && firebase.initializeApp) {
+                    let app = (firebase.apps && firebase.apps.length > 0) ? firebase.apps[0] : firebase.initializeApp(config);
+                    this.db = firebase.firestore(app);
+                }
+            }
+            if (this.db) {
+                const docRef = this.db.collection('buildings').doc('meera_heights');
+                const fetchPromise = docRef.get();
+                const timeoutPromise = new Promise(resolve => setTimeout(() => resolve(null), 2500));
+                const doc = await Promise.race([fetchPromise, timeoutPromise]);
+                if (doc && doc.exists) {
+                    const cloudData = doc.data();
+                    if (cloudData && cloudData.authSecurity && cloudData.authSecurity.hash && cloudData.authSecurity.salt) {
+                        StorageManager.setAuthCredentials(cloudData.authSecurity);
+                        return cloudData.authSecurity;
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn('Could not fetch remote auth security:', e);
+        }
+        return null;
+    }
+
     static pushToCloud(data, immediate = false) {
         if (!this.db || !this.isEnabled() || this.isSyncingFromCloud) return;
 
@@ -1483,8 +1618,13 @@ class CloudSyncManager {
                 const myDevId = this.getDeviceId();
                 const now = Date.now();
 
+                const authCreds = StorageManager.getAuthCredentials();
+                const activityLogs = (typeof ActivityLogger !== 'undefined' && ActivityLogger.getLogs) ? ActivityLogger.getLogs('all').slice(0, 100) : [];
+
                 const payload = {
                     ...data,
+                    authSecurity: authCreds || null,
+                    activityLogs: activityLogs,
                     _cloudMeta: {
                         senderDeviceId: myDevId,
                         lastUpdated: now,
@@ -1493,7 +1633,7 @@ class CloudSyncManager {
                     }
                 };
 
-                await docRef.set(payload);
+                await docRef.set(payload, { merge: true });
                 this.setLastSynced(new Date());
                 this.updateStatus('connected', 'Live Cloud Sync Connected');
             } catch (e) {

@@ -69,6 +69,9 @@ const App = {
 
     init() {
         this.initTheme();
+        if (!AuthManager.isAuthenticated()) {
+            document.body.classList.add('portal-locked');
+        }
         this.initAuthGate();
         this.data = StorageManager.getData();
         this.setupEventListeners();
@@ -5980,6 +5983,7 @@ const App = {
             this.showToast(`Advance settlement processed for ${tenant.name} in ${ownerInfo.name} Advance Wallet. Retained: ₹${totalDeductions.toLocaleString('en-IN')}, Refunded: ₹${refundAmount.toLocaleString('en-IN')}`);
         }
 
+        ActivityLogger.log('tenant', `Advance Settled: ${tenant ? tenant.name : 'Tenant'}`, `Retained: ₹${totalDeductions.toLocaleString('en-IN')}, Refunded: ₹${refundAmount.toLocaleString('en-IN')}`);
         StorageManager.saveData(this.data);
         this.hideModal('modal-settle-advance');
         this.renderAll();
@@ -7679,6 +7683,7 @@ const App = {
             this.renderAll();
 
             const actionText = (type === 'wallet_to_bank') ? 'transferred to bank' : 'deposited into wallet';
+            ActivityLogger.log('rent', `Bank Transfer: ₹${amount.toLocaleString('en-IN')}`, `${wInfo.name} (${actionText} - ${bankName})`);
             this.showToast(`₹${amount.toLocaleString('en-IN')} successfully ${actionText} for ${wInfo.shortName}!`, 'success');
         } finally {
             this._isSavingBankTransfer = false;
@@ -7700,6 +7705,7 @@ const App = {
         if (!confirm(msg)) return;
 
         this.data.bankTransactions = (this.data.bankTransactions || []).filter(t => t.id !== id);
+        ActivityLogger.log('rent', `Bank Transfer Deleted: ₹${tx.amount.toLocaleString('en-IN')}`, `${tx.bankName} (${wInfo.name})`);
         StorageManager.saveData(this.data);
         this.renderAll();
         this.showToast(`Bank transaction removed. ${wInfo.shortName} updated.`);
@@ -7957,6 +7963,7 @@ const App = {
             this.hideModal('modal-wallet-transfer');
             this.renderAll();
 
+            ActivityLogger.log('rent', `Wallet Transfer: ₹${amount.toLocaleString('en-IN')}`, `${fromInfo.shortName} → ${toInfo.shortName} (${reason || 'Transfer'})`);
             this.showToast(`Transferred ₹${amount.toLocaleString('en-IN')} from ${fromInfo.shortName} to ${toInfo.shortName}!`, 'success');
         } finally {
             this._isSavingWalletTransfer = false;
@@ -7981,6 +7988,7 @@ const App = {
         if (!confirm(msg)) return;
 
         this.data.walletTransfers = (this.data.walletTransfers || []).filter(t => t.id !== id);
+        ActivityLogger.log('rent', `Wallet Transfer Deleted: ₹${parseFloat(tx.amount).toLocaleString('en-IN')}`, `${fromInfo.shortName} → ${toInfo.shortName}`);
         StorageManager.saveData(this.data);
         this.renderAll();
         this.showToast(`Transfer reverted. Wallet balances restored.`);
@@ -8633,29 +8641,76 @@ const App = {
     // SECURE AUTHENTICATION GATE ENGINE
     // Username & Password Gateway with Masked Credentials & Recovery
     // =============================================================
-    initAuthGate() {
+    async initAuthGate() {
         const overlay = document.getElementById('auth-gate-overlay');
         if (!overlay) return;
 
         if (AuthManager.isAuthenticated()) {
+            document.body.classList.remove('portal-locked');
+            overlay.classList.add('hidden');
             overlay.style.display = 'none';
-        } else {
-            overlay.style.display = 'flex';
-            if (!AuthManager.isPasswordConfigured()) {
-                this.showAuthSetupView();
-            } else {
-                this.showAuthLoginView();
+            return;
+        }
+
+        // Conceal all underlying app data immediately while locked
+        document.body.classList.add('portal-locked');
+        overlay.classList.remove('hidden');
+        overlay.style.display = 'flex';
+
+        if (AuthManager.isPasswordConfigured()) {
+            this.showAuthLoginView();
+            return;
+        }
+
+        // Password not in local localStorage: check cloud database (if configured on Windows / other device)
+        if (navigator.onLine && typeof CloudSyncManager !== 'undefined') {
+            this.showAuthCheckingView();
+            try {
+                const remoteCreds = await CloudSyncManager.fetchRemoteAuthSecurity();
+                if (remoteCreds && remoteCreds.hash) {
+                    this.showAuthLoginView();
+                    return;
+                }
+            } catch (e) {
+                console.warn('Cloud auth check error:', e);
             }
         }
+
+        // If not found in cloud, present first-time setup
+        this.showAuthSetupView();
+    },
+
+    onAuthCredentialsSynced() {
+        if (!AuthManager.isAuthenticated()) {
+            const setupView = document.getElementById('auth-view-setup');
+            const checkingView = document.getElementById('auth-view-checking');
+            if ((setupView && !setupView.classList.contains('hidden')) || (checkingView && !checkingView.classList.contains('hidden'))) {
+                this.showAuthLoginView();
+                this.showToast('Master password synchronized from cloud. Please sign in.', 'info');
+            }
+        }
+    },
+
+    showAuthCheckingView() {
+        const setup = document.getElementById('auth-view-setup');
+        const login = document.getElementById('auth-view-login');
+        const recovery = document.getElementById('auth-view-recovery');
+        const checking = document.getElementById('auth-view-checking');
+        if (setup) setup.classList.add('hidden');
+        if (login) login.classList.add('hidden');
+        if (recovery) recovery.classList.add('hidden');
+        if (checking) checking.classList.remove('hidden');
     },
 
     showAuthSetupView() {
         const setup = document.getElementById('auth-view-setup');
         const login = document.getElementById('auth-view-login');
         const recovery = document.getElementById('auth-view-recovery');
+        const checking = document.getElementById('auth-view-checking');
         if (setup) setup.classList.remove('hidden');
         if (login) login.classList.add('hidden');
         if (recovery) recovery.classList.add('hidden');
+        if (checking) checking.classList.add('hidden');
         const err = document.getElementById('auth-setup-error');
         if (err) err.classList.add('hidden');
     },
@@ -8664,9 +8719,11 @@ const App = {
         const setup = document.getElementById('auth-view-setup');
         const login = document.getElementById('auth-view-login');
         const recovery = document.getElementById('auth-view-recovery');
+        const checking = document.getElementById('auth-view-checking');
         if (setup) setup.classList.add('hidden');
         if (login) login.classList.remove('hidden');
         if (recovery) recovery.classList.add('hidden');
+        if (checking) checking.classList.add('hidden');
         const err = document.getElementById('auth-login-error');
         if (err) err.classList.add('hidden');
     },
@@ -8675,9 +8732,11 @@ const App = {
         const setup = document.getElementById('auth-view-setup');
         const login = document.getElementById('auth-view-login');
         const recovery = document.getElementById('auth-view-recovery');
+        const checking = document.getElementById('auth-view-checking');
         if (setup) setup.classList.add('hidden');
         if (login) login.classList.add('hidden');
         if (recovery) recovery.classList.remove('hidden');
+        if (checking) checking.classList.add('hidden');
         const err = document.getElementById('auth-recovery-error');
         if (err) err.classList.add('hidden');
     },
@@ -8743,8 +8802,15 @@ const App = {
         try {
             await AuthManager.setPassword(password);
             ActivityLogger.log('security', 'Master Password Configured', 'Initial master password setup completed successfully.');
+            document.body.classList.remove('portal-locked');
             const overlay = document.getElementById('auth-gate-overlay');
-            if (overlay) overlay.style.display = 'none';
+            if (overlay) {
+                overlay.classList.add('hidden');
+                overlay.style.display = 'none';
+            }
+            if (typeof CloudSyncManager !== 'undefined' && CloudSyncManager.isEnabled()) {
+                CloudSyncManager.pushToCloud(this.data, true);
+            }
             this.showToast('Master password configured successfully! Welcome to Meera Heights.', 'success');
         } catch (err) {
             if (errorBox && errorText) {
@@ -8788,8 +8854,12 @@ const App = {
 
         AuthManager.setAuthenticated(true);
         ActivityLogger.log('security', 'Administrator Signed In', 'Successful authentication into management portal.');
+        document.body.classList.remove('portal-locked');
         const overlay = document.getElementById('auth-gate-overlay');
-        if (overlay) overlay.style.display = 'none';
+        if (overlay) {
+            overlay.classList.add('hidden');
+            overlay.style.display = 'none';
+        }
         this.showToast('Signed in successfully!', 'success');
     },
 
@@ -8836,8 +8906,15 @@ const App = {
         try {
             await AuthManager.setPassword(password);
             ActivityLogger.log('security', 'Password Reset via Recovery Key', 'Master password successfully reset.');
+            document.body.classList.remove('portal-locked');
             const overlay = document.getElementById('auth-gate-overlay');
-            if (overlay) overlay.style.display = 'none';
+            if (overlay) {
+                overlay.classList.add('hidden');
+                overlay.style.display = 'none';
+            }
+            if (typeof CloudSyncManager !== 'undefined' && CloudSyncManager.isEnabled()) {
+                CloudSyncManager.pushToCloud(this.data, true);
+            }
             this.showToast('Master password successfully reset! Welcome back.', 'success');
         } catch (err) {
             if (errorBox && errorText) {
@@ -8850,12 +8927,32 @@ const App = {
     lockApp() {
         AuthManager.logout();
         ActivityLogger.log('security', 'Portal Locked', 'User locked portal session.');
+        document.body.classList.add('portal-locked');
+
+        // Close all open modals to ensure complete privacy
+        document.querySelectorAll('[id^="modal-"]').forEach(m => {
+            if (m.id !== 'auth-gate-overlay') {
+                m.classList.add('hidden');
+                m.style.display = 'none';
+            }
+        });
+
+        // Wipe sensitive password inputs
+        const loginPass = document.getElementById('auth-login-password');
+        if (loginPass) loginPass.value = '';
+        const recPass = document.getElementById('auth-recovery-password');
+        if (recPass) recPass.value = '';
+
         const overlay = document.getElementById('auth-gate-overlay');
         if (overlay) {
+            overlay.classList.remove('hidden');
             overlay.style.display = 'flex';
             this.showAuthLoginView();
         }
-        this.showToast('Portal locked.', 'info');
+        this.showToast('Portal signed out & locked.', 'info');
+        setTimeout(() => {
+            if (loginPass) loginPass.focus();
+        }, 150);
     },
 
     // =============================================================

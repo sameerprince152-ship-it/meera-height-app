@@ -77,7 +77,7 @@
     <!-- MANDATORY AUTHENTICATION GATE OVERLAY (SECURE ACCESS PORTAL)   -->
     <!-- Protects Meera Heights with Masked Credential Verification    -->
     <!-- ============================================================= -->
-    <div id="auth-gate-overlay" style="z-index: 999999; display: flex;" class="fixed inset-0 bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-4 overflow-y-auto">
+    <div id="auth-gate-overlay" style="z-index: 999999; display: flex;" class="fixed inset-0 bg-slate-950 flex items-center justify-center p-4 overflow-y-auto min-h-screen w-full">
         <div class="max-w-md w-full bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden my-auto animate-fade-in">
             <!-- Header Brand & Shield Badge -->
             <div class="flex items-center justify-between gap-3 mb-6 pb-4 border-b border-slate-100 dark:border-slate-800">
@@ -94,6 +94,17 @@
                     <i class="fa-solid fa-shield-halved text-emerald-600 dark:text-emerald-400 text-xs"></i>
                     <span>Secure</span>
                 </span>
+            </div>
+
+            <!-- VIEW 0: CLOUD CREDENTIALS CHECK (Shown while verifying credentials with cloud database) -->
+            <div id="auth-view-checking" class="space-y-4 text-center py-6 hidden">
+                <div class="w-12 h-12 rounded-2xl bg-emerald-100 dark:bg-emerald-950/70 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xl mx-auto animate-pulse">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm font-extrabold text-slate-900 dark:text-white">Connecting Secure Portal</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Verifying security credentials with cloud database...</p>
+                </div>
             </div>
 
             <!-- VIEW 1: FIRST-TIME SETUP (Shown when no password has been created) -->
@@ -258,7 +269,7 @@
     </div>
 
     <!-- Top App Navigation Bar -->
-    <header class="sticky top-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-b border-slate-200 dark:border-slate-800 px-3 sm:px-4 lg:px-8 py-2.5 sm:py-3 transition-all">
+    <header id="app-header" class="sticky top-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-b border-slate-200 dark:border-slate-800 px-3 sm:px-4 lg:px-8 py-2.5 sm:py-3 transition-all">
         <div class="max-w-7xl mx-auto">
             <!-- Row 1: Brand (Left) + Actions (Right) -->
             <div class="flex items-center justify-between gap-2">
@@ -285,37 +296,38 @@
                     <button id="nav-cloud-sync-btn-desktop" onclick="App.openCloudSyncModal()" class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 transition text-xs font-semibold text-slate-700 dark:text-slate-200 cursor-pointer shadow-sm active:scale-95" title="Real-Time Cloud Sync (Desktop ⇄ Mobile)">
                         <span id="nav-cloud-sync-dot-desktop" class="w-2 h-2 rounded-full bg-slate-400"></span>
                         <i class="fa-solid fa-cloud text-xs text-slate-500 dark:text-slate-400"></i>
-                        <span id="nav-cloud-sync-text-desktop" class="text-[11px] font-medium">Sync Off</span>
+                        <span id="nav-cloud-sync-text-desktop" class="text-xs font-bold">Sync: Offline</span>
+                    </button>
+
+                    <!-- Desktop Treasury Balance Pill (Replaced old Capital Balance) -->
+                    <button id="header-treasury-btn-desktop" onclick="App.switchTab('wallets')" class="flex items-center gap-2 bg-emerald-50 hover:bg-emerald-100/80 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/50 border border-emerald-200 dark:border-emerald-800/60 px-3 py-1.5 rounded-xl cursor-pointer transition active:scale-95 shadow-sm text-left" title="View Treasury Wallets & Bank Accounts">
+                        <div class="w-7 h-7 rounded-lg bg-emerald-100 dark:bg-emerald-900/60 flex items-center justify-center text-emerald-700 dark:text-emerald-300 text-xs">
+                            <i class="fa-solid fa-vault"></i>
+                        </div>
+                        <div>
+                            <span class="block text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 leading-none mb-0.5">Total Treasury</span>
+                            <span id="header-treasury-balance-desktop" class="font-extrabold text-xs text-emerald-900 dark:text-emerald-100 leading-none">₹0</span>
+                        </div>
                     </button>
 
                     <!-- Desktop Month Filter -->
-                    <div onclick="document.getElementById('global-month-filter-desktop')?.showPicker?.() || document.getElementById('global-month-filter-desktop')?.focus()" class="flex items-center bg-slate-100 dark:bg-slate-800 rounded-xl px-2.5 py-1.5 border border-slate-200 dark:border-slate-700 cursor-pointer hover:border-slate-300 dark:hover:border-slate-600 transition">
-                        <i class="fa-regular fa-calendar text-xs text-slate-500 dark:text-slate-400 mr-2"></i>
-                        <select id="global-month-filter-desktop" onchange="App.onMonthFilterChange(this.value)" class="bg-transparent text-xs font-semibold text-slate-700 dark:text-slate-200 dark:bg-slate-800 outline-none cursor-pointer">
+                    <div class="flex items-center bg-slate-100 dark:bg-slate-800 rounded-xl px-2.5 py-1.5 border border-slate-200 dark:border-slate-700">
+                        <i class="fa-regular fa-calendar text-xs text-slate-500 dark:text-slate-400 mr-1.5"></i>
+                        <select id="global-month-filter-desktop" onchange="App.onMonthFilterChange(this.value)" class="bg-transparent text-xs font-bold text-slate-700 dark:text-slate-200 dark:bg-slate-800 outline-none cursor-pointer">
                             <option value="all">All Months</option>
                         </select>
                     </div>
 
-                    <!-- Desktop Treasury Balance Button (Interactive -> Wallets) -->
-                    <button id="header-treasury-btn-desktop" onclick="App.switchTab('wallets')" class="flex items-center gap-2 bg-emerald-50 hover:bg-emerald-100/80 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/50 border border-emerald-200 dark:border-emerald-800/60 px-3 py-1.5 rounded-xl cursor-pointer transition active:scale-95 shadow-sm text-left" title="View Treasury Wallets & Bank Accounts">
-                        <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0"></div>
-                        <div class="text-right">
-                            <span class="block text-[10px] font-semibold text-emerald-800 dark:text-emerald-300 uppercase leading-none">Treasury</span>
-                            <span id="header-treasury-badge-desktop" class="text-xs sm:text-sm font-extrabold text-emerald-900 dark:text-emerald-200 leading-tight">₹0</span>
-                        </div>
+                    <!-- Master Excel Statement Export Button -->
+                    <button id="btn-download-excel-header" onclick="App.downloadExcel()" class="flex px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition items-center gap-1.5 shadow-sm shadow-emerald-600/20 active:scale-95 cursor-pointer" title="Download Master Excel Statement (.xlsx)">
+                        <i class="fa-solid fa-file-excel"></i>
+                        <span>Excel</span>
                     </button>
 
-                    <!-- Guaranteed Excel Download Button -->
-                    <button onclick="App.openExportModal()" id="btn-download-excel" class="px-3 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm active:scale-95 cursor-pointer" title="Export Excel Sheets (.xlsx)">
-                        <i class="fa-solid fa-file-excel text-emerald-400 text-sm"></i>
-                        <span class="hidden md:inline">Export Excel</span>
-                        <i class="fa-solid fa-chevron-down text-[10px] text-slate-400 hidden sm:inline"></i>
-                    </button>
-
-                    <!-- Executive PDF Download Button -->
-                    <button onclick="App.openPDFExportModal()" id="btn-download-pdf-header" class="px-3 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm shadow-rose-600/20 active:scale-95 cursor-pointer" title="Executive PDF Reports (Weekly, Monthly, Yearly, Custom)">
+                    <!-- PDF Reports Export Button -->
+                    <button id="btn-download-pdf-header" onclick="App.openPDFExportModal()" class="flex px-3 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition items-center gap-1.5 shadow-sm shadow-rose-600/20 active:scale-95 cursor-pointer" title="Export PDF Reports">
                         <i class="fa-solid fa-file-pdf"></i>
-                        <span class="hidden md:inline">Export PDF</span>
+                        <span>PDF</span>
                     </button>
                     
                     <!-- CSV Download Button -->
@@ -336,8 +348,9 @@
                     </button>
 
                     <!-- Lock / Sign Out Button -->
-                    <button id="btn-lock-app-desktop" onclick="App.lockApp()" class="px-2.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 hover:text-rose-600 dark:hover:text-rose-400 transition flex items-center justify-center cursor-pointer shadow-sm active:scale-90" title="Lock App / Sign Out">
-                        <i class="fa-solid fa-lock text-sm"></i>
+                    <button id="btn-lock-app-desktop" onclick="App.lockApp()" class="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-rose-200/80 dark:border-rose-900/60 bg-rose-50/80 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 font-bold text-xs transition cursor-pointer shadow-sm active:scale-95" title="Sign Out & Lock Portal">
+                        <i class="fa-solid fa-arrow-right-from-bracket text-xs"></i>
+                        <span class="hidden xl:inline">Sign Out</span>
                     </button>
                 </div>
 
@@ -363,8 +376,8 @@
                     <button id="btn-download-pdf-mobile" onclick="App.openPDFExportModal()" class="w-9 h-9 rounded-xl bg-rose-600 hover:bg-rose-700 text-white flex items-center justify-center text-xs shadow-sm shadow-rose-600/20 active:scale-95 transition cursor-pointer" title="Export PDF Reports" aria-label="Export PDF Reports">
                         <i class="fa-solid fa-file-pdf text-sm"></i>
                     </button>
-                    <button id="btn-lock-app-mobile" onclick="App.lockApp()" class="w-9 h-9 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 flex items-center justify-center text-xs shadow-sm active:scale-95 transition cursor-pointer" title="Lock App / Sign Out" aria-label="Lock App">
-                        <i class="fa-solid fa-lock text-xs"></i>
+                    <button id="btn-lock-app-mobile" onclick="App.lockApp()" class="w-9 h-9 rounded-xl border border-rose-200/80 dark:border-rose-900/60 bg-rose-50/80 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/60 text-rose-600 dark:text-rose-400 flex items-center justify-center text-xs shadow-sm active:scale-95 transition cursor-pointer" title="Sign Out & Lock Portal" aria-label="Sign Out">
+                        <i class="fa-solid fa-arrow-right-from-bracket text-xs"></i>
                     </button>
                 </div>
             </div>
@@ -421,7 +434,7 @@
     </nav>
 
     <!-- Main Content Container -->
-    <main class="max-w-7xl mx-auto px-4 lg:px-8 py-6">
+    <main id="app-main" class="max-w-7xl mx-auto px-4 lg:px-8 py-6">
 
         <!-- Automated Scheduled Backup Reminder Banner (Shown when recurring backup is due) -->
         <div id="scheduled-backup-banner" class="hidden mb-6 bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 text-white p-4 sm:p-5 rounded-3xl shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-fade-in border border-amber-400/30">
@@ -1864,6 +1877,52 @@
                 </button>
             </div>
 
+            <!-- Session Security & Sign Out Zone -->
+            <div class="bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 rounded-3xl p-5 sm:p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div class="flex items-start gap-3.5">
+                    <div class="w-10 h-10 rounded-2xl bg-rose-100 dark:bg-rose-950/70 text-rose-600 dark:text-rose-400 flex items-center justify-center text-lg shrink-0">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h5 class="text-sm font-extrabold text-slate-900 dark:text-white">Session Security & Sign Out</h5>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">Active</span>
+                        </div>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Locks the portal and conceals all tenant names, balances, collections, and financial data behind the master login gate.</p>
+                    </div>
+                </div>
+                <button onclick="App.lockApp()" class="px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-sm shadow-rose-600/20 active:scale-95 cursor-pointer shrink-0">
+                    <i class="fa-solid fa-arrow-right-from-bracket text-xs"></i>
+                    <span>Sign Out & Lock</span>
+                </button>
+            </div>
+
+            <!-- Activity History & Audit Trail Zone -->
+            <div class="bg-white dark:bg-slate-800/80 border border-slate-200/80 dark:border-slate-700/80 rounded-3xl p-5 sm:p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div class="flex items-start gap-3.5">
+                    <div class="w-10 h-10 rounded-2xl bg-indigo-100 dark:bg-indigo-950/70 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-lg shrink-0">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h5 class="text-sm font-extrabold text-slate-900 dark:text-white">Activity History & Audit Log</h5>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300">Audited</span>
+                        </div>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Comprehensive audit trail of rent collections, expenses, backups, and security events across all devices.</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                    <button onclick="App.openActivityHistoryModal()" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition flex items-center justify-center gap-2 shadow-sm shadow-indigo-600/20 active:scale-95 cursor-pointer">
+                        <i class="fa-solid fa-list-check"></i>
+                        <span>View History</span>
+                    </button>
+                    <button onclick="App.exportActivityHistoryCSV()" class="px-3 py-2.5 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-xl transition flex items-center justify-center gap-1.5 border border-slate-200 dark:border-slate-600 cursor-pointer" title="Export Activity Logs as CSV">
+                        <i class="fa-solid fa-file-csv"></i>
+                        <span>CSV</span>
+                    </button>
+                </div>
+            </div>
+
             <!-- Same-network mobile access guide -->
             <div class="bg-sky-50 border border-sky-200 rounded-3xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div class="flex items-start gap-3">
@@ -1886,7 +1945,7 @@
     </main>
 
     <!-- Mobile Bottom Navigation Bar (Visible on mobile screens) -->
-    <nav class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-t border-slate-200 dark:border-slate-800 px-2 py-2 flex items-center justify-around safe-bottom shadow-lg">
+    <nav id="app-bottom-nav" class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-t border-slate-200 dark:border-slate-800 px-2 py-2 flex items-center justify-around safe-bottom shadow-lg">
         <button onclick="App.switchTab('dashboard')" data-tab="dashboard" class="nav-btn flex-1 flex flex-col items-center gap-1 text-emerald-600 text-[10px] font-extrabold py-0.5 transition">
             <i class="fa-solid fa-chart-pie text-base"></i>
             <span>Overview</span>
@@ -4363,7 +4422,7 @@
     <!-- MODAL: COMPREHENSIVE ACTIVITY HISTORY & AUDIT LOG              -->
     <!-- Multi-platform, non-intrusive activity timeline with filters  -->
     <!-- ============================================================= -->
-    <div id="modal-activity-history" style="z-index: 99997; display: none;" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-3 sm:p-6">
+    <div id="modal-activity-history" onclick="if(event.target === this) App.hideModal('modal-activity-history')" style="z-index: 99997; display: none;" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-3 sm:p-6">
         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-2xl w-full p-5 sm:p-6 shadow-2xl modal-enter flex flex-col max-h-[90vh]">
             <!-- Header -->
             <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800 mb-3">

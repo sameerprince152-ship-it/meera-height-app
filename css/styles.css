@@ -739,4 +739,26 @@ html.dark .border-indigo-200 {
     border-color: rgba(79, 70, 229, 0.4) !important;
 }
 
+/* ============================================================= */
+/* SECURE APP CONCEALMENT (Locked / Signed-Out Portal Guard)     */
+/* Completely hides all underlying data when portal is locked   */
+/* ============================================================= */
+body.portal-locked {
+    overflow: hidden !important;
+    height: 100vh !important;
+    background-color: #020617 !important; /* Solid bg-slate-950 */
+}
 
+body.portal-locked header,
+body.portal-locked main,
+body.portal-locked nav,
+body.portal-locked footer,
+body.portal-locked #app-header,
+body.portal-locked #app-main,
+body.portal-locked #app-bottom-nav,
+body.portal-locked > div:not(#auth-gate-overlay):not(#app-floating-toast) {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}

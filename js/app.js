@@ -2570,12 +2570,12 @@ const App = {
         (this.data.categories || []).forEach(cat => {
             html += `
                 <button onclick="App.openQuickExpenseForCategory('${cat.id}')" 
-                    class="px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 bg-white hover:bg-emerald-50 text-slate-800 hover:text-emerald-700 border border-slate-200 hover:border-emerald-300 shadow-sm active:scale-95 cursor-pointer" 
+                    class="quick-expense-chip px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 bg-white dark:bg-slate-800 text-slate-800 dark:text-white hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-emerald-400 border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-emerald-500 shadow-sm active:scale-95 cursor-pointer" 
                     title="1-Tap record ${this.escapeHtml(cat.name)} expense">
                     <span class="w-4 h-4 rounded-full flex items-center justify-center text-[9px] text-white shrink-0" style="background-color: ${cat.color || '#10B981'}">
                         <i class="fa-solid fa-plus"></i>
                     </span>
-                    <span>${this.escapeHtml(cat.name)}</span>
+                    <span class="quick-chip-name text-slate-800 dark:text-white">${this.escapeHtml(cat.name)}</span>
                 </button>
             `;
         });

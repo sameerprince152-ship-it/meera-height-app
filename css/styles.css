@@ -750,19 +750,22 @@ html.dark .border-indigo-200 {
 /* Shuts OFF pixels physically on iOS & Android OLED displays     */
 /* Infinite contrast, zero power draw for black subpixels         */
 /* ============================================================= */
+html.oled,
 html.oled body,
-body.oled {
+html.oled body.bg-slate-50,
+body.oled,
+body.oled.bg-slate-50 {
     background-color: #000000 !important;
     color: #ffffff !important;
 }
 
-/* Sticky App Header - Pure Black melting into status bar */
+/* Sticky App Header - Pure Black melting seamlessly into status bar */
 html.oled header,
 .oled header,
 html.oled #app-header,
 .oled #app-header {
     background-color: #000000 !important;
-    border-color: #1a2333 !important;
+    border-color: #222222 !important;
 }
 
 /* Mobile Bottom Navigation Bar - Pure Black with safe area inset */
@@ -771,44 +774,70 @@ html.oled nav,
 html.oled #app-bottom-nav,
 .oled #app-bottom-nav {
     background-color: #000000 !important;
-    border-color: #1a2333 !important;
+    border-color: #222222 !important;
 }
 
-/* Elevated Obsidian Containers & Cards */
+/* Elevated True Black Containers & Cards (Pixels 100% OFF) */
 html.oled .bg-white,
-.oled .bg-white {
-    background-color: #080d1a !important;
-    border-color: #1a2333 !important;
+.oled .bg-white,
+html.oled .dark\:bg-slate-900,
+.oled .dark\:bg-slate-900,
+html.oled .dark\:bg-slate-950,
+.oled .dark\:bg-slate-950 {
+    background-color: #000000 !important;
+    border-color: #222222 !important;
 }
 
-html.oled .bg-slate-50,
-.oled .bg-slate-50 {
-    background-color: #04070e !important;
+html.oled div.bg-slate-50,
+.oled div.bg-slate-50,
+html.oled :not(body).bg-slate-50,
+.oled :not(body).bg-slate-50,
+html.oled .dark\:bg-slate-800\/50,
+.oled .dark\:bg-slate-800\/50 {
+    background-color: #080808 !important;
+    border-color: #1f1f1f !important;
 }
 
 html.oled .bg-slate-100,
-.oled .bg-slate-100 {
-    background-color: #0c1322 !important;
+.oled .bg-slate-100,
+html.oled .dark\:bg-slate-800,
+.oled .dark\:bg-slate-800 {
+    background-color: #121212 !important;
+    border-color: #262626 !important;
 }
 
 html.oled .bg-slate-200,
 .oled .bg-slate-200 {
-    background-color: #121c30 !important;
+    background-color: #1a1a1a !important;
+    border-color: #2d2d2d !important;
 }
 
-/* Razor-sharp OLED Borders & Dividers */
+/* Cancel gradients in OLED mode for pure black continuity */
+html.oled [class*="bg-gradient-to"],
+.oled [class*="bg-gradient-to"] {
+    background-image: none !important;
+    background-color: #000000 !important;
+}
+
+/* Razor-sharp Neutral OLED Borders & Dividers */
 html.oled .border-slate-100,
 html.oled .border-slate-200,
 html.oled .border-slate-300,
+html.oled .border-slate-700,
+html.oled .border-slate-800,
 .oled .border-slate-100,
 .oled .border-slate-200,
-.oled .border-slate-300 {
-    border-color: #1a2333 !important;
+.oled .border-slate-300,
+.oled .border-slate-700,
+.oled .border-slate-800 {
+    border-color: #222222 !important;
 }
 
 html.oled .divide-slate-100 > :not([hidden]) ~ :not([hidden]),
-html.oled .divide-slate-200 > :not([hidden]) ~ :not([hidden]) {
-    border-color: #1a2333 !important;
+html.oled .divide-slate-200 > :not([hidden]) ~ :not([hidden]),
+html.oled .divide-slate-700 > :not([hidden]) ~ :not([hidden]),
+html.oled .divide-slate-800 > :not([hidden]) ~ :not([hidden]) {
+    border-color: #222222 !important;
 }
 
 /* Typography in OLED Mode - Ultra-High Contrast (WCAG AAA) */
@@ -830,7 +859,82 @@ html.oled .text-slate-500,
 
 html.oled .text-slate-400,
 .oled .text-slate-400 {
-    color: #94a3b8 !important;
+    color: #a1a1aa !important;
+}
+
+/* Quick Expense Category Chips & Bar (High Visibility Across All OS) */
+.quick-expense-chip {
+    transition: all 0.15s ease-in-out;
+}
+.quick-expense-chip .quick-chip-name {
+    color: inherit;
+}
+
+html.dark .quick-expense-chip {
+    background-color: #1e293b !important;
+    color: #ffffff !important;
+    border-color: #334155 !important;
+}
+html.dark .quick-expense-chip:hover,
+html.dark .quick-expense-chip:active {
+    background-color: #334155 !important;
+    color: #34d399 !important;
+    border-color: #10b981 !important;
+}
+
+html.oled .quick-expense-chip,
+.oled .quick-expense-chip,
+html.oled #quick-expense-category-chips button,
+.oled #quick-expense-category-chips button {
+    background-color: #121212 !important;
+    color: #ffffff !important;
+    border-color: #27272a !important;
+}
+
+html.oled .quick-expense-chip:hover,
+html.oled .quick-expense-chip:active,
+.oled .quick-expense-chip:hover,
+.oled .quick-expense-chip:active,
+html.oled #quick-expense-category-chips button:hover,
+html.oled #quick-expense-category-chips button:active,
+.oled #quick-expense-category-chips button:hover,
+.oled #quick-expense-category-chips button:active {
+    background-color: #1c1c1c !important;
+    border-color: #10b981 !important;
+    color: #34d399 !important;
+}
+
+/* Category Export Action Buttons in OLED Mode */
+html.oled .category-export-btn.excel {
+    background: #000000 !important;
+    color: #34d399 !important;
+    border-color: #059669 !important;
+}
+html.oled .category-export-btn.csv {
+    background: #000000 !important;
+    color: #38bdf8 !important;
+    border-color: #0284c7 !important;
+}
+html.oled .category-export-btn.pdf {
+    background: #000000 !important;
+    color: #fb7185 !important;
+    border-color: #e11d48 !important;
+}
+html.oled .category-export-btn.period {
+    background: #000000 !important;
+    color: #2dd4bf !important;
+    border-color: #0d9488 !important;
+}
+html.oled .category-export-btn.quick-add {
+    background: #059669 !important;
+    color: #ffffff !important;
+    border-color: #10b981 !important;
+}
+
+/* Category Filter Pills in OLED Mode */
+html.oled #category-pills-container button,
+.oled #category-pills-container button {
+    border-color: #27272a !important;
 }
 
 /* Form Controls & Inputs in OLED Mode */
@@ -840,8 +944,8 @@ html.oled textarea,
 .oled input:not([type="checkbox"]):not([type="radio"]),
 .oled select,
 .oled textarea {
-    background-color: #04070e !important;
-    border-color: #243656 !important;
+    background-color: #080808 !important;
+    border-color: #27272a !important;
     color: #ffffff !important;
 }
 
@@ -849,49 +953,63 @@ html.oled input:focus,
 html.oled select:focus,
 html.oled textarea:focus {
     border-color: #10b981 !important;
-    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25) !important;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3) !important;
 }
 
 html.oled input::placeholder,
 html.oled textarea::placeholder,
 .oled input::placeholder,
 .oled textarea::placeholder {
-    color: #94a3b8 !important;
+    color: #71717a !important;
 }
 
 /* Tables in OLED Mode */
 html.oled table thead th,
 .oled table thead th {
-    background-color: #060a14 !important;
-    color: #f1f5f9 !important;
+    background-color: #000000 !important;
+    color: #f4f4f5 !important;
     font-weight: 700 !important;
-    border-color: #1a2333 !important;
+    border-color: #222222 !important;
 }
 
 html.oled tr.hover\:bg-slate-50:hover,
 html.oled tr:hover,
 .oled tr.hover\:bg-slate-50:hover,
 .oled tr:hover {
-    background-color: #0c1322 !important;
+    background-color: #0d0d0d !important;
 }
 
 /* Modals & Popups in OLED Mode */
 html.oled .modal-content,
 html.oled .fixed .bg-white,
+html.oled .fixed .dark\:bg-slate-900,
+html.oled .fixed .dark\:bg-slate-800,
 .oled .modal-content,
-.oled .fixed .bg-white {
-    background-color: #080d1a !important;
+.oled .fixed .bg-white,
+.oled .fixed .dark\:bg-slate-900,
+.oled .fixed .dark\:bg-slate-800 {
+    background-color: #000000 !important;
     color: #ffffff !important;
-    border-color: #1e293b !important;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.95) !important;
+    border-color: #27272a !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 1) !important;
+}
+
+html.oled .fixed .bg-slate-50,
+html.oled .fixed .dark\:bg-slate-800\/80,
+html.oled .fixed .dark\:bg-slate-800\/50,
+html.oled .fixed .dark\:bg-slate-700\/50,
+.oled .fixed .bg-slate-50 {
+    background-color: #0a0a0a !important;
+    border-color: #222222 !important;
 }
 
 /* Modal Backdrops - Deep OLED Dimming */
 html.oled .bg-black\/50,
 html.oled .bg-black\/60,
 html.oled .bg-slate-900\/50,
-html.oled .bg-slate-900\/60 {
-    background-color: rgba(0, 0, 0, 0.88) !important;
+html.oled .bg-slate-900\/60,
+html.oled .bg-slate-900\/70 {
+    background-color: rgba(0, 0, 0, 0.92) !important;
 }
 
 /* Scrollbars in OLED */
@@ -899,11 +1017,11 @@ html.oled ::-webkit-scrollbar-track {
     background: #000000;
 }
 html.oled ::-webkit-scrollbar-thumb {
-    background: #1e293b;
+    background: #27272a;
     border-radius: 4px;
 }
 html.oled ::-webkit-scrollbar-thumb:hover {
-    background: #334155;
+    background: #3f3f46;
 }
 
 /* ============================================================= */

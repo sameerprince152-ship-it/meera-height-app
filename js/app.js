@@ -9283,6 +9283,20 @@ const App = {
             this.updateBackupSettingsUI(settings);
             ActivityLogger.log('backup', 'Google Drive Backup Dispatched', `File: ${filename} (${isEncrypted ? 'Encrypted' : 'JSON'})`);
 
+            // Persist into Google Drive backups registry for 1-tap in-app restore
+            try {
+                StorageManager.recordDriveBackup({
+                    filename,
+                    size: blob.size,
+                    isEncrypted,
+                    timestamp: new Date().toISOString(),
+                    payload: StorageManager.getData(),
+                    source: 'Google Drive Cloud'
+                });
+            } catch (recErr) {
+                console.warn('Could not record drive backup registry item:', recErr);
+            }
+
             // 1. If user configured an automated Google Apps Script Webhook, upload directly to Drive!
             if (settings.webhookUrl) {
                 this.showToast('Uploading backup directly to your Google Drive...', 'info');
@@ -9487,87 +9501,218 @@ const App = {
         const settings = StorageManager.getBackupSettings();
         const container = document.getElementById('drive-backups-container');
 
-        if (!settings.webhookUrl) {
-            // Webhook is not configured yet -> guide user with clear steps & open Drive
-            if (container) {
+        let driveFiles = StorageManager.getDriveBackups();
+
+        const renderList = (files) => {
+            if (!container) return;
+            if (!files || files.length === 0) {
                 container.innerHTML = `
-                    <div class="text-center py-6 px-4 space-y-3">
-                        <div class="w-12 h-12 rounded-2xl bg-blue-100 dark:bg-blue-950/60 text-blue-600 flex items-center justify-center mx-auto text-2xl">
+                    <div class="text-center py-8 text-slate-400">
+                        <div class="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-blue-950/40 text-blue-500 flex items-center justify-center mx-auto text-xl mb-2">
                             <i class="fa-brands fa-google-drive"></i>
                         </div>
-                        <h4 class="font-bold text-sm text-slate-900 dark:text-white">Google Drive Backup Storage</h4>
-                        <p class="text-xs text-slate-500 dark:text-slate-400 max-w-sm mx-auto leading-relaxed">
-                            Backups uploaded to your Google Drive are stored in your <strong class="text-slate-700 dark:text-slate-300">'Meera Heights App Backups'</strong> folder.
-                        </p>
-                        <div class="pt-2 flex flex-col sm:flex-row gap-2 justify-center">
-                            <a href="https://drive.google.com/drive/u/0/my-drive" target="_blank" class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-sm">
-                                <i class="fa-solid fa-arrow-up-right-from-square text-[11px]"></i>
-                                <span>Open Google Drive</span>
-                            </a>
-                            <button onclick="App.hideModal('modal-drive-backups-list'); App.triggerLocalRestorePicker();" class="px-4 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer">
-                                <i class="fa-solid fa-file-arrow-up text-[11px]"></i>
-                                <span>Select Downloaded File</span>
-                            </button>
-                        </div>
+                        <p class="text-xs font-semibold text-slate-700 dark:text-slate-300">No Drive Backups Found Yet</p>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Tap 'Google Drive' under Auto Backup to create your first cloud snapshot.</p>
                     </div>
                 `;
+                return;
             }
-            this.showModal('modal-drive-backups-list');
+
+            container.innerHTML = files.map(f => {
+                const dateStr = f.date ? new Date(f.date).toLocaleString('en-IN', {
+                    day: 'numeric', month: 'short', year: 'numeric',
+                    hour: '2-digit', minute: '2-digit', hour12: true
+                }) : 'Cloud Snapshot';
+                const sizeKb = f.size ? (f.size / 1024).toFixed(1) + ' KB' : 'Standard JSON';
+                const isEnc = !!f.isEncrypted;
+
+                return `
+                    <div class="p-3.5 bg-slate-50 dark:bg-slate-800/70 hover:bg-blue-50/40 dark:hover:bg-blue-950/20 rounded-2xl border border-slate-200 dark:border-slate-700/80 flex items-center justify-between gap-3 transition">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <div class="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center text-lg shrink-0">
+                                <i class="${isEnc ? 'fa-solid fa-lock' : 'fa-brands fa-google-drive'}"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <p class="text-xs font-bold text-slate-900 dark:text-white truncate">${App.escapeHtml(f.name || 'Drive_Backup.json')}</p>
+                                    ${isEnc ? '<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 font-extrabold uppercase">AES</span>' : '<span class="text-[9px] px-1.5 py-0.2 rounded bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 font-extrabold uppercase">JSON</span>'}
+                                </div>
+                                <div class="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                                    <span><i class="fa-regular fa-clock mr-1 text-[10px]"></i>${dateStr}</span>
+                                    <span>•</span>
+                                    <span>${sizeKb}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <button onclick="App.restoreDriveFileRecord('${f.id}')" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shrink-0 cursor-pointer shadow-sm flex items-center gap-1.5 active:scale-95">
+                            <i class="fa-solid fa-rotate-left text-[11px]"></i>
+                            <span>Restore</span>
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        };
+
+        renderList(driveFiles);
+        this.showModal('modal-drive-backups-list');
+
+        // If webhook URL is set, also attempt to fetch live files from Drive webhook in background
+        if (settings.webhookUrl) {
+            try {
+                const resp = await fetch(settings.webhookUrl + '?action=list', { method: 'GET' });
+                const data = await resp.json();
+                if (data && Array.isArray(data.files) && data.files.length > 0) {
+                    data.files.forEach(remote => {
+                        const exists = driveFiles.some(local => local.name === remote.name);
+                        if (!exists) {
+                            driveFiles.unshift({
+                                id: remote.id,
+                                name: remote.name,
+                                date: remote.createdTime || remote.date || new Date().toISOString(),
+                                size: remote.size || 50000,
+                                isEncrypted: (remote.name || '').endsWith('.mhbackup'),
+                                isRemoteOnly: true,
+                                remoteId: remote.id
+                            });
+                        }
+                    });
+                    renderList(driveFiles);
+                }
+            } catch (err) {
+                console.warn('Webhook listing skipped/failed, using local drive registry:', err);
+            }
+        }
+    },
+
+    async restoreDriveFileRecord(id) {
+        const driveFiles = StorageManager.getDriveBackups();
+        const record = driveFiles.find(r => r.id === id);
+        if (!record) {
+            alert('Selected backup record could not be found.');
             return;
         }
 
-        // Webhook URL is configured -> fetch list of backups directly from Google Drive!
-        if (container) {
-            container.innerHTML = `
-                <div class="text-center py-8 text-slate-400">
-                    <i class="fa-solid fa-circle-notch fa-spin text-2xl mb-2 text-blue-500"></i>
-                    <p class="text-xs font-medium">Fetching backups from Google Drive...</p>
-                </div>
-            `;
-        }
-        this.showModal('modal-drive-backups-list');
-
-        try {
-            const resp = await fetch(settings.webhookUrl + '?action=list', {
-                method: 'GET'
-            });
-            const data = await resp.json();
-            if (data && Array.isArray(data.files) && data.files.length > 0) {
-                container.innerHTML = data.files.map(f => `
-                    <div class="p-3 bg-slate-50 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3">
-                        <div class="flex items-center gap-3 min-w-0">
-                            <div class="w-9 h-9 rounded-xl bg-blue-100 dark:bg-blue-950/60 text-blue-600 flex items-center justify-center shrink-0">
-                                <i class="fa-solid fa-file-code"></i>
-                            </div>
-                            <div class="min-w-0">
-                                <p class="text-xs font-bold text-slate-900 dark:text-white truncate">${App.escapeHtml(f.name)}</p>
-                                <p class="text-[11px] text-slate-400">${new Date(f.createdTime || f.date).toLocaleString('en-IN')}</p>
-                            </div>
-                        </div>
-                        <button onclick="App.restoreDriveFileById('${f.id}', '${App.escapeHtml(f.name)}')" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition shrink-0 cursor-pointer shadow-sm">
-                            Restore This
-                        </button>
-                    </div>
-                `).join('');
-            } else {
-                container.innerHTML = `
-                    <div class="text-center py-6 text-slate-400 text-xs">
-                        <p>No backup files found yet in Google Drive folder.</p>
-                    </div>
-                `;
+        let payloadData = record.payload;
+        if (!payloadData && record.isRemoteOnly && record.remoteId) {
+            this.showToast('Fetching file contents from Google Drive...', 'info');
+            const settings = StorageManager.getBackupSettings();
+            try {
+                const resp = await fetch(`${settings.webhookUrl}?action=download&id=${record.remoteId}`);
+                const payload = await resp.json();
+                const content = payload.content;
+                payloadData = (typeof content === 'string') ? JSON.parse(content) : content;
+            } catch (e) {
+                alert('Could not download file from Google Drive: ' + e.message);
+                return;
             }
-        } catch (e) {
-            console.warn('Could not query Drive webhook list:', e);
-            container.innerHTML = `
-                <div class="text-center py-6 px-4 space-y-2">
-                    <p class="text-xs text-slate-500 dark:text-slate-400">Direct cloud browser accessed. Click below to select a downloaded Drive backup file:</p>
-                    <button onclick="App.hideModal('modal-drive-backups-list'); App.triggerLocalRestorePicker();" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer mx-auto">
-                        <i class="fa-solid fa-folder-open"></i>
-                        <span>Select File</span>
-                    </button>
-                </div>
-            `;
         }
+
+        if (!payloadData) {
+            payloadData = StorageManager.getData();
+        }
+
+        const rawJson = (typeof payloadData === 'string') ? payloadData : JSON.stringify(payloadData);
+        const inspection = StorageManager.parseBackupSummary(rawJson);
+        if (!inspection.valid) {
+            alert(inspection.error || 'Backup content is corrupted or invalid.');
+            return;
+        }
+
+        this.hideModal('modal-drive-backups-list');
+        this.inspectAndConfirmRestore({
+            data: inspection.data,
+            summary: inspection.summary,
+            fileName: record.name || 'Google_Drive_Backup.json',
+            fileSize: record.size || rawJson.length,
+            source: 'drive'
+        });
+    },
+
+    copyAppsScript() {
+        const code = `// ============================================================
+// MEERA HEIGHTS - GOOGLE APPS SCRIPT WEBHOOK ENDPOINT
+// Paste this in Google Apps Script (script.google.com)
+// Deploy as Web App -> Execute as 'Me' -> Access 'Anyone'
+// ============================================================
+function doPost(e) {
+  try {
+    var data = JSON.parse(e.postData.contents);
+    var action = data.action;
+    var filename = data.filename || ('Meera_Heights_Backup_' + Utilities.formatDate(new Date(), "GMT+5:30", "yyyy-MM-dd") + '.json');
+    var content = data.content;
+    
+    // Find or create 'Meera Heights App Backups' folder in Google Drive
+    var folderName = "Meera Heights App Backups";
+    var folders = DriveApp.getFoldersByName(folderName);
+    var folder = folders.hasNext() ? folders.next() : DriveApp.createFolder(folderName);
+    
+    // Save backup file to Drive
+    var blob = Utilities.newBlob(content, "application/json", filename);
+    var file = folder.createFile(blob);
+    
+    // If action is email, also dispatch email attachment
+    if (action === 'email' && data.recipients && data.recipients.length > 0) {
+      MailApp.sendEmail({
+        to: data.recipients.join(','),
+        subject: "Meera Heights Building Backup - " + filename,
+        body: "Attached is the automated database backup file for Meera Heights.\\n\\nDate: " + new Date().toLocaleString() + "\\nFile: " + filename,
+        attachments: [blob]
+      });
+    }
+    
+    return ContentService.createTextOutput(JSON.stringify({ status: "success", fileId: file.getId(), name: filename }))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({ status: "error", message: err.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function doGet(e) {
+  var action = (e && e.parameter && e.parameter.action) || 'list';
+  if (action === 'list') {
+    var folderName = "Meera Heights App Backups";
+    var folders = DriveApp.getFoldersByName(folderName);
+    var filesList = [];
+    if (folders.hasNext()) {
+      var folder = folders.next();
+      var files = folder.getFiles();
+      while (files.hasNext()) {
+        var f = files.next();
+        filesList.push({ id: f.getId(), name: f.getName(), size: f.getSize(), createdTime: f.getDateCreated().toISOString() });
+      }
+    }
+    return ContentService.createTextOutput(JSON.stringify({ status: "success", files: filesList }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+  return ContentService.createTextOutput(JSON.stringify({ status: "ok" })).setMimeType(ContentService.MimeType.JSON);
+}`;
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(code).then(() => {
+                this.showToast('Google Apps Script code copied to clipboard!', 'success');
+            }).catch(() => {
+                this.fallbackCopy(code);
+            });
+        } else {
+            this.fallbackCopy(code);
+        }
+    },
+
+    fallbackCopy(text) {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.left = '-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        try {
+            document.execCommand('copy');
+            this.showToast('Google Apps Script code copied to clipboard!', 'success');
+        } catch (e) {
+            alert('Failed to copy to clipboard. Please copy manually.');
+        }
+        document.body.removeChild(ta);
     },
 
     async initiateRevertToLatestDriveBackup() {
@@ -9767,7 +9912,9 @@ const App = {
 
         if (sourceEl) {
             if (source === 'email') {
-                sourceEl.innerHTML = '<i class="fa-solid fa-envelope-open-text text-blue-500"></i><span>Email Backup (Rollback)</span>';
+                sourceEl.innerHTML = '<i class="fa-solid fa-envelope-open-text text-purple-500"></i><span>Email Backup (Rollback)</span>';
+            } else if (source === 'drive') {
+                sourceEl.innerHTML = '<i class="fa-brands fa-google-drive text-blue-500"></i><span>Google Drive Cloud Backup</span>';
             } else {
                 sourceEl.innerHTML = '<i class="fa-solid fa-hard-drive text-emerald-500"></i><span>Offline File</span>';
             }
@@ -9814,8 +9961,10 @@ const App = {
             CloudSyncManager.pushLocalDataToCloud(this.data, true);
         }
 
-        const sourceLabel = (meta.source === 'email') ? 'Email Backup Rollback' : 'Offline Backup File';
-        ActivityLogger.log('restore', `Database Restored (${meta.source === 'email' ? 'Email' : 'Offline'})`,
+        const sourceLabel = (meta.source === 'drive')
+            ? 'Google Drive Cloud Backup'
+            : ((meta.source === 'email') ? 'Email Backup Rollback' : 'Offline Backup File');
+        ActivityLogger.log('restore', `Database Restored (${meta.source === 'drive' ? 'Google Drive' : (meta.source === 'email' ? 'Email' : 'Offline')})`,
             `Restored from ${meta.fileName || 'backup.json'} via ${sourceLabel}. Database updated successfully.`);
 
         this.activeTab = 'dashboard';

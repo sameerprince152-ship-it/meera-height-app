@@ -1056,3 +1056,135 @@ body.portal-locked > div:not(#auth-gate-overlay):not(#app-floating-toast) {
     opacity: 0 !important;
     pointer-events: none !important;
 }
+
+/* ============================================================= */
+/* EXECUTIVE PREMIUM 4 CAPITAL WALLET CARDS                      */
+/* Ultra-high contrast, tactile glassmorphic/obsidian fintech UI */
+/* ============================================================= */
+.wallet-card {
+    position: relative;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 1.25rem;
+    padding: 1.1rem;
+    box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    overflow: hidden;
+}
+.wallet-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px -4px rgba(0, 0, 0, 0.09);
+}
+.wallet-card .wallet-accent-bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+}
+.wallet-card .wallet-title {
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #334155;
+}
+.wallet-card .wallet-amount {
+    font-size: 1.45rem;
+    font-weight: 900;
+    letter-spacing: -0.025em;
+    line-height: 1.2;
+    color: #0f172a;
+}
+.wallet-card .wallet-subtext {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #475569;
+    margin-top: 0.35rem;
+}
+
+/* Individual Wallet Card Color Accents (Light) */
+.wallet-card-sajida-adv .wallet-accent-bar {
+    background: linear-gradient(90deg, #10b981, #34d399);
+}
+.wallet-card-sajida-rent .wallet-accent-bar {
+    background: linear-gradient(90deg, #14b8a6, #2dd4bf);
+}
+.wallet-card-jeelani-adv .wallet-accent-bar {
+    background: linear-gradient(90deg, #3b82f6, #60a5fa);
+}
+.wallet-card-jeelani-rent .wallet-accent-bar {
+    background: linear-gradient(90deg, #6366f1, #818cf8);
+}
+
+/* Dark Slate Mode */
+.dark .wallet-card {
+    background: #0f172a;
+    border-color: #1e293b;
+    box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.5);
+}
+.dark .wallet-card .wallet-title {
+    color: #cbd5e1 !important;
+}
+.dark .wallet-card .wallet-amount {
+    color: #ffffff !important;
+}
+.dark .wallet-card .wallet-subtext {
+    color: #94a3b8 !important;
+}
+
+/* OLED True Black Mode - Pure Obsidian Surfaces with Glowing Neon Borders */
+html.oled .wallet-card,
+.oled .wallet-card {
+    background: #000000 !important;
+    border-width: 1.5px !important;
+}
+html.oled .wallet-card .wallet-title,
+.oled .wallet-card .wallet-title {
+    color: #e2e8f0 !important;
+}
+html.oled .wallet-card .wallet-amount,
+.oled .wallet-card .wallet-amount {
+    color: #ffffff !important;
+    text-shadow: 0 0 16px rgba(255, 255, 255, 0.25);
+}
+html.oled .wallet-card .wallet-subtext,
+.oled .wallet-card .wallet-subtext {
+    color: #cbd5e1 !important;
+}
+
+/* Neon Borders & Ambient Glow in OLED */
+html.oled .wallet-card-sajida-adv,
+.oled .wallet-card-sajida-adv {
+    border-color: rgba(16, 185, 129, 0.55) !important;
+    box-shadow: 0 0 18px -2px rgba(16, 185, 129, 0.25) !important;
+}
+html.oled .wallet-card-sajida-rent,
+.oled .wallet-card-sajida-rent {
+    border-color: rgba(20, 184, 166, 0.55) !important;
+    box-shadow: 0 0 18px -2px rgba(20, 184, 166, 0.25) !important;
+}
+html.oled .wallet-card-jeelani-adv,
+.oled .wallet-card-jeelani-adv {
+    border-color: rgba(59, 130, 246, 0.55) !important;
+    box-shadow: 0 0 18px -2px rgba(59, 130, 246, 0.25) !important;
+}
+html.oled .wallet-card-jeelani-rent,
+.oled .wallet-card-jeelani-rent {
+    border-color: rgba(99, 102, 241, 0.55) !important;
+    box-shadow: 0 0 18px -2px rgba(99, 102, 241, 0.25) !important;
+}
+
+/* Detailed Balance Cards in OLED */
+html.oled #view-wallets .bg-white,
+.oled #view-wallets .bg-white {
+    background-color: #000000 !important;
+    border-color: #27272a !important;
+}
+html.oled #view-wallets .bg-slate-100,
+.oled #view-wallets .bg-slate-100 {
+    background-color: #121212 !important;
+    border-color: #27272a !important;
+    color: #ffffff !important;
+}
+

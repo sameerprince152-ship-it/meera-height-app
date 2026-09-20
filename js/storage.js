@@ -738,6 +738,59 @@ class StorageManager {
         downloadAnchor.remove();
     }
 
+    static parseBackupSummary(jsonString) {
+        try {
+            const parsed = (typeof jsonString === 'string') ? JSON.parse(jsonString) : jsonString;
+            const valid = parsed && (parsed.buildingName === 'Meera Heights' || parsed.buildingName) &&
+                Array.isArray(parsed.owners) && Array.isArray(parsed.categories) &&
+                Array.isArray(parsed.tenants) && Array.isArray(parsed.rentCollections) &&
+                Array.isArray(parsed.expenses);
+            if (!valid) {
+                return {
+                    valid: false,
+                    error: 'Invalid backup file structure. Required Meera Heights data collections are missing.'
+                };
+            }
+            const normalized = {
+                ...JSON.parse(JSON.stringify(INITIAL_DATA)),
+                ...parsed,
+                buildingName: parsed.buildingName || 'Meera Heights',
+                owners: parsed.owners || INITIAL_DATA.owners,
+                categories: parsed.categories || INITIAL_DATA.categories,
+                recurringExpenses: parsed.recurringExpenses || [],
+                tenants: parsed.tenants || [],
+                rentCollections: parsed.rentCollections || [],
+                expenses: parsed.expenses || [],
+                walletAdjustments: parsed.walletAdjustments || [],
+                advanceSettlements: parsed.advanceSettlements || [],
+                bankTransactions: parsed.bankTransactions || [],
+                walletTransfers: parsed.walletTransfers || []
+            };
+
+            const transfersCount = (normalized.bankTransactions || []).length +
+                (normalized.walletTransfers || []).length +
+                (normalized.walletAdjustments || []).length;
+
+            return {
+                valid: true,
+                data: normalized,
+                summary: {
+                    buildingName: normalized.buildingName,
+                    tenantsCount: normalized.tenants.length,
+                    rentCollectionsCount: normalized.rentCollections.length,
+                    expensesCount: normalized.expenses.length,
+                    transfersCount: transfersCount,
+                    timestamp: parsed.exportDate || parsed.timestamp || null
+                }
+            };
+        } catch (err) {
+            return {
+                valid: false,
+                error: 'Error parsing JSON file: ' + err.message
+            };
+        }
+    }
+
     static importJsonBackup(file, callback) {
         const reader = new FileReader();
         reader.onload = (event) => {
@@ -1186,6 +1239,17 @@ class ActivityLogger {
             const raw = localStorage.getItem(STORAGE_KEYS.ACTIVITY_LOG);
             let logs = raw ? JSON.parse(raw) : [];
             if (!Array.isArray(logs)) logs = [];
+
+            // If empty, auto-seed from building data first so baseline records are preserved!
+            if (logs.length === 0 && typeof StorageManager !== 'undefined' && StorageManager.getData) {
+                const buildingData = StorageManager.getData();
+                if (buildingData) {
+                    const seeded = this.seedFromExistingData(buildingData);
+                    if (seeded && seeded.length > 0) {
+                        logs = seeded;
+                    }
+                }
+            }
 
             const newRecord = {
                 id: 'act_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),

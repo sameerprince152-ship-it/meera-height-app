@@ -5327,6 +5327,7 @@ const App = {
         const activeHeld = Math.max(0, deposit - deductions - refunded);
 
         StorageManager.saveData(this.data);
+        ActivityLogger.log('tenant', `Advance Breakup Updated: ${tenant.name}`, `Deposit: ₹${deposit.toLocaleString('en-IN')}, Held: ₹${activeHeld.toLocaleString('en-IN')} (Flat ${tenant.flat})`);
         this.hideModal('modal-edit-advance');
         this.renderAll();
         this.showToast(`Advance breakup for "${tenant.name}" updated! Active held: ₹${activeHeld.toLocaleString('en-IN')}`);
@@ -5373,6 +5374,7 @@ const App = {
         this.data.advanceSettlements = (this.data.advanceSettlements || []).filter(s => s.tenantId !== tenantId);
 
         StorageManager.saveData(this.data);
+        ActivityLogger.log('tenant', `Advance Record Deleted: ${tenant.name}`, `Flat ${tenant.flat} • Deposit: ₹${deposit.toLocaleString('en-IN')}`);
         this.hideModal('modal-edit-advance');
         this.renderAll();
         this.showToast(`Advance record for "${tenant.name}" deleted.`);
@@ -7153,6 +7155,7 @@ const App = {
 
         this.data.categories.push(newCat);
         StorageManager.saveData(this.data);
+        ActivityLogger.log('expense', `Category Created: ${name}`, `New expense category added.`);
         this.hideModal('modal-add-category');
         this.renderAll();
         this.showToast(`New sheet/category "${name}" created!`);
@@ -7176,6 +7179,7 @@ const App = {
 
         this.data.categories = this.data.categories.filter(c => c.id !== id);
         StorageManager.saveData(this.data);
+        ActivityLogger.log('expense', `Category Deleted: ${cat.name}`, `Expense category removed.`);
         if (this.expenseCategoryFilter === id) {
             this.expenseCategoryFilter = 'all';
             this.expenseFilters.categoryId = 'all';
@@ -7211,8 +7215,12 @@ const App = {
 
     deleteCapitalAdjustment(id) {
         if (!confirm('Delete this capital transaction?')) return;
+        const targetAdj = (this.data.walletAdjustments || []).find(a => a.id === id);
         this.data.walletAdjustments = (this.data.walletAdjustments || []).filter(a => a.id !== id);
         StorageManager.saveData(this.data);
+        const ownerName = targetAdj?.ownerId === 'sajida' ? 'Sajida' : (targetAdj?.ownerId === 'jeelani' ? 'Jeelani' : 'Building');
+        const adjAmt = targetAdj ? parseFloat(targetAdj.amount) || 0 : 0;
+        ActivityLogger.log('rent', `Capital Adjustment Deleted: ₹${adjAmt.toLocaleString('en-IN')}`, `${ownerName} • ${targetAdj?.type || 'Adjustment'}`);
         this.renderAll();
         this.showToast('Capital transaction removed.');
     },
@@ -7256,6 +7264,8 @@ const App = {
         }
 
         StorageManager.saveData(this.data);
+        const ownerName = ownerId === 'sajida' ? 'Sajida' : (ownerId === 'jeelani' ? 'Jeelani' : 'Building');
+        ActivityLogger.log('rent', `Capital ${type === 'injection' ? 'Infusion' : 'Draw'}: ₹${amount.toLocaleString('en-IN')}`, `${ownerName} • ${date}${notes ? ' • ' + notes : ''}`);
         this.hideModal('modal-add-capital');
         this.renderAll();
         this.showToast(`Capital ${type} of ₹${amount.toLocaleString('en-IN')} saved.`);
@@ -8532,6 +8542,17 @@ const App = {
                 this.openCloudPairQrModal();
             });
         }
+
+        // 8. Activity History & Audit Log Buttons (Desktop & Mobile)
+        ['btn-activity-history-desktop', 'btn-activity-history-mobile'].forEach(id => {
+            const btn = document.getElementById(id);
+            if (btn) {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.openActivityHistoryModal();
+                });
+            }
+        });
     },
 
     // =============================================================
@@ -9437,10 +9458,28 @@ const App = {
         this.showModal('modal-restore-options');
     },
 
-    triggerLocalRestorePicker() {
+    triggerOfflineFileRestore() {
         this.hideModal('modal-restore-options');
+        this._restoreSource = 'offline';
         const input = document.getElementById('file-import-backup');
-        if (input) input.click();
+        if (input) {
+            input.value = '';
+            input.click();
+        }
+    },
+
+    triggerEmailFileRestore() {
+        this.hideModal('modal-restore-options');
+        this._restoreSource = 'email';
+        const input = document.getElementById('file-import-backup');
+        if (input) {
+            input.value = '';
+            input.click();
+        }
+    },
+
+    triggerLocalRestorePicker() {
+        this.triggerOfflineFileRestore();
     },
 
     async browseGoogleDriveBackups() {
@@ -9626,12 +9665,15 @@ const App = {
     handleBackupFileRestore(input) {
         if (!input.files || !input.files[0]) return;
         const file = input.files[0];
+        const source = this._restoreSource || 'offline';
 
         if (file.name.endsWith('.mhbackup')) {
             // Encrypted backup file
             const reader = new FileReader();
             reader.onload = (e) => {
                 this.pendingEncryptedBackupBuffer = e.target.result;
+                this.pendingBackupFileName = file.name;
+                this.pendingBackupFileSize = file.size;
                 const modal = document.getElementById('modal-restore-passphrase');
                 const passInput = document.getElementById('restore-passphrase-input');
                 if (passInput) passInput.value = '';
@@ -9640,29 +9682,31 @@ const App = {
             reader.readAsArrayBuffer(file);
         } else {
             // Standard JSON backup
-            if (!confirm('Restore this backup and replace current data? Export an existing backup first if you need it.')) {
-                input.value = '';
-                return;
-            }
-            StorageManager.importJsonBackup(file, (success, msg) => {
-                this.showToast(msg, success ? 'success' : 'error');
-                if (success) {
-                    this.data = StorageManager.getData();
-                    if (typeof CloudSyncManager !== 'undefined' && CloudSyncManager.isEnabled()) {
-                        CloudSyncManager.pushLocalDataToCloud(this.data, true);
-                    }
-                    ActivityLogger.log('restore', 'Local Backup Restored', `Restored database from file: ${file.name}`);
-                    this.activeTab = 'dashboard';
-                    this.selectedMonthFilter = 'all';
-                    this.renderAll();
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const inspection = StorageManager.parseBackupSummary(e.target.result);
+                if (!inspection.valid) {
+                    alert(inspection.error || 'Invalid backup file.');
+                    input.value = '';
+                    return;
                 }
-            });
+                this.inspectAndConfirmRestore({
+                    data: inspection.data,
+                    summary: inspection.summary,
+                    fileName: file.name,
+                    fileSize: file.size,
+                    source: source
+                });
+            };
+            reader.readAsText(file);
         }
         input.value = '';
     },
 
     cancelRestorePassphrase() {
         this.pendingEncryptedBackupBuffer = null;
+        this.pendingBackupFileName = null;
+        this.pendingBackupFileSize = null;
         this.hideModal('modal-restore-passphrase');
     },
 
@@ -9681,34 +9725,108 @@ const App = {
 
         try {
             const jsonText = await this.decryptWithPassphrase(this.pendingEncryptedBackupBuffer, password);
-            const parsed = JSON.parse(jsonText);
-            const dataToRestore = parsed.data || parsed;
-
-            if (!dataToRestore.expenses || !dataToRestore.tenants) {
-                throw new Error('Backup format missing critical tables.');
+            const inspection = StorageManager.parseBackupSummary(jsonText);
+            if (!inspection.valid) {
+                throw new Error(inspection.error || 'Decrypted data has invalid backup format.');
             }
 
-            if (!confirm('Passphrase verified! Replace current database with this restored backup?')) {
-                this.hideModal('modal-restore-passphrase');
-                return;
-            }
+            const fileName = this.pendingBackupFileName || 'backup.mhbackup';
+            const fileSize = this.pendingBackupFileSize || 0;
+            const source = this._restoreSource || 'offline';
 
-            StorageManager.saveData(dataToRestore);
-            this.data = StorageManager.getData();
-            if (typeof CloudSyncManager !== 'undefined' && CloudSyncManager.isEnabled()) {
-                CloudSyncManager.pushLocalDataToCloud(this.data, true);
-            }
-            ActivityLogger.log('restore', 'Encrypted Backup Decrypted & Restored', 'Restored database from encrypted .mhbackup file.');
-            this.activeTab = 'dashboard';
-            this.selectedMonthFilter = 'all';
-            this.renderAll();
             this.hideModal('modal-restore-passphrase');
             this.pendingEncryptedBackupBuffer = null;
-            this.showToast('Encrypted backup successfully decrypted and restored!', 'success');
+            this.pendingBackupFileName = null;
+            this.pendingBackupFileSize = null;
+
+            this.inspectAndConfirmRestore({
+                data: inspection.data,
+                summary: inspection.summary,
+                fileName: fileName,
+                fileSize: fileSize,
+                source: source
+            });
         } catch (err) {
             console.error('Decryption failed:', err);
             alert('Decryption failed: Incorrect passphrase or damaged backup file.');
         }
+    },
+
+    inspectAndConfirmRestore({ data, summary, fileName, fileSize, source }) {
+        this._pendingRestoreData = data;
+        this._pendingRestoreMeta = { fileName, fileSize, source };
+
+        const sourceEl = document.getElementById('restore-confirm-source');
+        const filenameEl = document.getElementById('restore-confirm-filename');
+        const filesizeEl = document.getElementById('restore-confirm-filesize');
+        const dateEl = document.getElementById('restore-confirm-date');
+        const countTenants = document.getElementById('restore-count-tenants');
+        const countRents = document.getElementById('restore-count-rents');
+        const countExpenses = document.getElementById('restore-count-expenses');
+        const countTransfers = document.getElementById('restore-count-transfers');
+
+        if (sourceEl) {
+            if (source === 'email') {
+                sourceEl.innerHTML = '<i class="fa-solid fa-envelope-open-text text-blue-500"></i><span>Email Backup (Rollback)</span>';
+            } else {
+                sourceEl.innerHTML = '<i class="fa-solid fa-hard-drive text-emerald-500"></i><span>Offline File</span>';
+            }
+        }
+        if (filenameEl) filenameEl.textContent = fileName || 'Meera_Heights_Backup.json';
+        if (filesizeEl) {
+            const kb = ((fileSize || 0) / 1024).toFixed(1);
+            filesizeEl.textContent = `${kb} KB`;
+        }
+        if (dateEl) {
+            if (summary.timestamp) {
+                dateEl.textContent = new Date(summary.timestamp).toLocaleString('en-IN');
+            } else {
+                dateEl.textContent = 'Included in backup';
+            }
+        }
+        if (countTenants) countTenants.textContent = summary.tenantsCount;
+        if (countRents) countRents.textContent = summary.rentCollectionsCount;
+        if (countExpenses) countExpenses.textContent = summary.expensesCount;
+        if (countTransfers) countTransfers.textContent = summary.transfersCount;
+
+        this.showModal('modal-restore-confirm-json');
+    },
+
+    cancelConfirmedRestore() {
+        this._pendingRestoreData = null;
+        this._pendingRestoreMeta = null;
+        this.hideModal('modal-restore-confirm-json');
+    },
+
+    executeConfirmedRestore() {
+        if (!this._pendingRestoreData) {
+            this.hideModal('modal-restore-confirm-json');
+            return;
+        }
+
+        const dataToRestore = this._pendingRestoreData;
+        const meta = this._pendingRestoreMeta || {};
+
+        StorageManager.saveData(dataToRestore);
+        this.data = StorageManager.getData();
+
+        if (typeof CloudSyncManager !== 'undefined' && CloudSyncManager.isEnabled()) {
+            CloudSyncManager.pushLocalDataToCloud(this.data, true);
+        }
+
+        const sourceLabel = (meta.source === 'email') ? 'Email Backup Rollback' : 'Offline Backup File';
+        ActivityLogger.log('restore', `Database Restored (${meta.source === 'email' ? 'Email' : 'Offline'})`,
+            `Restored from ${meta.fileName || 'backup.json'} via ${sourceLabel}. Database updated successfully.`);
+
+        this.activeTab = 'dashboard';
+        this.selectedMonthFilter = 'all';
+        this.renderAll();
+        this.hideModal('modal-restore-confirm-json');
+
+        this._pendingRestoreData = null;
+        this._pendingRestoreMeta = null;
+
+        this.showToast(`Database restored successfully from ${meta.fileName || 'backup file'}!`, 'success');
     },
 
     // =============================================================

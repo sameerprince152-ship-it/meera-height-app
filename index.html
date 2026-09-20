@@ -69,7 +69,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="css/styles.css?v=5.3.0">
+    <link rel="stylesheet" href="css/styles.css?v=5.4.0">
 </head>
 <body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 min-h-screen pb-28 sm:pb-32 md:pb-8 antialiased selection:bg-emerald-100 selection:text-emerald-900 transition-colors duration-200">
 
@@ -4273,9 +4273,11 @@
                 </button>
             </div>
         </div>
+    </div>
+
     <!-- ============================================================= -->
-    <!-- MODAL: 3-OPTION RESTORE CENTER                                 -->
-    <!-- 1. Local JSON/MHBACKUP | 2. Google Drive | 3. Latest Revert    -->
+    <!-- MODAL: 2-OPTION RESTORE CENTER                                 -->
+    <!-- 1. Offline File (.json / .mhbackup) | 2. Email Backup Rollback -->
     <!-- ============================================================= -->
     <div id="modal-restore-options" style="z-index: 99998; display: none;" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-lg w-full p-6 sm:p-7 shadow-2xl modal-enter">
@@ -4287,7 +4289,7 @@
                     </div>
                     <div>
                         <h3 class="font-black text-base text-slate-900 dark:text-white">Restore Database</h3>
-                        <p class="text-xs text-slate-500 dark:text-slate-400">Choose your preferred restore source</p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Choose your restore source</p>
                     </div>
                 </div>
                 <button onclick="App.hideModal('modal-restore-options')" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 flex items-center justify-center transition cursor-pointer">
@@ -4295,56 +4297,118 @@
                 </button>
             </div>
 
-            <!-- 3 Restore Option Cards -->
+            <!-- 2 Restore Option Cards -->
             <div class="space-y-3">
-                <!-- OPTION 1: Upload Local Backup JSON / MHBACKUP -->
-                <div onclick="App.triggerLocalRestorePicker()" class="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-emerald-500/50 dark:hover:border-emerald-500/50 bg-slate-50/70 hover:bg-emerald-50/50 dark:bg-slate-800/50 dark:hover:bg-emerald-950/20 transition cursor-pointer flex items-center gap-4 group">
+                <!-- OPTION 1: Manual Restore from Offline File -->
+                <div id="btn-restore-option-offline" onclick="App.triggerOfflineFileRestore()" class="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-emerald-500/50 dark:hover:border-emerald-500/50 bg-slate-50/70 hover:bg-emerald-50/50 dark:bg-slate-800/50 dark:hover:bg-emerald-950/20 transition cursor-pointer flex items-center gap-4 group">
                     <div class="w-12 h-12 rounded-2xl bg-emerald-100 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xl shrink-0 group-hover:scale-105 transition-transform">
-                        <i class="fa-solid fa-file-arrow-up"></i>
+                        <i class="fa-solid fa-hard-drive"></i>
                     </div>
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-2">
                             <span class="text-[10px] font-extrabold uppercase tracking-wide bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 px-2 py-0.5 rounded-md">Option 1</span>
-                            <h4 class="font-extrabold text-sm text-slate-900 dark:text-white truncate">Upload Local Backup File</h4>
+                            <h4 class="font-extrabold text-sm text-slate-900 dark:text-white truncate">Manual Restore from Offline File</h4>
                         </div>
-                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">Choose a standard <code class="font-mono text-emerald-600">.json</code> or encrypted <code class="font-mono text-emerald-600">.mhbackup</code> file from this device.</p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">Choose a standard <code class="font-mono text-emerald-600 dark:text-emerald-400">.json</code> or encrypted <code class="font-mono text-emerald-600 dark:text-emerald-400">.mhbackup</code> file saved on this device.</p>
                     </div>
                     <i class="fa-solid fa-chevron-right text-slate-400 group-hover:text-emerald-500 transition-colors text-xs shrink-0"></i>
                 </div>
 
-                <!-- OPTION 2: Choose Backup from Google Drive -->
-                <div onclick="App.browseGoogleDriveBackups()" class="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-blue-500/50 dark:hover:border-blue-500/50 bg-slate-50/70 hover:bg-blue-50/50 dark:bg-slate-800/50 dark:hover:bg-blue-950/20 transition cursor-pointer flex items-center gap-4 group">
+                <!-- OPTION 2: Restore from Email Backup -->
+                <div id="btn-restore-option-email" onclick="App.triggerEmailFileRestore()" class="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-blue-500/50 dark:hover:border-blue-500/50 bg-slate-50/70 hover:bg-blue-50/50 dark:bg-slate-800/50 dark:hover:bg-blue-950/20 transition cursor-pointer flex items-center gap-4 group">
                     <div class="w-12 h-12 rounded-2xl bg-blue-100 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xl shrink-0 group-hover:scale-105 transition-transform">
-                        <i class="fa-brands fa-google-drive"></i>
+                        <i class="fa-solid fa-envelope-open-text"></i>
                     </div>
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-2">
                             <span class="text-[10px] font-extrabold uppercase tracking-wide bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-md">Option 2</span>
-                            <h4 class="font-extrabold text-sm text-slate-900 dark:text-white truncate">Choose from Google Drive</h4>
+                            <h4 class="font-extrabold text-sm text-slate-900 dark:text-white truncate">Restore from Email Backup</h4>
                         </div>
-                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">Browse cloud backups saved in your Google Drive 'Meera Heights App Backups' folder.</p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">Select the downloaded email backup file (<code class="font-mono text-blue-600 dark:text-blue-400">.json</code>) that you wish to roll back to.</p>
                     </div>
                     <i class="fa-solid fa-chevron-right text-slate-400 group-hover:text-blue-500 transition-colors text-xs shrink-0"></i>
                 </div>
+            </div>
 
-                <!-- OPTION 3: 1-Click Revert to Latest Drive Backup -->
-                <div onclick="App.initiateRevertToLatestDriveBackup()" class="p-4 rounded-2xl border border-amber-200 dark:border-amber-900/60 hover:border-amber-500/80 bg-amber-50/40 hover:bg-amber-50/80 dark:bg-amber-950/20 dark:hover:bg-amber-950/40 transition cursor-pointer flex items-center gap-4 group">
-                    <div class="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-950/80 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xl shrink-0 group-hover:scale-105 transition-transform">
-                        <i class="fa-solid fa-rotate-left"></i>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <div class="flex items-center gap-2">
-                            <span class="text-[10px] font-extrabold uppercase tracking-wide bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 px-2 py-0.5 rounded-md">Option 3</span>
-                            <h4 class="font-extrabold text-sm text-slate-900 dark:text-white truncate">Revert to Previous Latest Backup</h4>
-                        </div>
-                        <p class="text-xs text-amber-800/80 dark:text-amber-300/80 mt-1 leading-relaxed">Automatically fetch the newest backup file from Google Drive with 1-click confirmation.</p>
-                    </div>
-                    <i class="fa-solid fa-chevron-right text-amber-500 transition-colors text-xs shrink-0"></i>
+            <!-- Pre-restore confirmation promise note -->
+            <div class="p-3 bg-indigo-50/60 dark:bg-indigo-950/30 rounded-2xl border border-indigo-100 dark:border-indigo-900/40 text-[11px] text-indigo-700 dark:text-indigo-300 flex items-center gap-2.5 mt-4">
+                <i class="fa-solid fa-shield-check text-indigo-500 shrink-0 text-sm"></i>
+                <span>Both options will display a detailed record count preview and ask for your confirmation before restoring.</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================= -->
+    <!-- MODAL: CONFIRM JSON RESTORE WITH RECORD PREVIEW                -->
+    <!-- Displays file stats, record counts, and requires confirmation  -->
+    <!-- ============================================================= -->
+    <div id="modal-restore-confirm-json" style="z-index: 99999; display: none;" class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl modal-enter">
+            <div class="w-14 h-14 rounded-2xl bg-amber-100 dark:bg-amber-950/60 text-amber-600 flex items-center justify-center text-2xl mx-auto mb-3">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h3 class="font-black text-lg text-slate-900 dark:text-white text-center">Confirm Database Restore</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 text-center mt-1 mb-4">Please inspect the backup file details before restoring into the database.</p>
+
+            <!-- Backup File Meta Card -->
+            <div class="bg-slate-50 dark:bg-slate-800/80 rounded-2xl p-4 border border-slate-200 dark:border-slate-700 space-y-2.5 mb-4 text-xs">
+                <div class="flex justify-between items-center py-1 border-b border-slate-200/60 dark:border-slate-700/60">
+                    <span class="text-slate-500 dark:text-slate-400">Source:</span>
+                    <span id="restore-confirm-source" class="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                        <i class="fa-solid fa-hard-drive text-emerald-500"></i>
+                        <span>Offline File</span>
+                    </span>
+                </div>
+                <div class="flex justify-between items-center py-1 border-b border-slate-200/60 dark:border-slate-700/60">
+                    <span class="text-slate-500 dark:text-slate-400">File Name:</span>
+                    <span id="restore-confirm-filename" class="font-mono font-bold text-slate-800 dark:text-slate-200 truncate max-w-[210px]">Meera_Heights_Backup.json</span>
+                </div>
+                <div class="flex justify-between items-center py-1 border-b border-slate-200/60 dark:border-slate-700/60">
+                    <span class="text-slate-500 dark:text-slate-400">File Size:</span>
+                    <span id="restore-confirm-filesize" class="font-bold text-slate-800 dark:text-slate-200">0 KB</span>
+                </div>
+                <div class="flex justify-between items-center py-1">
+                    <span class="text-slate-500 dark:text-slate-400">Backup Date:</span>
+                    <span id="restore-confirm-date" class="font-bold text-slate-800 dark:text-slate-200">Today</span>
                 </div>
             </div>
 
-            <!-- Footer Note -->
-            <p class="text-[11px] text-slate-400 text-center mt-5">All restores perform a safe atomic update with an automatic activity audit record.</p>
+            <!-- Content Record Counts Grid -->
+            <div class="grid grid-cols-2 gap-2 mb-4 text-xs">
+                <div class="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 text-center">
+                    <span class="text-slate-500 dark:text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Tenants</span>
+                    <span id="restore-count-tenants" class="text-base font-black text-slate-900 dark:text-white">0</span>
+                </div>
+                <div class="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 text-center">
+                    <span class="text-slate-500 dark:text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Rent Collections</span>
+                    <span id="restore-count-rents" class="text-base font-black text-emerald-600 dark:text-emerald-400">0</span>
+                </div>
+                <div class="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 text-center">
+                    <span class="text-slate-500 dark:text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Expenses</span>
+                    <span id="restore-count-expenses" class="text-base font-black text-rose-600 dark:text-rose-400">0</span>
+                </div>
+                <div class="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 text-center">
+                    <span class="text-slate-500 dark:text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Transfers</span>
+                    <span id="restore-count-transfers" class="text-base font-black text-indigo-600 dark:text-indigo-400">0</span>
+                </div>
+            </div>
+
+            <!-- Warning Notice -->
+            <div class="p-3 bg-rose-50 dark:bg-rose-950/40 rounded-xl border border-rose-200 dark:border-rose-900/60 text-rose-700 dark:text-rose-300 text-[11px] leading-relaxed mb-5 flex items-start gap-2">
+                <i class="fa-solid fa-circle-exclamation mt-0.5 shrink-0 text-rose-600"></i>
+                <span><strong>Warning:</strong> Restoring will replace all current entries on this device with the records in this backup file.</span>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex gap-2">
+                <button onclick="App.cancelConfirmedRestore()" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition cursor-pointer">
+                    Cancel
+                </button>
+                <button id="btn-execute-confirmed-restore" onclick="App.executeConfirmedRestore()" class="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-md shadow-emerald-600/20 cursor-pointer">
+                    <i class="fa-solid fa-cloud-arrow-down"></i>
+                    <span>Confirm & Restore</span>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -4496,9 +4560,9 @@
     <div id="app-floating-toast" class="fixed top-5 right-5 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl shadow-2xl text-xs font-bold transition-all transform duration-300 pointer-events-none opacity-0 translate-y-[-10px]"></div>
 
     <!-- Application JavaScript Scripts -->
-    <script src="js/storage.js?v=5.3.0"></script>
-    <script src="js/excel-export.js?v=5.3.0"></script>
-    <script src="js/app.js?v=5.3.0"></script>
+    <script src="js/storage.js?v=5.4.0"></script>
+    <script src="js/excel-export.js?v=5.4.0"></script>
+    <script src="js/app.js?v=5.4.0"></script>
 
     <!-- Register Service Worker for PWA Offline Functionality -->
     <script>

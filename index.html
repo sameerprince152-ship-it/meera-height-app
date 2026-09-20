@@ -69,7 +69,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="css/styles.css?v=5.6.0">
+    <link rel="stylesheet" href="css/styles.css?v=5.7.0">
 </head>
 <body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 min-h-screen pb-28 sm:pb-32 md:pb-8 antialiased selection:bg-emerald-100 selection:text-emerald-900 transition-colors duration-200">
 
@@ -1123,8 +1123,8 @@
             <!-- Header with Title, Actions & Excel Export -->
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                    <h2 class="text-xl font-extrabold text-slate-900">Floor-Wise Expenses & Breakups</h2>
-                    <p class="text-xs text-slate-500">Granular expense records and cost breakups across each individual floor (Floors 1 to 5)</p>
+                    <h2 class="text-xl font-extrabold text-slate-900 dark:text-white">Floor-Wise Expenses & Breakups</h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Granular expense records and cost breakups across each individual floor (Floors 1 to 5)</p>
                 </div>
                 <!-- Desktop Action Buttons (md and above: untouched) -->
                 <div class="hidden md:flex items-center gap-2 flex-wrap">
@@ -1208,18 +1208,18 @@
             </div>
 
             <!-- Interactive Floor Filter Navigation & Month Filter -->
-            <div class="bg-white rounded-2xl p-3 border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div class="bg-white dark:bg-slate-900 rounded-2xl p-3 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div id="floor-filter-pills" class="flex flex-wrap items-center gap-1.5 text-xs font-bold">
-                    <button onclick="App.setFloorFilter('all')" data-floor="all" class="floor-pill-btn px-3 py-1.5 rounded-xl transition bg-slate-900 text-white shadow-sm">All Floors</button>
-                    <button onclick="App.setFloorFilter('1')" data-floor="1" class="floor-pill-btn px-3 py-1.5 rounded-xl transition bg-slate-100 text-slate-600 hover:bg-slate-200">1st Floor (Sajida)</button>
-                    <button onclick="App.setFloorFilter('2')" data-floor="2" class="floor-pill-btn px-3 py-1.5 rounded-xl transition bg-slate-100 text-slate-600 hover:bg-slate-200">2nd Floor (Sajida)</button>
-                    <button onclick="App.setFloorFilter('3')" data-floor="3" class="floor-pill-btn px-3 py-1.5 rounded-xl transition bg-slate-100 text-slate-600 hover:bg-slate-200">3rd Floor (Jeelani)</button>
-                    <button onclick="App.setFloorFilter('4')" data-floor="4" class="floor-pill-btn px-3 py-1.5 rounded-xl transition bg-slate-100 text-slate-600 hover:bg-slate-200">4th Floor (Jeelani)</button>
-                    <button onclick="App.setFloorFilter('5')" data-floor="5" class="floor-pill-btn px-3 py-1.5 rounded-xl transition bg-slate-100 text-slate-600 hover:bg-slate-200">5th Floor (Jeelani)</button>
+                    <button onclick="App.setFloorFilter('all')" data-floor="all" class="floor-pill-btn px-3 py-1.5 rounded-xl transition bg-slate-900 dark:bg-emerald-600 text-white shadow-sm">All Floors</button>
+                    <button onclick="App.setFloorFilter('1')" data-floor="1" class="floor-pill-btn px-3 py-1.5 rounded-xl transition bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700">1st Floor (Sajida)</button>
+                    <button onclick="App.setFloorFilter('2')" data-floor="2" class="floor-pill-btn px-3 py-1.5 rounded-xl transition bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700">2nd Floor (Sajida)</button>
+                    <button onclick="App.setFloorFilter('3')" data-floor="3" class="floor-pill-btn px-3 py-1.5 rounded-xl transition bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700">3rd Floor (Jeelani)</button>
+                    <button onclick="App.setFloorFilter('4')" data-floor="4" class="floor-pill-btn px-3 py-1.5 rounded-xl transition bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700">4th Floor (Jeelani)</button>
+                    <button onclick="App.setFloorFilter('5')" data-floor="5" class="floor-pill-btn px-3 py-1.5 rounded-xl transition bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700">5th Floor (Jeelani)</button>
                 </div>
                 <div class="flex items-center gap-2">
-                    <label class="text-xs font-bold text-slate-500 uppercase">Month:</label>
-                    <select id="floor-month-filter" onchange="App.onFloorMonthFilterChanged(this.value)" class="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-emerald-500">
+                    <label class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">Month:</label>
+                    <select id="floor-month-filter" onchange="App.onFloorMonthFilterChanged(this.value)" class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-2.5 py-1.5 text-xs font-semibold text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500">
                         <option value="all">All Months</option>
                     </select>
                 </div>
@@ -1231,16 +1231,16 @@
             </div>
 
             <!-- Search Bar for Floor Expenses -->
-                <div class="flex flex-col sm:flex-row sm:items-center gap-2 bg-white rounded-2xl p-2 border border-slate-200 shadow-sm">
-                    <i class="fa-solid fa-magnifying-glass text-slate-400 ml-2"></i>
-                    <input type="text" id="floor-expense-search" oninput="App.onFloorSearchInput(this.value)" placeholder="Search floor expense title, sheet, bill notes..." class="w-full bg-transparent text-xs font-medium text-slate-800 placeholder-slate-400 outline-none px-2 py-1">
-                    <select id="floor-sort" onchange="App.setSort('floor', this.value)" class="mobile-control bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-2 text-xs font-semibold text-slate-700 outline-none" aria-label="Sort floor transactions">
-                        <option value="date-desc">Newest first</option><option value="date-asc">Oldest first</option><option value="amount-desc">Highest amount</option><option value="amount-asc">Lowest amount</option><option value="title-asc">Description A-Z</option>
-                    </select>
-                </div>
+            <div class="flex flex-col sm:flex-row sm:items-center gap-2 bg-white dark:bg-slate-900 rounded-2xl p-2 border border-slate-200 dark:border-slate-800 shadow-sm">
+                <i class="fa-solid fa-magnifying-glass text-slate-400 ml-2"></i>
+                <input type="text" id="floor-expense-search" oninput="App.onFloorSearchInput(this.value)" placeholder="Search floor expense title, sheet, bill notes..." class="w-full bg-transparent text-xs font-medium text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 outline-none px-2 py-1">
+                <select id="floor-sort" onchange="App.setSort('floor', this.value)" class="mobile-control bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-2.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 outline-none" aria-label="Sort floor transactions">
+                    <option value="date-desc">Newest first</option><option value="date-asc">Oldest first</option><option value="amount-desc">Highest amount</option><option value="amount-asc">Lowest amount</option><option value="title-asc">Description A-Z</option>
+                </select>
+            </div>
 
             <!-- Granular Floor Expenses Ledger Table Container -->
-            <div id="floor-ledger-container" class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+            <div id="floor-ledger-container" class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
                 <!-- Populated dynamically -->
             </div>
         </section>
@@ -4371,7 +4371,7 @@
                 </div>
 
                 <!-- OPTION 3: Restore from Email Backup -->
-                <div id="btn-restore-option-email" onclick="App.triggerEmailFileRestore()" class="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-purple-500/50 dark:hover:border-purple-500/50 bg-slate-50/70 hover:bg-purple-50/50 dark:bg-slate-800/50 dark:hover:bg-purple-950/20 transition cursor-pointer flex items-center gap-4 group">
+                <div id="btn-restore-option-email" onclick="App.browseEmailBackups()" class="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-purple-500/50 dark:hover:border-purple-500/50 bg-slate-50/70 hover:bg-purple-50/50 dark:bg-slate-800/50 dark:hover:bg-purple-950/20 transition cursor-pointer flex items-center gap-4 group">
                     <div class="w-12 h-12 rounded-2xl bg-purple-100 dark:bg-purple-950/80 text-purple-600 dark:text-purple-400 flex items-center justify-center text-xl shrink-0 group-hover:scale-105 transition-transform">
                         <i class="fa-solid fa-envelope-open-text"></i>
                     </div>
@@ -4380,7 +4380,7 @@
                             <span class="text-[10px] font-extrabold uppercase tracking-wide bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded-md">Option 3</span>
                             <h4 class="font-extrabold text-sm text-slate-900 dark:text-white truncate">Restore from Email Backup</h4>
                         </div>
-                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">Select the downloaded email backup file (<code class="font-mono text-purple-600 dark:text-purple-400">.json</code>) that you wish to roll back to.</p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">Browse database backups sent to Sajida & Jeelani's email and roll back with 1 tap.</p>
                     </div>
                     <i class="fa-solid fa-chevron-right text-slate-400 group-hover:text-purple-500 transition-colors text-xs shrink-0"></i>
                 </div>
@@ -4554,6 +4554,44 @@
     </div>
 
     <!-- ============================================================= -->
+    <!-- MODAL: EMAIL BACKUP ROLLBACK BROWSER                           -->
+    <!-- Browse and pick from backups sent to Sajida & Jeelani's email  -->
+    <!-- ============================================================= -->
+    <div id="modal-email-backups-list" style="z-index: 99999; display: none;" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm hidden items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl max-w-lg w-full p-6 shadow-2xl modal-enter flex flex-col max-h-[85vh]">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800 mb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-purple-100 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center text-lg shrink-0">
+                        <i class="fa-solid fa-envelope-open-text"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-black text-base text-slate-900 dark:text-white">Email Backup Rollback</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Select a backup snapshot sent to Sajida & Jeelani</p>
+                    </div>
+                </div>
+                <button onclick="App.hideModal('modal-email-backups-list')" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 flex items-center justify-center transition cursor-pointer">
+                    <i class="fa-solid fa-xmark text-sm"></i>
+                </button>
+            </div>
+
+            <!-- List Container -->
+            <div id="email-backups-container" class="flex-1 overflow-y-auto space-y-2.5 py-1 pr-1">
+                <!-- Dynamically populated via App.browseEmailBackups() -->
+            </div>
+
+            <div class="pt-4 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center text-xs gap-2">
+                <button onclick="App.triggerOfflineFileRestore()" class="text-purple-600 dark:text-purple-400 font-bold hover:underline flex items-center gap-1.5 cursor-pointer bg-transparent border-none p-0 text-left">
+                    <i class="fa-solid fa-folder-open text-xs"></i>
+                    <span>Browse downloaded .json file from device</span>
+                </button>
+                <button onclick="App.hideModal('modal-email-backups-list')" class="px-4 py-2 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 font-bold rounded-xl transition cursor-pointer shrink-0">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================= -->
     <!-- MODAL: COMPREHENSIVE ACTIVITY HISTORY & AUDIT LOG              -->
     <!-- Multi-platform, non-intrusive activity timeline with filters  -->
     <!-- ============================================================= -->
@@ -4616,9 +4654,9 @@
     <div id="app-floating-toast" class="fixed top-5 right-5 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl shadow-2xl text-xs font-bold transition-all transform duration-300 pointer-events-none opacity-0 translate-y-[-10px]"></div>
 
     <!-- Application JavaScript Scripts -->
-    <script src="js/storage.js?v=5.6.0"></script>
-    <script src="js/excel-export.js?v=5.6.0"></script>
-    <script src="js/app.js?v=5.6.0"></script>
+    <script src="js/storage.js?v=5.7.0"></script>
+    <script src="js/excel-export.js?v=5.7.0"></script>
+    <script src="js/app.js?v=5.7.0"></script>
 
     <!-- Register Service Worker for PWA Offline Functionality -->
     <script>

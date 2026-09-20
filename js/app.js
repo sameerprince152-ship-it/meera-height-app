@@ -3646,66 +3646,66 @@ const App = {
             const margin = data.rent - data.expenses;
             const isSelected = (this.activeFloorFilter === String(fl));
             const ownerBadge = data.owner === 'Sajida' 
-                ? 'bg-emerald-100 text-emerald-800' 
-                : 'bg-sky-100 text-sky-800';
+                ? 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300' 
+                : 'bg-sky-100 dark:bg-sky-950/80 text-sky-800 dark:text-sky-300';
 
             kpiHtml += `
-                <div onclick="App.setFloorFilter('${fl}')" class="cursor-pointer transition-all duration-200 bg-white rounded-2xl p-3.5 border ${
-                    isSelected ? 'border-emerald-600 ring-2 ring-emerald-500/30 shadow-md scale-[1.01]' : 'border-slate-200 hover:border-slate-300 shadow-sm'
+                <div onclick="App.setFloorFilter('${fl}')" class="cursor-pointer transition-all duration-200 bg-white dark:bg-slate-900 rounded-2xl p-3.5 border ${
+                    isSelected ? 'border-emerald-600 ring-2 ring-emerald-500/30 shadow-md scale-[1.01]' : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 shadow-sm'
                 } flex flex-col justify-between space-y-2.5">
                     <div>
                         <div class="flex items-center justify-between gap-1 mb-1.5">
-                            <span class="font-black text-sm text-slate-900">${data.name}</span>
+                            <span class="font-black text-sm text-slate-900 dark:text-white">${data.name}</span>
                             <span class="px-2 py-0.5 rounded text-[10px] font-extrabold ${ownerBadge}">
                                 ${data.owner}
                             </span>
                         </div>
-                        <div class="text-[10px] text-slate-400 flex items-center justify-between mb-2">
+                        <div class="text-[10px] text-slate-400 dark:text-slate-400 flex items-center justify-between mb-2">
                             <span>20% Building Share</span>
-                            <span class="font-bold text-slate-600">${data.activeTenants} Active Lease${data.activeTenants === 1 ? '' : 's'}</span>
+                            <span class="font-bold text-slate-600 dark:text-slate-300">${data.activeTenants} Active Lease${data.activeTenants === 1 ? '' : 's'}</span>
                         </div>
 
                         <!-- 1. Advance Deposits Movement -->
-                        <div class="bg-amber-50/70 border border-amber-200/70 rounded-xl p-2 space-y-1 mb-2 text-[11px]">
+                        <div class="bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200/70 dark:border-amber-800/40 rounded-xl p-2 space-y-1 mb-2 text-[11px]">
                             <div class="flex items-center justify-between">
-                                <span class="text-amber-800 font-bold">Advance Payment:</span>
-                                <strong class="text-amber-950 font-black">+₹${data.advancePayment.toLocaleString('en-IN')}</strong>
+                                <span class="text-amber-800 dark:text-amber-300 font-bold">Advance Payment:</span>
+                                <strong class="text-amber-950 dark:text-amber-200 font-black">+₹${data.advancePayment.toLocaleString('en-IN')}</strong>
                             </div>
                             <div class="flex items-center justify-between text-[10px]">
-                                <span class="text-slate-500">Refund Advance:</span>
-                                <span class="font-bold ${data.refundAdvance > 0 ? 'text-rose-600' : 'text-slate-400'}">${data.refundAdvance > 0 ? `-₹${data.refundAdvance.toLocaleString('en-IN')}` : '₹0'}</span>
+                                <span class="text-slate-500 dark:text-slate-400">Refund Advance:</span>
+                                <span class="font-bold ${data.refundAdvance > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-400 dark:text-slate-500'}">${data.refundAdvance > 0 ? `-₹${data.refundAdvance.toLocaleString('en-IN')}` : '₹0'}</span>
                             </div>
-                            <div class="flex items-center justify-between text-[10px] pt-1 border-t border-amber-200/50">
-                                <span class="text-slate-500 font-medium">Active Held Deposit:</span>
-                                <strong class="text-slate-800 font-bold">₹${data.advanceHeld.toLocaleString('en-IN')}</strong>
+                            <div class="flex items-center justify-between text-[10px] pt-1 border-t border-amber-200/50 dark:border-amber-800/40">
+                                <span class="text-slate-500 dark:text-slate-400 font-medium">Active Held Deposit:</span>
+                                <strong class="text-slate-800 dark:text-slate-100 font-bold">₹${data.advanceHeld.toLocaleString('en-IN')}</strong>
                             </div>
                         </div>
 
                         <!-- 2. Rent & Banking Flow -->
-                        <div class="bg-emerald-50/70 border border-emerald-200/70 rounded-xl p-2 space-y-1 mb-2 text-[11px]">
+                        <div class="bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200/70 dark:border-emerald-800/40 rounded-xl p-2 space-y-1 mb-2 text-[11px]">
                             <div class="flex items-center justify-between">
-                                <span class="text-emerald-800 font-bold">Rent Inflow:</span>
-                                <strong class="text-emerald-900 font-black">+₹${data.rent.toLocaleString('en-IN')}</strong>
+                                <span class="text-emerald-800 dark:text-emerald-300 font-bold">Rent Inflow:</span>
+                                <strong class="text-emerald-900 dark:text-emerald-200 font-black">+₹${data.rent.toLocaleString('en-IN')}</strong>
                             </div>
                             <div class="flex items-center justify-between text-[10px]">
-                                <span class="text-slate-500">Rent Outflow:</span>
-                                <span class="font-bold ${data.rentOutflow > 0 ? 'text-amber-700' : 'text-slate-400'}">${data.rentOutflow > 0 ? `-₹${data.rentOutflow.toLocaleString('en-IN')}` : '₹0'}</span>
+                                <span class="text-slate-500 dark:text-slate-400">Rent Outflow:</span>
+                                <span class="font-bold ${data.rentOutflow > 0 ? 'text-amber-700 dark:text-amber-300' : 'text-slate-400 dark:text-slate-500'}">${data.rentOutflow > 0 ? `-₹${data.rentOutflow.toLocaleString('en-IN')}` : '₹0'}</span>
                             </div>
-                            <div class="flex items-center justify-between text-[10px] pt-1 border-t border-emerald-200/50">
-                                <span class="text-blue-700 font-bold flex items-center gap-1">
+                            <div class="flex items-center justify-between text-[10px] pt-1 border-t border-emerald-200/50 dark:border-emerald-800/40">
+                                <span class="text-blue-700 dark:text-blue-300 font-bold flex items-center gap-1">
                                     <i class="fa-solid fa-building-columns text-[9px]"></i> Rent ➔ Bank Inflow:
                                 </span>
-                                <strong class="text-blue-900 font-black">₹${data.rentToBank.toLocaleString('en-IN')}</strong>
+                                <strong class="text-blue-900 dark:text-blue-200 font-black">₹${data.rentToBank.toLocaleString('en-IN')}</strong>
                             </div>
                         </div>
 
                         <!-- 3. Expenses Debited -->
-                        <div class="bg-slate-50 border border-slate-200 rounded-xl p-2 space-y-1 text-[11px]">
+                        <div class="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 rounded-xl p-2 space-y-1 text-[11px]">
                             <div class="flex items-center justify-between">
-                                <span class="text-slate-600 font-bold">Expenses Debited:</span>
-                                <strong class="text-slate-900 font-black">₹${data.expenses.toLocaleString('en-IN')}</strong>
+                                <span class="text-slate-600 dark:text-slate-300 font-bold">Expenses Debited:</span>
+                                <strong class="text-slate-900 dark:text-white font-black">₹${data.expenses.toLocaleString('en-IN')}</strong>
                             </div>
-                            <div class="flex items-center justify-between text-[10px] text-slate-400">
+                            <div class="flex items-center justify-between text-[10px] text-slate-400 dark:text-slate-400">
                                 <span>Direct: ₹${data.directExp.toLocaleString('en-IN')}</span>
                                 <span>Shared: ₹${data.sharedExp.toLocaleString('en-IN')}</span>
                             </div>
@@ -3713,9 +3713,9 @@ const App = {
                     </div>
 
                     <!-- Net Operating Yield -->
-                    <div class="flex items-center justify-between text-xs pt-2 border-t border-slate-100">
-                        <span class="text-slate-500 font-medium">Net Operating Yield:</span>
-                        <strong class="font-extrabold text-sm ${margin >= 0 ? 'text-emerald-700' : 'text-rose-600'}">
+                    <div class="flex items-center justify-between text-xs pt-2 border-t border-slate-100 dark:border-slate-800">
+                        <span class="text-slate-500 dark:text-slate-400 font-medium">Net Operating Yield:</span>
+                        <strong class="font-extrabold text-sm ${margin >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}">
                             ${margin >= 0 ? '+' : ''}₹${margin.toLocaleString('en-IN')}
                         </strong>
                     </div>
@@ -3780,7 +3780,7 @@ const App = {
         let categoryBarsHtml = '';
         const sortedCats = Object.entries(aggregateCategories).sort((a, b) => b[1] - a[1]);
         if (sortedCats.length === 0) {
-            categoryBarsHtml = `<p class="text-xs text-slate-400 py-4 text-center">No categorized expenses recorded for this floor in the selected timeframe.</p>`;
+            categoryBarsHtml = `<p class="text-xs text-slate-400 dark:text-slate-400 py-4 text-center">No categorized expenses recorded for this floor in the selected timeframe.</p>`;
         } else {
             sortedCats.slice(0, 5).forEach(([cid, amt]) => {
                 const catObj = this.data.categories.find(c => c.id === cid) || { name: cid, icon: 'fa-tag', color: '#64748b' };
@@ -3788,13 +3788,13 @@ const App = {
                 categoryBarsHtml += `
                     <div class="space-y-1">
                         <div class="flex items-center justify-between text-xs">
-                            <span class="font-semibold text-slate-700 flex items-center gap-1.5">
+                            <span class="font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
                                 <i class="fa-solid ${catObj.icon}" style="color: ${catObj.color}"></i>
                                 ${catObj.name}
                             </span>
-                            <span class="font-bold text-slate-900">₹${amt.toLocaleString('en-IN')} <span class="text-slate-400 text-[10px]">(${pct}%)</span></span>
+                            <span class="font-bold text-slate-900 dark:text-white">₹${amt.toLocaleString('en-IN')} <span class="text-slate-400 dark:text-slate-400 text-[10px]">(${pct}%)</span></span>
                         </div>
-                        <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                        <div class="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
                             <div class="h-1.5 rounded-full" style="width: ${pct}%; background-color: ${catObj.color || '#10B981'};"></div>
                         </div>
                     </div>
@@ -3804,108 +3804,108 @@ const App = {
 
         costStructureContainer.innerHTML = `
             <!-- Card 1: Tenant Security Deposits & Advance Capital -->
-            <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+            <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
                 <div>
                     <div class="flex items-center justify-between mb-3">
-                        <h4 class="font-extrabold text-sm text-slate-900">Tenant Advance Capital</h4>
-                        <span class="text-[11px] font-bold text-slate-500">${scopeTitle}</span>
+                        <h4 class="font-extrabold text-sm text-slate-900 dark:text-white">Tenant Advance Capital</h4>
+                        <span class="text-[11px] font-bold text-slate-500 dark:text-slate-400">${scopeTitle}</span>
                     </div>
-                    <div class="text-2xl font-black text-amber-900 mb-1">₹${totalSelectedAdvHeld.toLocaleString('en-IN')}</div>
-                    <p class="text-xs text-slate-500 mb-3">Net active security deposits held in advance wallets</p>
+                    <div class="text-2xl font-black text-amber-900 dark:text-amber-300 mb-1">₹${totalSelectedAdvHeld.toLocaleString('en-IN')}</div>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">Net active security deposits held in advance wallets</p>
 
                     <div class="grid grid-cols-2 gap-2 text-xs mb-3">
-                        <div class="p-2.5 bg-amber-50/80 border border-amber-200 rounded-xl">
-                            <span class="text-[10px] font-bold text-amber-800 uppercase block">Advance Payment</span>
-                            <strong class="text-sm font-black text-amber-950">+₹${totalSelectedAdvPayment.toLocaleString('en-IN')}</strong>
-                            <span class="text-[10px] text-slate-500 block">Collected from tenants</span>
+                        <div class="p-2.5 bg-amber-50/80 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-xl">
+                            <span class="text-[10px] font-bold text-amber-800 dark:text-amber-300 uppercase block">Advance Payment</span>
+                            <strong class="text-sm font-black text-amber-950 dark:text-amber-200">+₹${totalSelectedAdvPayment.toLocaleString('en-IN')}</strong>
+                            <span class="text-[10px] text-slate-500 dark:text-slate-400 block">Collected from tenants</span>
                         </div>
-                        <div class="p-2.5 bg-rose-50/80 border border-rose-200 rounded-xl">
-                            <span class="text-[10px] font-bold text-rose-800 uppercase block">Refund Advance</span>
-                            <strong class="text-sm font-black text-rose-950">${totalSelectedAdvRefund > 0 ? `-₹${totalSelectedAdvRefund.toLocaleString('en-IN')}` : '₹0'}</strong>
-                            <span class="text-[10px] text-slate-500 block">Paid out on vacate</span>
+                        <div class="p-2.5 bg-rose-50/80 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800/60 rounded-xl">
+                            <span class="text-[10px] font-bold text-rose-800 dark:text-rose-300 uppercase block">Refund Advance</span>
+                            <strong class="text-sm font-black text-rose-950 dark:text-rose-200">${totalSelectedAdvRefund > 0 ? `-₹${totalSelectedAdvRefund.toLocaleString('en-IN')}` : '₹0'}</strong>
+                            <span class="text-[10px] text-slate-500 dark:text-slate-400 block">Paid out on vacate</span>
                         </div>
                     </div>
 
-                    <div class="p-2.5 bg-emerald-50/80 border border-emerald-200 rounded-xl flex items-center justify-between text-xs">
-                        <span class="font-medium text-emerald-800">Settlement Deductions Retained:</span>
-                        <strong class="font-extrabold text-emerald-900">+₹${totalSelectedAdvDeductions.toLocaleString('en-IN')}</strong>
+                    <div class="p-2.5 bg-emerald-50/80 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 rounded-xl flex items-center justify-between text-xs">
+                        <span class="font-medium text-emerald-800 dark:text-emerald-300">Settlement Deductions Retained:</span>
+                        <strong class="font-extrabold text-emerald-900 dark:text-emerald-200">+₹${totalSelectedAdvDeductions.toLocaleString('en-IN')}</strong>
                     </div>
                 </div>
-                <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
+                <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
                     <span>Advance Security Reserves</span>
                     <span>Held in Advance Wallet</span>
                 </div>
             </div>
 
             <!-- Card 2: Operating Cashflow & Owner Bank Inflow -->
-            <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+            <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
                 <div>
                     <div class="flex items-center justify-between mb-2">
-                        <h4 class="font-extrabold text-sm text-slate-900">Operating Cashflow & Bank Flow</h4>
-                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700">${totalSelectedTenants} Active Lease${totalSelectedTenants === 1 ? '' : 's'}</span>
+                        <h4 class="font-extrabold text-sm text-slate-900 dark:text-white">Operating Cashflow & Bank Flow</h4>
+                        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">${totalSelectedTenants} Active Lease${totalSelectedTenants === 1 ? '' : 's'}</span>
                     </div>
 
                     <div class="grid grid-cols-2 gap-2 mb-2">
-                        <div class="p-2.5 bg-emerald-50 border border-emerald-100 rounded-xl">
-                            <span class="text-[10px] font-bold text-emerald-800 uppercase block">Rent Inflow</span>
-                            <strong class="text-base font-black text-emerald-900">+₹${totalSelectedRent.toLocaleString('en-IN')}</strong>
+                        <div class="p-2.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-100 dark:border-emerald-800/60 rounded-xl">
+                            <span class="text-[10px] font-bold text-emerald-800 dark:text-emerald-300 uppercase block">Rent Inflow</span>
+                            <strong class="text-base font-black text-emerald-900 dark:text-emerald-200">+₹${totalSelectedRent.toLocaleString('en-IN')}</strong>
                         </div>
-                        <div class="p-2.5 bg-rose-50 border border-rose-100 rounded-xl">
-                            <span class="text-[10px] font-bold text-rose-800 uppercase block">Total Debited</span>
-                            <strong class="text-base font-black text-rose-900">₹${totalSelectedCost.toLocaleString('en-IN')}</strong>
+                        <div class="p-2.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-100 dark:border-rose-800/60 rounded-xl">
+                            <span class="text-[10px] font-bold text-rose-800 dark:text-rose-300 uppercase block">Total Debited</span>
+                            <strong class="text-base font-black text-rose-900 dark:text-rose-200">₹${totalSelectedCost.toLocaleString('en-IN')}</strong>
                         </div>
                     </div>
 
                     <div class="grid grid-cols-2 gap-2 mb-2">
-                        <div class="p-2.5 bg-amber-50 border border-amber-100 rounded-xl">
-                            <span class="text-[10px] font-bold text-amber-800 uppercase block">Rent Outflow</span>
-                            <strong class="text-sm font-black text-amber-900">${totalSelectedRentOutflow > 0 ? `-₹${totalSelectedRentOutflow.toLocaleString('en-IN')}` : '₹0'}</strong>
+                        <div class="p-2.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-100 dark:border-amber-800/60 rounded-xl">
+                            <span class="text-[10px] font-bold text-amber-800 dark:text-amber-300 uppercase block">Rent Outflow</span>
+                            <strong class="text-sm font-black text-amber-900 dark:text-amber-200">${totalSelectedRentOutflow > 0 ? `-₹${totalSelectedRentOutflow.toLocaleString('en-IN')}` : '₹0'}</strong>
                         </div>
-                        <div class="p-2.5 bg-blue-50 border border-blue-100 rounded-xl">
-                            <span class="text-[10px] font-bold text-blue-800 uppercase block flex items-center gap-1">
+                        <div class="p-2.5 bg-blue-50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-800/60 rounded-xl">
+                            <span class="text-[10px] font-bold text-blue-800 dark:text-blue-300 uppercase block flex items-center gap-1">
                                 <i class="fa-solid fa-building-columns text-[9px]"></i> Rent ➔ Bank
                             </span>
-                            <strong class="text-sm font-black text-blue-900">₹${totalSelectedRentToBank.toLocaleString('en-IN')}</strong>
+                            <strong class="text-sm font-black text-blue-900 dark:text-blue-200">₹${totalSelectedRentToBank.toLocaleString('en-IN')}</strong>
                         </div>
                     </div>
 
-                    <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl">
-                        <div class="text-[10px] font-bold text-slate-500 uppercase">Net Operating Surplus</div>
-                        <div class="text-lg font-black ${selectedMargin >= 0 ? 'text-emerald-700' : 'text-rose-600'}">
+                    <div class="p-2.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/60 rounded-xl">
+                        <div class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">Net Operating Surplus</div>
+                        <div class="text-lg font-black ${selectedMargin >= 0 ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}">
                             ${selectedMargin >= 0 ? '+' : ''}₹${selectedMargin.toLocaleString('en-IN')}
                         </div>
-                        <span class="text-[10px] text-slate-500">${selectedMargin >= 0 ? 'Surplus retained after maintenance costs' : 'Operating deficit on this floor scope'}</span>
+                        <span class="text-[10px] text-slate-500 dark:text-slate-400">${selectedMargin >= 0 ? 'Surplus retained after maintenance costs' : 'Operating deficit on this floor scope'}</span>
                     </div>
                 </div>
-                <div class="mt-3 pt-2.5 border-t border-slate-100 text-right">
-                    <button onclick="ExcelExporter.exportFloorExpensesToExcel(App.activeFloorFilter)" class="text-xs font-bold text-emerald-700 hover:text-emerald-800 inline-flex items-center gap-1">
+                <div class="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800 text-right">
+                    <button onclick="ExcelExporter.exportFloorExpensesToExcel(App.activeFloorFilter)" class="text-xs font-bold text-emerald-700 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-300 inline-flex items-center gap-1">
                         <i class="fa-solid fa-file-excel"></i> Export Detailed Report
                     </button>
                 </div>
             </div>
 
             <!-- Card 3: Cost Structure & Maintenance Categories -->
-            <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+            <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
                 <div>
-                    <h4 class="font-extrabold text-sm text-slate-900 mb-1">Expense Structure & Categories</h4>
-                    <p class="text-xs text-slate-500 mb-2">Direct floor vs 20% shared maintenance breakdown</p>
+                    <h4 class="font-extrabold text-sm text-slate-900 dark:text-white mb-1">Expense Structure & Categories</h4>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mb-2">Direct floor vs 20% shared maintenance breakdown</p>
 
-                    <div class="space-y-2 mb-3 bg-slate-50 p-2.5 rounded-xl text-xs">
+                    <div class="space-y-2 mb-3 bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl text-xs border border-slate-200/60 dark:border-slate-700/60">
                         <div>
                             <div class="flex items-center justify-between mb-0.5">
-                                <span class="font-medium text-slate-600">Common Building (20% share):</span>
-                                <strong class="text-slate-900">₹${totalSelectedShared.toLocaleString('en-IN')} (${sharedPct}%)</strong>
+                                <span class="font-medium text-slate-600 dark:text-slate-300">Common Building (20% share):</span>
+                                <strong class="text-slate-900 dark:text-white">₹${totalSelectedShared.toLocaleString('en-IN')} (${sharedPct}%)</strong>
                             </div>
-                            <div class="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                            <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5 overflow-hidden">
                                 <div class="bg-blue-600 h-1.5 rounded-full" style="width: ${sharedPct}%"></div>
                             </div>
                         </div>
                         <div>
                             <div class="flex items-center justify-between mb-0.5">
-                                <span class="font-medium text-slate-600">Direct Floor Specific:</span>
-                                <strong class="text-slate-900">₹${totalSelectedDirect.toLocaleString('en-IN')} (${directPct}%)</strong>
+                                <span class="font-medium text-slate-600 dark:text-slate-300">Direct Floor Specific:</span>
+                                <strong class="text-slate-900 dark:text-white">₹${totalSelectedDirect.toLocaleString('en-IN')} (${directPct}%)</strong>
                             </div>
-                            <div class="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                            <div class="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-1.5 overflow-hidden">
                                 <div class="bg-emerald-600 h-1.5 rounded-full" style="width: ${directPct}%"></div>
                             </div>
                         </div>
@@ -3915,7 +3915,7 @@ const App = {
                         ${categoryBarsHtml}
                     </div>
                 </div>
-                <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400">
+                <div class="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
                     <span>${sortedCats.length} Categories active</span>
                     <span>100% Granular</span>
                 </div>
@@ -3940,20 +3940,20 @@ const App = {
 
         // 11. Render Granular Table
         let ledgerHtml = `
-            <div class="px-5 py-4 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div class="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div>
-                    <h4 class="font-extrabold text-sm text-slate-900">Itemized Floor Expenses (${tableList.length} records)</h4>
-                    <p class="text-xs text-slate-500">Every individual building maintenance expense and this floor's mathematically calculated share</p>
+                    <h4 class="font-extrabold text-sm text-slate-900 dark:text-white">Itemized Floor Expenses (${tableList.length} records)</h4>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Every individual building maintenance expense and this floor's mathematically calculated share</p>
                 </div>
                 <div class="flex items-center gap-2">
-                    <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-700">Scope: ${scopeTitle}</span>
+                    <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200">Scope: ${scopeTitle}</span>
                 </div>
             </div>
 
             <!-- 1. Desktop Table View (visible on md and above) -->
             <div class="hidden md:block overflow-x-auto">
-                <table class="w-full text-left text-xs text-slate-600">
-                    <thead class="bg-slate-50 text-[11px] uppercase font-bold text-slate-500 border-b border-slate-200">
+                <table class="w-full text-left text-xs text-slate-600 dark:text-slate-300">
+                    <thead class="bg-slate-50 dark:bg-slate-900 text-[11px] uppercase font-bold text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
                         <tr>
                             <th class="px-4 py-3">Date</th>
                             <th class="px-4 py-3">Floor</th>
@@ -3961,12 +3961,12 @@ const App = {
                             <th class="px-4 py-3">Category</th>
                             <th class="px-4 py-3">Building Total</th>
                             <th class="px-4 py-3">Floor Allocation Scope</th>
-                            <th class="px-4 py-3 text-emerald-800">This Floor's Share</th>
+                            <th class="px-4 py-3 text-emerald-800 dark:text-emerald-400">This Floor's Share</th>
                             <th class="px-4 py-3">Debited Wallet</th>
                             <th class="px-4 py-3 text-right">Actions</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-100 font-medium">
+                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
         `;
 
         let mobileHtml = `<div class="md:hidden p-3 space-y-3">`;
@@ -3974,22 +3974,22 @@ const App = {
         if (tableList.length === 0) {
             ledgerHtml += `
                 <tr>
-                    <td colspan="9" class="text-center py-12 text-slate-400">
-                        <i class="fa-solid fa-layer-group text-3xl mb-2 text-slate-300 block"></i>
+                    <td colspan="9" class="text-center py-12 text-slate-400 dark:text-slate-500">
+                        <i class="fa-solid fa-layer-group text-3xl mb-2 text-slate-300 dark:text-slate-600 block"></i>
                         No expense records found for this floor filter.
                     </td>
                 </tr>
             `;
             mobileHtml += `
-                <div class="text-center py-8 text-slate-400 text-xs">
-                    <i class="fa-solid fa-layer-group text-2xl mb-2 text-slate-300 block"></i>
+                <div class="text-center py-8 text-slate-400 dark:text-slate-500 text-xs">
+                    <i class="fa-solid fa-layer-group text-2xl mb-2 text-slate-300 dark:text-slate-600 block"></i>
                     No expense records found for this floor filter.
                 </div>
             `;
         } else {
             tableList.forEach(item => {
                 const cat = this.data.categories.find(c => c.id === item.categoryId) || { name: 'Expense', icon: 'fa-tag', color: '#64748b' };
-                const ownerBadge = item.floorOwner === 'Sajida' ? 'bg-emerald-100 text-emerald-800' : 'bg-sky-100 text-sky-800';
+                const ownerBadge = item.floorOwner === 'Sajida' ? 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300' : 'bg-sky-100 dark:bg-sky-950/80 text-sky-800 dark:text-sky-300';
                 
                 let walletBadge = 'Split 60:40';
                 if (item.debitedWallet === 'sajida') walletBadge = 'Sajida (100%)';
@@ -3998,39 +3998,39 @@ const App = {
 
                 // Desktop Row
                 ledgerHtml += `
-                    <tr class="hover:bg-slate-50/80 transition">
-                        <td class="px-4 py-3 whitespace-nowrap font-semibold text-slate-800">${item.date || 'N/A'}</td>
+                    <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition">
+                        <td class="px-4 py-3 whitespace-nowrap font-semibold text-slate-800 dark:text-slate-200">${item.date || 'N/A'}</td>
                         <td class="px-4 py-3 whitespace-nowrap">
                             <span class="px-2 py-0.5 rounded text-[10px] font-bold ${ownerBadge}">
                                 ${item.floorName} (${item.floorOwner})
                             </span>
                         </td>
                         <td class="px-4 py-3">
-                            <strong class="text-slate-900 block font-bold">${item.title}</strong>
-                            ${item.notes ? `<span class="text-[11px] text-slate-400 truncate max-w-xs block">${item.notes}</span>` : ''}
+                            <strong class="text-slate-900 dark:text-white block font-bold">${item.title}</strong>
+                            ${item.notes ? `<span class="text-[11px] text-slate-400 dark:text-slate-400 truncate max-w-xs block">${item.notes}</span>` : ''}
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap">
-                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700">
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200">
                                 <i class="fa-solid ${cat.icon}" style="color: ${cat.color}"></i>
                                 ${cat.name}
                             </span>
                         </td>
-                        <td class="px-4 py-3 whitespace-nowrap font-extrabold text-slate-700">
+                        <td class="px-4 py-3 whitespace-nowrap font-extrabold text-slate-700 dark:text-slate-200">
                             ₹${parseFloat(item.amount).toLocaleString('en-IN')}
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap">
-                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-800 border border-blue-200">
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60">
                                 ${item.scope || '20% Share'}
                             </span>
                         </td>
-                        <td class="px-4 py-3 whitespace-nowrap font-black text-emerald-700 text-sm">
+                        <td class="px-4 py-3 whitespace-nowrap font-black text-emerald-700 dark:text-emerald-400 text-sm">
                             ₹${parseFloat(item.floorShare || 0).toLocaleString('en-IN')}
                         </td>
-                        <td class="px-4 py-3 whitespace-nowrap text-[11px] text-slate-500">
+                        <td class="px-4 py-3 whitespace-nowrap text-[11px] text-slate-500 dark:text-slate-400">
                             ${walletBadge}
                         </td>
                         <td class="px-4 py-3 text-right whitespace-nowrap">
-                            <button onclick="App.openExpenseModal('${item.id}')" class="p-1.5 text-slate-400 hover:text-emerald-600 transition" title="Edit Expense">
+                            <button onclick="App.openExpenseModal('${item.id}')" class="p-1.5 text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition" title="Edit Expense">
                                 <i class="fa-solid fa-pen-to-square"></i>
                             </button>
                         </td>
@@ -4039,33 +4039,33 @@ const App = {
 
                 // Mobile Card
                 mobileHtml += `
-                    <div class="bg-slate-50/70 rounded-2xl p-3.5 border border-slate-200 space-y-2.5">
+                    <div class="bg-slate-50/70 dark:bg-slate-800/60 rounded-2xl p-3.5 border border-slate-200 dark:border-slate-700/70 space-y-2.5">
                         <div class="flex items-center justify-between gap-2">
                             <div class="flex items-center gap-1.5 flex-wrap">
                                 <span class="px-2 py-0.5 rounded text-[10px] font-bold ${ownerBadge}">
                                     ${item.floorName}
                                 </span>
-                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-white text-slate-700 border border-slate-200">
+                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700">
                                     <i class="fa-solid ${cat.icon}" style="color: ${cat.color}"></i>
                                     ${cat.name}
                                 </span>
                             </div>
                             <div class="text-right">
-                                <span class="text-xs font-black text-emerald-700">Share: ₹${parseFloat(item.floorShare || 0).toLocaleString('en-IN')}</span>
+                                <span class="text-xs font-black text-emerald-700 dark:text-emerald-400">Share: ₹${parseFloat(item.floorShare || 0).toLocaleString('en-IN')}</span>
                             </div>
                         </div>
                         <div>
-                            <h5 class="text-xs font-bold text-slate-900">${item.title}</h5>
-                            ${item.notes ? `<p class="text-[11px] text-slate-500 mt-0.5">${item.notes}</p>` : ''}
+                            <h5 class="text-xs font-bold text-slate-900 dark:text-white">${item.title}</h5>
+                            ${item.notes ? `<p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">${item.notes}</p>` : ''}
                         </div>
-                        <div class="pt-2 border-t border-slate-200/60 flex items-center justify-between text-[11px] text-slate-500">
+                        <div class="pt-2 border-t border-slate-200/60 dark:border-slate-700/60 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
                             <div>
-                                <span>Total: <strong>₹${parseFloat(item.amount).toLocaleString('en-IN')}</strong></span>
+                                <span>Total: <strong class="text-slate-900 dark:text-white">₹${parseFloat(item.amount).toLocaleString('en-IN')}</strong></span>
                                 <span class="text-slate-400 ml-1">(${item.scope || '20% Share'})</span>
                             </div>
                             <div class="flex items-center gap-2">
-                                <span class="text-[10px] font-semibold text-slate-600">${walletBadge}</span>
-                                <button onclick="App.openExpenseModal('${item.id}')" class="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-emerald-600 flex items-center justify-center text-xs transition" title="Edit Expense">
+                                <span class="text-[10px] font-semibold text-slate-600 dark:text-slate-300">${walletBadge}</span>
+                                <button onclick="App.openExpenseModal('${item.id}')" class="w-7 h-7 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-emerald-600 dark:hover:text-emerald-400 flex items-center justify-center text-xs transition" title="Edit Expense">
                                     <i class="fa-solid fa-pen-to-square"></i>
                                 </button>
                             </div>
@@ -4734,8 +4734,8 @@ const App = {
 
         if (filtered.length === 0) {
             container.innerHTML = `
-                <div class="text-center py-10 text-slate-400 text-sm bg-white rounded-2xl border border-slate-200">
-                    <i class="fa-solid fa-receipt text-3xl mb-2 text-slate-300"></i>
+                <div class="text-center py-10 text-slate-400 dark:text-slate-500 text-sm bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
+                    <i class="fa-solid fa-receipt text-3xl mb-2 text-slate-300 dark:text-slate-600"></i>
                     <p>No wallet transactions found for this filter.</p>
                 </div>
             `;
@@ -4744,9 +4744,9 @@ const App = {
 
         let html = `
             <div class="space-y-3">
-                <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center justify-between">
+                <div class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 flex items-center justify-between">
                     <span>Transaction History (${filtered.length} entries)</span>
-                    <span class="text-[11px] text-emerald-600 font-semibold"><i class="fa-solid fa-pen-to-square"></i> Tap Edit or Delete on any entry below</span>
+                    <span class="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold"><i class="fa-solid fa-pen-to-square"></i> Tap Edit or Delete on any entry below</span>
                 </div>
         `;
 
@@ -4756,37 +4756,37 @@ const App = {
             const isCredit = !isTransfer && !isSettlement && (item.type === 'rent' || (item.type === 'capital' && item.isDeposit) || item.type === 'advance_received' || (item.type === 'bank_transfer' && item.isCredit));
             
             let icon = isCredit ? 'fa-arrow-down' : 'fa-arrow-up';
-            let colorClass = isCredit ? 'text-emerald-600 bg-emerald-100' : 'text-rose-600 bg-rose-100';
-            let amtClass = isCredit ? 'text-emerald-600' : 'text-rose-600';
+            let colorClass = isCredit ? 'text-emerald-600 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/80' : 'text-rose-600 dark:text-rose-300 bg-rose-100 dark:bg-rose-950/80';
+            let amtClass = isCredit ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400';
             let amtPrefix = isCredit ? '+' : '-';
-            let catBadge = 'bg-slate-100 text-slate-700';
+            let catBadge = 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200';
 
             if (isTransfer) {
                 icon = 'fa-arrow-right-arrow-left';
-                colorClass = 'text-purple-600 bg-purple-100';
-                amtClass = 'text-purple-700';
+                colorClass = 'text-purple-600 dark:text-purple-300 bg-purple-100 dark:bg-purple-950/80';
+                amtClass = 'text-purple-700 dark:text-purple-400';
                 amtPrefix = '⇄';
-                catBadge = 'bg-purple-100 text-purple-800';
+                catBadge = 'bg-purple-100 dark:bg-purple-950/80 text-purple-800 dark:text-purple-300';
             } else if (item.type === 'bank_transfer') {
                 icon = 'fa-building-columns';
-                catBadge = item.isCredit ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800';
+                catBadge = item.isCredit ? 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300' : 'bg-rose-100 dark:bg-rose-950/80 text-rose-800 dark:text-rose-300';
             } else if (isSettlement) {
                 icon = 'fa-handshake';
                 if (item.isDeductOnly || item.amount === 0) {
-                    colorClass = 'text-amber-700 bg-amber-100';
-                    amtClass = 'text-amber-800';
+                    colorClass = 'text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-950/80';
+                    amtClass = 'text-amber-800 dark:text-amber-400';
                     amtPrefix = '';
-                    catBadge = 'bg-amber-100 text-amber-800';
+                    catBadge = 'bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300';
                 } else {
-                    colorClass = 'text-rose-600 bg-rose-100';
-                    amtClass = 'text-rose-600';
+                    colorClass = 'text-rose-600 dark:text-rose-300 bg-rose-100 dark:bg-rose-950/80';
+                    amtClass = 'text-rose-600 dark:text-rose-400';
                     amtPrefix = '-';
-                    catBadge = 'bg-amber-100 text-amber-800';
+                    catBadge = 'bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300';
                 }
             }
 
             html += `
-                <div class="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm gap-2 hover:border-emerald-200 transition">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm gap-2 hover:border-emerald-200 dark:hover:border-emerald-800/60 transition">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${colorClass}">
                             <i class="fa-solid ${icon}"></i>
@@ -4794,33 +4794,33 @@ const App = {
                         <div>
                             <h5 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2 flex-wrap">
                                 <span>${item.title}</span>
-                                ${isSettlement && item.isVacated ? '<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">Vacated</span>' : ''}
+                                ${isSettlement && item.isVacated ? '<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">Vacated</span>' : ''}
                             </h5>
-                            <div class="text-xs text-slate-400 flex items-center gap-2 mt-0.5 flex-wrap">
+                            <div class="text-xs text-slate-400 dark:text-slate-400 flex items-center gap-2 mt-0.5 flex-wrap">
                                 <span><i class="fa-regular fa-calendar"></i> ${item.date}</span>
                                 <span>•</span>
                                 <span class="px-2 py-0.5 rounded ${catBadge} text-[10px] font-bold">${item.category}</span>
                                 <span>•</span>
                                 <span class="font-medium text-slate-600 dark:text-slate-300">${item.ownerDisplay}</span>
-                                ${isSettlement && item.deductions > 0 ? `<span>•</span><span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded">Retained Deductions: +₹${item.deductions.toLocaleString('en-IN')}</span>` : ''}
-                                ${item.transferMode ? `<span>•</span><span class="text-[10px] text-slate-500 font-medium">${item.transferMode}</span>` : ''}
-                                ${item.notes ? `<span>•</span><span class="text-[10px] text-slate-500 italic">"${item.notes}"</span>` : ''}
-                                ${item.reference ? `<span>•</span><span class="text-[10px] font-mono text-slate-500">Ref: ${item.reference}</span>` : ''}
+                                ${isSettlement && item.deductions > 0 ? `<span>•</span><span class="text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800/50 px-1.5 py-0.5 rounded">Retained Deductions: +₹${item.deductions.toLocaleString('en-IN')}</span>` : ''}
+                                ${item.transferMode ? `<span>•</span><span class="text-[10px] text-slate-500 dark:text-slate-400 font-medium">${item.transferMode}</span>` : ''}
+                                ${item.notes ? `<span>•</span><span class="text-[10px] text-slate-500 dark:text-slate-400 italic">"${item.notes}"</span>` : ''}
+                                ${item.reference ? `<span>•</span><span class="text-[10px] font-mono text-slate-500 dark:text-slate-400">Ref: ${item.reference}</span>` : ''}
                             </div>
                         </div>
                     </div>
 
-                    <div class="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-0 border-slate-100">
+                    <div class="flex items-center justify-between sm:justify-end gap-3 pt-2 sm:pt-0 border-t sm:border-0 border-slate-100 dark:border-slate-800">
                         <div class="text-right">
                             ${isSettlement && (item.isDeductOnly || item.amount === 0) ? `
-                                <div class="text-sm font-black text-amber-800">₹0 Refund</div>
-                                <div class="text-[11px] font-bold text-emerald-700">+₹${(item.deductions || 0).toLocaleString('en-IN')} Deducted</div>
+                                <div class="text-sm font-black text-amber-800 dark:text-amber-300">₹0 Refund</div>
+                                <div class="text-[11px] font-bold text-emerald-700 dark:text-emerald-400">+₹${(item.deductions || 0).toLocaleString('en-IN')} Deducted</div>
                             ` : isSettlement ? `
-                                <div class="text-base font-black text-rose-600">
+                                <div class="text-base font-black text-rose-600 dark:text-rose-400">
                                     -₹${parseFloat(item.amount).toLocaleString('en-IN')}
                                 </div>
-                                <div class="text-[10px] text-slate-400 font-semibold">Refund Paid Out</div>
-                                ${item.deductions > 0 ? `<div class="text-[10px] font-bold text-emerald-700">+₹${item.deductions.toLocaleString('en-IN')} Retained</div>` : ''}
+                                <div class="text-[10px] text-slate-400 dark:text-slate-400 font-semibold">Refund Paid Out</div>
+                                ${item.deductions > 0 ? `<div class="text-[10px] font-bold text-emerald-700 dark:text-emerald-400">+₹${item.deductions.toLocaleString('en-IN')} Retained</div>` : ''}
                             ` : `
                                 <div class="text-base font-black ${amtClass}">
                                     ${amtPrefix}₹${parseFloat(item.amount).toLocaleString('en-IN')}
@@ -4830,11 +4830,11 @@ const App = {
 
                         <!-- EDIT & DELETE BUTTONS FOR EVERY TRANSACTION -->
                         <div class="flex items-center gap-1">
-                            <button onclick="App.editWalletTransaction('${item.type}', '${item.id}')" class="p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition text-xs font-bold flex items-center gap-1" title="Edit this transaction">
+                            <button onclick="App.editWalletTransaction('${item.type}', '${item.id}')" class="p-2 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 rounded-xl transition text-xs font-bold flex items-center gap-1 cursor-pointer" title="Edit this transaction">
                                 <i class="fa-solid fa-pen"></i>
                                 <span class="hidden sm:inline">Edit</span>
                             </button>
-                            <button onclick="App.deleteWalletTransaction('${item.type}', '${item.id}')" class="p-2 text-slate-400 hover:text-red-600 hover:bg-rose-50 rounded-xl transition text-xs" title="Delete this transaction">
+                            <button onclick="App.deleteWalletTransaction('${item.type}', '${item.id}')" class="p-2 text-slate-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl transition text-xs cursor-pointer" title="Delete this transaction">
                                 <i class="fa-solid fa-trash-can"></i>
                             </button>
                         </div>
@@ -4876,30 +4876,30 @@ const App = {
 
         html += `
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div class="bg-emerald-50/70 border border-emerald-200 p-3 rounded-2xl">
-                    <span class="block text-[10px] uppercase font-bold text-emerald-800">Sajida: Adv ➔ Rent</span>
-                    <strong class="text-sm sm:text-base font-extrabold text-emerald-900">₹${sajidaAdvToRent.toLocaleString('en-IN')}</strong>
+                <div class="bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 p-3 rounded-2xl">
+                    <span class="block text-[10px] uppercase font-bold text-emerald-800 dark:text-emerald-300">Sajida: Adv ➔ Rent</span>
+                    <strong class="text-sm sm:text-base font-extrabold text-emerald-900 dark:text-emerald-200">₹${sajidaAdvToRent.toLocaleString('en-IN')}</strong>
                 </div>
-                <div class="bg-teal-50/70 border border-teal-200 p-3 rounded-2xl">
-                    <span class="block text-[10px] uppercase font-bold text-teal-800">Sajida: Rent ➔ Adv</span>
-                    <strong class="text-sm sm:text-base font-extrabold text-teal-900">₹${sajidaRentToAdv.toLocaleString('en-IN')}</strong>
+                <div class="bg-teal-50/70 dark:bg-teal-950/40 border border-teal-200 dark:border-teal-800/60 p-3 rounded-2xl">
+                    <span class="block text-[10px] uppercase font-bold text-teal-800 dark:text-teal-300">Sajida: Rent ➔ Adv</span>
+                    <strong class="text-sm sm:text-base font-extrabold text-teal-900 dark:text-teal-200">₹${sajidaRentToAdv.toLocaleString('en-IN')}</strong>
                 </div>
-                <div class="bg-blue-50/70 border border-blue-200 p-3 rounded-2xl">
-                    <span class="block text-[10px] uppercase font-bold text-blue-800">Jeelani: Adv ➔ Rent</span>
-                    <strong class="text-sm sm:text-base font-extrabold text-blue-900">₹${jeelaniAdvToRent.toLocaleString('en-IN')}</strong>
+                <div class="bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/60 p-3 rounded-2xl">
+                    <span class="block text-[10px] uppercase font-bold text-blue-800 dark:text-blue-300">Jeelani: Adv ➔ Rent</span>
+                    <strong class="text-sm sm:text-base font-extrabold text-blue-900 dark:text-blue-200">₹${jeelaniAdvToRent.toLocaleString('en-IN')}</strong>
                 </div>
-                <div class="bg-indigo-50/70 border border-indigo-200 p-3 rounded-2xl">
-                    <span class="block text-[10px] uppercase font-bold text-indigo-800">Jeelani: Rent ➔ Adv</span>
-                    <strong class="text-sm sm:text-base font-extrabold text-indigo-900">₹${jeelaniRentToAdv.toLocaleString('en-IN')}</strong>
+                <div class="bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/60 p-3 rounded-2xl">
+                    <span class="block text-[10px] uppercase font-bold text-indigo-800 dark:text-indigo-300">Jeelani: Rent ➔ Adv</span>
+                    <strong class="text-sm sm:text-base font-extrabold text-indigo-900 dark:text-indigo-200">₹${jeelaniRentToAdv.toLocaleString('en-IN')}</strong>
                 </div>
             </div>
 
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
                 <div>
-                    <h4 class="font-bold text-slate-900 text-sm">Advance ⇄ Rent Transfer Ledger</h4>
-                    <p class="text-xs text-slate-500">History of transfers between tenant advance deposits and rent collections</p>
+                    <h4 class="font-bold text-slate-900 dark:text-white text-sm">Advance ⇄ Rent Transfer Ledger</h4>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">History of transfers between tenant advance deposits and rent collections</p>
                 </div>
-                <button onclick="App.openWalletTransferModal()" class="px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm shadow-purple-600/20 self-start sm:self-auto">
+                <button onclick="App.openWalletTransferModal()" class="px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm shadow-purple-600/20 self-start sm:self-auto cursor-pointer">
                     <i class="fa-solid fa-arrow-right-arrow-left"></i>
                     <span>+ New Wallet Transfer</span>
                 </button>
@@ -4908,22 +4908,22 @@ const App = {
 
         if (list.length === 0) {
             html += `
-                <div class="text-center py-10 px-4 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-                    <div class="w-12 h-12 rounded-2xl bg-purple-100 text-purple-600 flex items-center justify-center mx-auto mb-2 text-lg">
+                <div class="text-center py-10 px-4 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
+                    <div class="w-12 h-12 rounded-2xl bg-purple-100 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center mx-auto mb-2 text-lg">
                         <i class="fa-solid fa-arrow-right-arrow-left"></i>
                     </div>
-                    <h5 class="font-bold text-slate-700 text-sm">No Internal Wallet Transfers Yet</h5>
-                    <p class="text-xs text-slate-400 mt-1 max-w-sm mx-auto">Transfer surplus advances to rental income or replenish advance wallets for maintenance with 1-click presets.</p>
-                    <button onclick="App.openWalletTransferModal()" class="mt-3 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl transition">
+                    <h5 class="font-bold text-slate-700 dark:text-slate-200 text-sm">No Internal Wallet Transfers Yet</h5>
+                    <p class="text-xs text-slate-400 dark:text-slate-400 mt-1 max-w-sm mx-auto">Transfer surplus advances to rental income or replenish advance wallets for maintenance with 1-click presets.</p>
+                    <button onclick="App.openWalletTransferModal()" class="mt-3 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl transition cursor-pointer">
                         Create First Transfer
                     </button>
                 </div>
             `;
         } else {
             html += `
-                <div class="overflow-x-auto border border-slate-200 rounded-2xl bg-white">
-                    <table class="w-full text-left text-xs">
-                        <thead class="bg-slate-50 text-slate-500 font-bold border-b border-slate-200">
+                <div class="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-900">
+                    <table class="w-full text-left text-xs text-slate-600 dark:text-slate-300">
+                        <thead class="bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 font-bold border-b border-slate-200 dark:border-slate-800">
                             <tr>
                                 <th class="px-4 py-3">Date</th>
                                 <th class="px-4 py-3">Source (Debit -)</th>
@@ -4934,7 +4934,7 @@ const App = {
                                 <th class="px-4 py-3 text-right">Actions</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-100">
+                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
             `;
 
             list.forEach(tx => {
@@ -4942,10 +4942,10 @@ const App = {
                 const toInfo = this.getWalletInfo(tx.toWallet);
 
                 html += `
-                    <tr class="hover:bg-slate-50/80 transition">
-                        <td class="px-4 py-3 font-semibold text-slate-700 whitespace-nowrap">${tx.date}</td>
+                    <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition">
+                        <td class="px-4 py-3 font-semibold text-slate-700 dark:text-slate-200 whitespace-nowrap">${tx.date}</td>
                         <td class="px-4 py-3">
-                            <span class="px-2 py-0.5 rounded text-[11px] font-bold ${fromInfo.badgeBg || 'bg-slate-100 text-slate-800'}">
+                            <span class="px-2 py-0.5 rounded text-[11px] font-bold ${fromInfo.badgeBg || 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200'}">
                                 ${fromInfo.name}
                             </span>
                         </td>
@@ -4953,23 +4953,23 @@ const App = {
                             <i class="fa-solid fa-arrow-right text-xs"></i>
                         </td>
                         <td class="px-4 py-3">
-                            <span class="px-2 py-0.5 rounded text-[11px] font-bold ${toInfo.badgeBg || 'bg-slate-100 text-slate-800'}">
+                            <span class="px-2 py-0.5 rounded text-[11px] font-bold ${toInfo.badgeBg || 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200'}">
                                 ${toInfo.name}
                             </span>
                         </td>
-                        <td class="px-4 py-3 text-slate-600">
-                            <strong class="block text-slate-800 text-xs">${tx.reason || 'Internal Transfer'}</strong>
-                            ${tx.notes ? `<span class="text-[11px] text-slate-400">${tx.notes}</span>` : ''}
+                        <td class="px-4 py-3 text-slate-600 dark:text-slate-300">
+                            <strong class="block text-slate-800 dark:text-white text-xs">${tx.reason || 'Internal Transfer'}</strong>
+                            ${tx.notes ? `<span class="text-[11px] text-slate-400 dark:text-slate-400">${tx.notes}</span>` : ''}
                         </td>
-                        <td class="px-4 py-3 text-right font-extrabold text-purple-700 text-sm whitespace-nowrap">
+                        <td class="px-4 py-3 text-right font-extrabold text-purple-700 dark:text-purple-400 text-sm whitespace-nowrap">
                             ₹${parseFloat(tx.amount).toLocaleString('en-IN')}
                         </td>
                         <td class="px-4 py-3 text-right whitespace-nowrap">
                             <div class="flex items-center justify-end gap-1">
-                                <button onclick="App.editWalletTransfer('${tx.id}')" class="p-1.5 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition text-xs font-bold" title="Edit Transfer">
+                                <button onclick="App.editWalletTransfer('${tx.id}')" class="p-1.5 text-slate-400 dark:text-slate-500 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-950/40 rounded-lg transition text-xs font-bold cursor-pointer" title="Edit Transfer">
                                     <i class="fa-solid fa-pen"></i>
                                 </button>
-                                <button onclick="App.deleteWalletTransfer('${tx.id}')" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-rose-50 rounded-lg transition text-xs" title="Delete Transfer">
+                                <button onclick="App.deleteWalletTransfer('${tx.id}')" class="p-1.5 text-slate-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition text-xs cursor-pointer" title="Delete Transfer">
                                     <i class="fa-solid fa-trash-can"></i>
                                 </button>
                             </div>
@@ -4997,27 +4997,27 @@ const App = {
             <div class="space-y-4">
                 <!-- Advance Summary Cards -->
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div class="bg-white p-4 rounded-2xl border border-slate-200">
-                        <span class="block text-[10px] uppercase font-bold text-slate-400">Total Active Advances Held</span>
-                        <div class="text-2xl font-black text-slate-900 mt-1">₹${stats.totalDeposits.toLocaleString('en-IN')}</div>
-                        <span class="text-xs text-slate-500">Security deposits across all active residents</span>
+                    <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800">
+                        <span class="block text-[10px] uppercase font-bold text-slate-400 dark:text-slate-400">Total Active Advances Held</span>
+                        <div class="text-2xl font-black text-slate-900 dark:text-white mt-1">₹${stats.totalDeposits.toLocaleString('en-IN')}</div>
+                        <span class="text-xs text-slate-500 dark:text-slate-400">Security deposits across all active residents</span>
                     </div>
-                    <div class="bg-emerald-50/70 p-4 rounded-2xl border border-emerald-200">
-                        <span class="block text-[10px] uppercase font-bold text-emerald-800">Sajida's Held Advances (Floors 1-2)</span>
-                        <div class="text-2xl font-black text-emerald-900 mt-1">₹${stats.sajidaAdvancesHeld.toLocaleString('en-IN')}</div>
-                        <span class="text-xs text-emerald-700">Held in trust for 1st & 2nd floors</span>
+                    <div class="bg-emerald-50/70 dark:bg-emerald-950/30 p-4 rounded-2xl border border-emerald-200 dark:border-emerald-800/60">
+                        <span class="block text-[10px] uppercase font-bold text-emerald-800 dark:text-emerald-400">Sajida's Held Advances (Floors 1-2)</span>
+                        <div class="text-2xl font-black text-emerald-900 dark:text-emerald-300 mt-1">₹${stats.sajidaAdvancesHeld.toLocaleString('en-IN')}</div>
+                        <span class="text-xs text-emerald-700 dark:text-emerald-400">Held in trust for 1st & 2nd floors</span>
                     </div>
-                    <div class="bg-blue-50/70 p-4 rounded-2xl border border-blue-200">
-                        <span class="block text-[10px] uppercase font-bold text-blue-800">Jeelani's Held Advances (Floors 3-5)</span>
-                        <div class="text-2xl font-black text-blue-900 mt-1">₹${stats.jeelaniAdvancesHeld.toLocaleString('en-IN')}</div>
-                        <span class="text-xs text-blue-700">Held in trust for 3rd, 4th & 5th floors</span>
+                    <div class="bg-blue-50/70 dark:bg-blue-950/30 p-4 rounded-2xl border border-blue-200 dark:border-blue-800/60">
+                        <span class="block text-[10px] uppercase font-bold text-blue-800 dark:text-blue-400">Jeelani's Held Advances (Floors 3-5)</span>
+                        <div class="text-2xl font-black text-blue-900 dark:text-blue-300 mt-1">₹${stats.jeelaniAdvancesHeld.toLocaleString('en-IN')}</div>
+                        <span class="text-xs text-blue-700 dark:text-blue-400">Held in trust for 3rd, 4th & 5th floors</span>
                     </div>
                 </div>
 
                 <!-- Advances Table -->
-                <div class="overflow-x-auto rounded-2xl bg-white shadow-sm border border-slate-200">
-                    <table class="w-full text-left text-sm text-slate-600">
-                        <thead class="bg-slate-50 text-xs uppercase font-semibold text-slate-500 border-b border-slate-200">
+                <div class="overflow-x-auto rounded-2xl bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800">
+                    <table class="w-full text-left text-sm text-slate-600 dark:text-slate-300">
+                        <thead class="bg-slate-50 dark:bg-slate-800/70 text-xs uppercase font-semibold text-slate-500 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">
                             <tr>
                                 <th class="px-4 py-3">Tenant & Unit</th>
                                 <th class="px-4 py-3">Floor</th>
@@ -5030,7 +5030,7 @@ const App = {
                                 <th class="px-4 py-3 text-right">Actions</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-100">
+                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
         `;
 
         let list = [...this.data.tenants];
@@ -5047,7 +5047,7 @@ const App = {
         }
 
         if (list.length === 0) {
-            html += `<tr><td colspan="9" class="text-center py-8 text-slate-400">No tenant advance deposits recorded for this filter. Add tenants to start tracking deposits.</td></tr>`;
+            html += `<tr><td colspan="9" class="text-center py-8 text-slate-400 dark:text-slate-500">No tenant advance deposits recorded for this filter. Add tenants to start tracking deposits.</td></tr>`;
         } else {
             list.forEach(t => {
                 const floor = parseInt(t.floor) || this.detectFloorFromFlat(t.flat);
@@ -5061,37 +5061,37 @@ const App = {
                 const isVacated = t.status === 'vacated';
 
                 html += `
-                    <tr class="hover:bg-slate-50/80 transition">
+                    <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition">
                         <td class="px-4 py-3">
-                            <strong class="text-slate-900 block">${t.name}</strong>
-                            <span class="text-xs text-slate-400 font-mono">${t.flat}</span>
+                            <strong class="text-slate-900 dark:text-white block">${t.name}</strong>
+                            <span class="text-xs text-slate-400 dark:text-slate-400 font-mono">${t.flat}</span>
                         </td>
-                        <td class="px-4 py-3 text-xs font-semibold">${floor} Floor</td>
+                        <td class="px-4 py-3 text-xs font-semibold text-slate-700 dark:text-slate-300">${floor} Floor</td>
                         <td class="px-4 py-3">
-                            <span class="px-2 py-0.5 rounded text-xs font-bold ${floor <= 2 ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'}">
+                            <span class="px-2 py-0.5 rounded text-xs font-bold ${floor <= 2 ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-300' : 'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300'}">
                                 ${ownerInfo.name}
                             </span>
                         </td>
-                        <td class="px-4 py-3 font-semibold text-slate-800">₹${deposit.toLocaleString('en-IN')}</td>
-                        <td class="px-4 py-3 font-bold text-emerald-600">₹${activeHeld.toLocaleString('en-IN')}</td>
-                        <td class="px-4 py-3 text-rose-600 font-semibold">₹${deductions.toLocaleString('en-IN')}</td>
-                        <td class="px-4 py-3 text-blue-600 font-semibold">₹${refunded.toLocaleString('en-IN')}</td>
+                        <td class="px-4 py-3 font-semibold text-slate-800 dark:text-slate-200">₹${deposit.toLocaleString('en-IN')}</td>
+                        <td class="px-4 py-3 font-bold text-emerald-600 dark:text-emerald-400">₹${activeHeld.toLocaleString('en-IN')}</td>
+                        <td class="px-4 py-3 text-rose-600 dark:text-rose-400 font-semibold">₹${deductions.toLocaleString('en-IN')}</td>
+                        <td class="px-4 py-3 text-blue-600 dark:text-blue-400 font-semibold">₹${refunded.toLocaleString('en-IN')}</td>
                         <td class="px-4 py-3">
-                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${isVacated ? 'bg-slate-100 text-slate-600' : 'bg-emerald-100 text-emerald-800'}">
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${isVacated ? 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300' : 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300'}">
                                 ${isVacated ? 'Vacated' : 'Active Resident'}
                             </span>
                         </td>
                         <td class="px-4 py-3 text-right whitespace-nowrap">
                             <div class="flex items-center justify-end gap-1.5">
-                                <button onclick="App.openSettleAdvanceModal('${t.id}')" class="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 rounded-xl text-xs font-bold transition flex items-center gap-1" title="${isVacated ? 'View settlement terms' : 'Refund advance or apply deductions'}">
+                                <button onclick="App.openSettleAdvanceModal('${t.id}')" class="px-2.5 py-1.5 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100 dark:hover:bg-amber-900/50 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700/60 rounded-xl text-xs font-bold transition flex items-center gap-1" title="${isVacated ? 'View settlement terms' : 'Refund advance or apply deductions'}">
                                     <i class="fa-solid fa-handshake"></i>
                                     <span class="hidden sm:inline">${isVacated ? 'Details' : 'Refund'}</span>
                                 </button>
-                                <button onclick="App.openEditAdvanceModal('${t.id}')" class="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition text-xs font-bold flex items-center gap-1" title="Edit advance breakup amounts and status">
+                                <button onclick="App.openEditAdvanceModal('${t.id}')" class="p-1.5 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 rounded-lg transition text-xs font-bold flex items-center gap-1" title="Edit advance breakup amounts and status">
                                     <i class="fa-solid fa-pen"></i>
                                     <span class="hidden sm:inline">Edit</span>
                                 </button>
-                                <button onclick="App.deleteAdvanceBreakup('${t.id}')" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-rose-50 rounded-lg transition text-xs" title="Delete advance record">
+                                <button onclick="App.deleteAdvanceBreakup('${t.id}')" class="p-1.5 text-slate-400 dark:text-slate-400 hover:text-red-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition text-xs" title="Delete advance record">
                                     <i class="fa-solid fa-trash-can"></i>
                                 </button>
                             </div>
@@ -5110,11 +5110,11 @@ const App = {
                 <div class="mt-6 space-y-3">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <div>
-                            <h4 class="text-sm font-extrabold text-slate-900 flex items-center gap-2">
-                                <i class="fa-solid fa-handshake text-amber-600"></i>
+                            <h4 class="text-sm font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+                                <i class="fa-solid fa-handshake text-amber-600 dark:text-amber-400"></i>
                                 <span>Advance Settlements & Deductions Log</span>
                             </h4>
-                            <p class="text-xs text-slate-500">Security deposits settled, deductions retained by owner, and refunds paid</p>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">Security deposits settled, deductions retained by owner, and refunds paid</p>
                         </div>
                     </div>
         `;
@@ -5129,16 +5129,16 @@ const App = {
 
         if (settlements.length === 0) {
             html += `
-                <div class="text-center py-8 text-slate-400 text-xs bg-slate-50 rounded-2xl border border-slate-200">
-                    <i class="fa-solid fa-handshake text-2xl mb-1 text-slate-300"></i>
+                <div class="text-center py-8 text-slate-400 dark:text-slate-500 text-xs bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
+                    <i class="fa-solid fa-handshake text-2xl mb-1 text-slate-300 dark:text-slate-600"></i>
                     <p>No advance settlements recorded yet for this filter. Use the "Refund / Settle Advance" button above to record deductions or refunds.</p>
                 </div>
             `;
         } else {
             html += `
-                <div class="overflow-x-auto rounded-2xl bg-white shadow-sm border border-slate-200">
-                    <table class="w-full text-left text-sm text-slate-600">
-                        <thead class="bg-amber-50/70 text-xs uppercase font-semibold text-amber-900 border-b border-amber-200/80">
+                <div class="overflow-x-auto rounded-2xl bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800">
+                    <table class="w-full text-left text-sm text-slate-600 dark:text-slate-300">
+                        <thead class="bg-amber-50/70 dark:bg-amber-950/40 text-xs uppercase font-semibold text-amber-900 dark:text-amber-300 border-b border-amber-200/80 dark:border-amber-800/60">
                             <tr>
                                 <th class="px-4 py-3">Date</th>
                                 <th class="px-4 py-3">Tenant & Unit</th>
@@ -5151,14 +5151,14 @@ const App = {
                                 <th class="px-4 py-3 text-right">Actions</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-100">
+                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
             `;
 
             settlements.forEach(s => {
                 const isSajida = (s.refundOwner === 'sajida' || (s.walletId && s.walletId.startsWith('sajida')) || s.floor <= 2);
                 const walletBadge = isSajida
-                    ? '<span class="px-2 py-0.5 rounded text-xs font-bold bg-emerald-100 text-emerald-800">Sajida Advance (Fl 1-2)</span>'
-                    : '<span class="px-2 py-0.5 rounded text-xs font-bold bg-blue-100 text-blue-800">Jeelani Advance (Fl 3-5)</span>';
+                    ? '<span class="px-2 py-0.5 rounded text-xs font-bold bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-300">Sajida Advance (Fl 1-2)</span>'
+                    : '<span class="px-2 py-0.5 rounded text-xs font-bold bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300">Jeelani Advance (Fl 3-5)</span>';
 
                 const deductParts = [];
                 if (s.paintingDeduction > 0) deductParts.push(`Painting: ₹${s.paintingDeduction.toLocaleString('en-IN')}`);
@@ -5169,34 +5169,34 @@ const App = {
                 const deductText = deductParts.length > 0 ? deductParts.join(', ') : 'None';
 
                 html += `
-                    <tr class="hover:bg-slate-50/80 transition text-xs">
-                        <td class="px-4 py-3 font-semibold text-slate-700 whitespace-nowrap">${s.settlementDate || '-'}</td>
+                    <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition text-xs">
+                        <td class="px-4 py-3 font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap">${s.settlementDate || '-'}</td>
                         <td class="px-4 py-3">
-                            <strong class="text-slate-900 block">${s.tenantName}</strong>
-                            <span class="text-[11px] text-slate-400 font-mono">${s.flat} (${s.floor} Fl)</span>
+                            <strong class="text-slate-900 dark:text-white block">${s.tenantName}</strong>
+                            <span class="text-[11px] text-slate-400 dark:text-slate-400 font-mono">${s.flat} (${s.floor} Fl)</span>
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap">${walletBadge}</td>
-                        <td class="px-4 py-3 text-slate-600 max-w-xs">
+                        <td class="px-4 py-3 text-slate-600 dark:text-slate-300 max-w-xs">
                             <span class="text-[11px]">${deductText}</span>
                             ${s.notes ? `<span class="block text-[10px] text-slate-400 italic mt-0.5">"${s.notes}"</span>` : ''}
                         </td>
-                        <td class="px-4 py-3 font-bold text-emerald-700 whitespace-nowrap">+₹${(s.totalDeductions || 0).toLocaleString('en-IN')}</td>
-                        <td class="px-4 py-3 font-extrabold ${s.refundAmount > 0 ? 'text-rose-600' : 'text-slate-500'} whitespace-nowrap">
+                        <td class="px-4 py-3 font-bold text-emerald-700 dark:text-emerald-400 whitespace-nowrap">+₹${(s.totalDeductions || 0).toLocaleString('en-IN')}</td>
+                        <td class="px-4 py-3 font-extrabold ${s.refundAmount > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-500 dark:text-slate-400'} whitespace-nowrap">
                             ${s.refundAmount > 0 ? `-₹${s.refundAmount.toLocaleString('en-IN')}` : '₹0 (Deduct only)'}
                         </td>
-                        <td class="px-4 py-3 text-slate-500 whitespace-nowrap">${s.refundPaymentMode || 'N/A'}</td>
+                        <td class="px-4 py-3 text-slate-500 dark:text-slate-400 whitespace-nowrap">${s.refundPaymentMode || 'N/A'}</td>
                         <td class="px-4 py-3 whitespace-nowrap">
-                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${s.isVacated ? 'bg-slate-100 text-slate-600' : 'bg-emerald-100 text-emerald-800'}">
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${s.isVacated ? 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300' : 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300'}">
                                 ${s.isVacated ? 'Vacated' : 'Continuing'}
                             </span>
                         </td>
                         <td class="px-4 py-3 text-right whitespace-nowrap">
                             <div class="flex items-center justify-end gap-1">
-                                <button onclick="App.openSettleAdvanceModal('${s.tenantId}', '${s.id}')" class="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition text-xs font-bold flex items-center gap-1" title="Edit this advance settlement">
+                                <button onclick="App.openSettleAdvanceModal('${s.tenantId}', '${s.id}')" class="p-1.5 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 rounded-lg transition text-xs font-bold flex items-center gap-1" title="Edit this advance settlement">
                                     <i class="fa-solid fa-pen"></i>
                                     <span class="hidden sm:inline">Edit</span>
                                 </button>
-                                <button onclick="App.deleteWalletTransaction('advance_settlement', '${s.id}')" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-rose-50 rounded-lg transition text-xs" title="Delete this settlement record">
+                                <button onclick="App.deleteWalletTransaction('advance_settlement', '${s.id}')" class="p-1.5 text-slate-400 dark:text-slate-400 hover:text-red-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition text-xs" title="Delete this settlement record">
                                     <i class="fa-solid fa-trash-can"></i>
                                 </button>
                             </div>
@@ -5386,7 +5386,7 @@ const App = {
         const list = [...this.data.rentCollections].sort((a, b) => new Date(b.paymentDate) - new Date(a.paymentDate));
 
         if (list.length === 0) {
-            container.innerHTML = `<p class="text-sm text-slate-400 text-center py-6">No rent collections recorded yet.</p>`;
+            container.innerHTML = `<p class="text-sm text-slate-400 dark:text-slate-500 text-center py-6">No rent collections recorded yet.</p>`;
             return;
         }
 
@@ -5395,20 +5395,20 @@ const App = {
             const ownerInfo = this.getFloorOwner(floor);
 
             html += `
-                <div class="flex items-center justify-between p-3 bg-white rounded-2xl border border-slate-200">
+                <div class="flex items-center justify-between p-3 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
                     <div class="flex items-center gap-3">
-                        <div class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
+                        <div class="w-9 h-9 rounded-xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 flex items-center justify-center font-bold">
                             <i class="fa-solid fa-hand-holding-dollar"></i>
                         </div>
                         <div>
-                            <div class="font-bold text-sm text-slate-900">${r.tenantName} (${r.flat} - ${floor} Floor)</div>
-                            <div class="text-xs text-slate-400">${r.paymentDate} • For ${r.month} • Credited: ${r.ownerCredited}</div>
+                            <div class="font-bold text-sm text-slate-900 dark:text-white">${r.tenantName} (${r.flat} - ${floor} Floor)</div>
+                            <div class="text-xs text-slate-400 dark:text-slate-400">${r.paymentDate} • For ${r.month} • Credited: ${r.ownerCredited}</div>
                         </div>
                     </div>
                     <div class="flex items-center gap-3">
-                        <span class="font-bold text-emerald-600 text-base">+₹${parseFloat(r.amount).toLocaleString('en-IN')}</span>
-                        <button onclick="App.openEditRentModal('${r.id}')" class="p-1.5 text-slate-400 hover:text-blue-600" title="Edit"><i class="fa-solid fa-pen"></i></button>
-                        <button onclick="App.deleteRentCollection('${r.id}')" class="p-1.5 text-slate-400 hover:text-red-600" title="Delete"><i class="fa-solid fa-trash"></i></button>
+                        <span class="font-bold text-emerald-600 dark:text-emerald-400 text-base">+₹${parseFloat(r.amount).toLocaleString('en-IN')}</span>
+                        <button onclick="App.openEditRentModal('${r.id}')" class="p-1.5 text-slate-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition" title="Edit"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="App.deleteRentCollection('${r.id}')" class="p-1.5 text-slate-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-rose-400 rounded-lg transition" title="Delete"><i class="fa-solid fa-trash"></i></button>
                     </div>
                 </div>
             `;
@@ -5424,26 +5424,26 @@ const App = {
         const list = [...this.data.expenses].sort((a, b) => new Date(b.date) - new Date(a.date));
 
         if (list.length === 0) {
-            container.innerHTML = `<p class="text-sm text-slate-400 text-center py-6">No expenses debited yet.</p>`;
+            container.innerHTML = `<p class="text-sm text-slate-400 dark:text-slate-500 text-center py-6">No expenses debited yet.</p>`;
             return;
         }
 
         list.forEach(e => {
             html += `
-                <div class="flex items-center justify-between p-3 bg-white rounded-2xl border border-slate-200">
+                <div class="flex items-center justify-between p-3 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
                     <div class="flex items-center gap-3">
-                        <div class="w-9 h-9 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center font-bold">
+                        <div class="w-9 h-9 rounded-xl bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-400 flex items-center justify-center font-bold">
                             <i class="fa-solid fa-receipt"></i>
                         </div>
                         <div>
-                            <div class="font-bold text-sm text-slate-900">${e.title}</div>
-                            <div class="text-xs text-slate-400">${e.date} • Sajida: ₹${e.sajidaAmount} | Jeelani: ₹${e.jeelaniAmount}</div>
+                            <div class="font-bold text-sm text-slate-900 dark:text-white">${e.title}</div>
+                            <div class="text-xs text-slate-400 dark:text-slate-400">${e.date} • Sajida: ₹${e.sajidaAmount} | Jeelani: ₹${e.jeelaniAmount}</div>
                         </div>
                     </div>
                     <div class="flex items-center gap-3">
-                        <span class="font-bold text-rose-600 text-base">-₹${parseFloat(e.amount).toLocaleString('en-IN')}</span>
-                        <button onclick="App.editExpense('${e.id}')" class="p-1.5 text-slate-400 hover:text-blue-600" title="Edit"><i class="fa-solid fa-pen"></i></button>
-                        <button onclick="App.deleteExpense('${e.id}')" class="p-1.5 text-slate-400 hover:text-red-600" title="Delete"><i class="fa-solid fa-trash"></i></button>
+                        <span class="font-bold text-rose-600 dark:text-rose-400 text-base">-₹${parseFloat(e.amount).toLocaleString('en-IN')}</span>
+                        <button onclick="App.editExpense('${e.id}')" class="p-1.5 text-slate-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition" title="Edit"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="App.deleteExpense('${e.id}')" class="p-1.5 text-slate-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-rose-400 rounded-lg transition" title="Delete"><i class="fa-solid fa-trash"></i></button>
                     </div>
                 </div>
             `;
@@ -5473,50 +5473,50 @@ const App = {
             <div class="space-y-4">
                 <!-- Bank Flow Metrics Cards -->
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div class="bg-rose-50/70 p-4 rounded-2xl border border-rose-200">
+                    <div class="bg-rose-50/70 dark:bg-rose-950/30 p-4 rounded-2xl border border-rose-200 dark:border-rose-800/60">
                         <div class="flex items-center justify-between">
-                            <span class="block text-[10px] uppercase font-bold text-rose-800">Total Transferred to Bank</span>
-                            <i class="fa-solid fa-arrow-up-right-from-square text-rose-500"></i>
+                            <span class="block text-[10px] uppercase font-bold text-rose-800 dark:text-rose-400">Total Transferred to Bank</span>
+                            <i class="fa-solid fa-arrow-up-right-from-square text-rose-500 dark:text-rose-400"></i>
                         </div>
-                        <div class="text-2xl font-black text-rose-900 mt-1">-₹${filteredOutflow.toLocaleString('en-IN')}</div>
-                        <span class="text-xs text-rose-700">Withdrawals from liquid wallet to bank</span>
+                        <div class="text-2xl font-black text-rose-900 dark:text-rose-300 mt-1">-₹${filteredOutflow.toLocaleString('en-IN')}</div>
+                        <span class="text-xs text-rose-700 dark:text-rose-400">Withdrawals from liquid wallet to bank</span>
                     </div>
-                    <div class="bg-emerald-50/70 p-4 rounded-2xl border border-emerald-200">
+                    <div class="bg-emerald-50/70 dark:bg-emerald-950/30 p-4 rounded-2xl border border-emerald-200 dark:border-emerald-800/60">
                         <div class="flex items-center justify-between">
-                            <span class="block text-[10px] uppercase font-bold text-emerald-800">Total Deposited from Bank</span>
-                            <i class="fa-solid fa-arrow-down-left-and-up-right-to-center text-emerald-500"></i>
+                            <span class="block text-[10px] uppercase font-bold text-emerald-800 dark:text-emerald-400">Total Deposited from Bank</span>
+                            <i class="fa-solid fa-arrow-down-left-and-up-right-to-center text-emerald-500 dark:text-emerald-400"></i>
                         </div>
-                        <div class="text-2xl font-black text-emerald-900 mt-1">+₹${filteredInflow.toLocaleString('en-IN')}</div>
-                        <span class="text-xs text-emerald-700">Funds injected into liquid wallet</span>
+                        <div class="text-2xl font-black text-emerald-900 dark:text-emerald-300 mt-1">+₹${filteredInflow.toLocaleString('en-IN')}</div>
+                        <span class="text-xs text-emerald-700 dark:text-emerald-400">Funds injected into liquid wallet</span>
                     </div>
-                    <div class="bg-white p-4 rounded-2xl border border-slate-200">
+                    <div class="bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800">
                         <div class="flex items-center justify-between">
-                            <span class="block text-[10px] uppercase font-bold text-slate-500">Net Bank Movement</span>
-                            <i class="fa-solid fa-building-columns text-sky-500"></i>
+                            <span class="block text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">Net Bank Movement</span>
+                            <i class="fa-solid fa-building-columns text-sky-500 dark:text-sky-400"></i>
                         </div>
-                        <div class="text-2xl font-black ${netFlow >= 0 ? 'text-emerald-600' : 'text-rose-600'} mt-1">
+                        <div class="text-2xl font-black ${netFlow >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'} mt-1">
                             ${netFlow >= 0 ? '+' : ''}₹${netFlow.toLocaleString('en-IN')}
                         </div>
-                        <span class="text-xs text-slate-500">${netFlow >= 0 ? 'Net addition to property wallet' : 'Net withdrawal into bank accounts'}</span>
+                        <span class="text-xs text-slate-500 dark:text-slate-400">${netFlow >= 0 ? 'Net addition to property wallet' : 'Net withdrawal into bank accounts'}</span>
                     </div>
                 </div>
 
                 <!-- Action Header -->
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1">
                     <div>
-                        <h4 class="font-extrabold text-sm text-slate-900">Wallet ⇄ Bank Transactions (${list.length})</h4>
-                        <p class="text-xs text-slate-500">Track and edit bank transfers and wallet deposits</p>
+                        <h4 class="font-extrabold text-sm text-slate-900 dark:text-white">Wallet ⇄ Bank Transactions (${list.length})</h4>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Track and edit bank transfers and wallet deposits</p>
                     </div>
-                    <button onclick="App.openBankTransferModal()" class="px-3.5 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm shadow-sky-600/20 self-start sm:self-auto">
+                    <button onclick="App.openBankTransferModal()" class="px-3.5 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-sm shadow-sky-600/20 self-start sm:self-auto cursor-pointer">
                         <i class="fa-solid fa-plus"></i>
                         <span>+ New Bank Transfer</span>
                     </button>
                 </div>
 
                 <!-- Transactions Table -->
-                <div class="overflow-x-auto rounded-2xl bg-white shadow-sm border border-slate-200">
-                    <table class="w-full text-left text-sm text-slate-600">
-                        <thead class="bg-slate-50 text-xs uppercase font-semibold text-slate-500 border-b border-slate-200">
+                <div class="overflow-x-auto rounded-2xl bg-white dark:bg-slate-900 shadow-sm border border-slate-200 dark:border-slate-800">
+                    <table class="w-full text-left text-sm text-slate-600 dark:text-slate-300">
+                        <thead class="bg-slate-50 dark:bg-slate-800/70 text-xs uppercase font-semibold text-slate-500 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">
                             <tr>
                                 <th class="px-4 py-3">Date</th>
                                 <th class="px-4 py-3">Owner & Floors</th>
@@ -5528,14 +5528,14 @@ const App = {
                                 <th class="px-4 py-3 text-right">Actions</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-100">
+                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
         `;
 
         if (list.length === 0) {
             html += `
                 <tr>
-                    <td colspan="8" class="text-center py-10 text-slate-400">
-                        <i class="fa-solid fa-building-columns text-3xl mb-2 text-slate-300 block"></i>
+                    <td colspan="8" class="text-center py-10 text-slate-400 dark:text-slate-500">
+                        <i class="fa-solid fa-building-columns text-3xl mb-2 text-slate-300 dark:text-slate-600 block"></i>
                         No bank transactions recorded yet. Click <strong>"+ New Bank Transfer"</strong> to record one.
                     </td>
                 </tr>
@@ -5545,19 +5545,19 @@ const App = {
                 const isWalletToBank = (tx.type === 'wallet_to_bank');
                 const ownerName = tx.ownerId === 'sajida' ? 'Sajida' : 'Jeelani';
                 const ownerFloors = tx.ownerId === 'sajida' ? 'Floors 1-2' : 'Floors 3-5';
-                const ownerBadgeClass = tx.ownerId === 'sajida' ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800';
-                const dirBadgeClass = isWalletToBank ? 'bg-rose-100 text-rose-800 border-rose-200' : 'bg-emerald-100 text-emerald-800 border-emerald-200';
+                const ownerBadgeClass = tx.ownerId === 'sajida' ? 'bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-300' : 'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300';
+                const dirBadgeClass = isWalletToBank ? 'bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border-rose-200 dark:border-rose-800/60' : 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/60';
                 const dirIcon = isWalletToBank ? 'fa-arrow-up-right-from-square' : 'fa-arrow-down-left-and-up-right-to-center';
                 const dirLabel = isWalletToBank ? 'Wallet ➔ Bank' : 'Bank ➔ Wallet';
 
                 html += `
-                    <tr class="hover:bg-slate-50/80 transition">
-                        <td class="px-4 py-3 text-xs font-semibold whitespace-nowrap">${tx.date}</td>
+                    <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition">
+                        <td class="px-4 py-3 text-xs font-semibold whitespace-nowrap text-slate-700 dark:text-slate-300">${tx.date}</td>
                         <td class="px-4 py-3">
                             <span class="px-2 py-0.5 rounded text-xs font-bold ${ownerBadgeClass}">
                                 ${ownerName} (${ownerFloors})
                             </span>
-                            ${tx.floor ? `<span class="block text-[10px] font-semibold text-slate-500 mt-0.5"><i class="fa-solid fa-layer-group text-[9px] text-sky-600"></i> ${tx.floor}</span>` : ''}
+                            ${tx.floor ? `<span class="block text-[10px] font-semibold text-slate-500 dark:text-slate-400 mt-0.5"><i class="fa-solid fa-layer-group text-[9px] text-sky-600 dark:text-sky-400"></i> ${tx.floor}</span>` : ''}
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap">
                             <span class="px-2.5 py-1 rounded-full text-xs font-extrabold border ${dirBadgeClass} inline-flex items-center gap-1.5">
@@ -5565,26 +5565,26 @@ const App = {
                                 ${dirLabel}
                             </span>
                         </td>
-                        <td class="px-4 py-3 font-extrabold whitespace-nowrap ${isWalletToBank ? 'text-rose-600' : 'text-emerald-600'}">
+                        <td class="px-4 py-3 font-extrabold whitespace-nowrap ${isWalletToBank ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}">
                             ${isWalletToBank ? '-' : '+'}₹${parseFloat(tx.amount).toLocaleString('en-IN')}
                         </td>
                         <td class="px-4 py-3 text-xs">
-                            <strong class="text-slate-900 block">${tx.bankName || 'Bank Account'}</strong>
-                            <span class="text-[11px] text-slate-400">${tx.transferMode || 'Transfer'}</span>
+                            <strong class="text-slate-900 dark:text-white block">${tx.bankName || 'Bank Account'}</strong>
+                            <span class="text-[11px] text-slate-400 dark:text-slate-400">${tx.transferMode || 'Transfer'}</span>
                         </td>
-                        <td class="px-4 py-3 text-xs font-mono text-slate-600">
+                        <td class="px-4 py-3 text-xs font-mono text-slate-600 dark:text-slate-300">
                             ${tx.reference || '-'}
                         </td>
-                        <td class="px-4 py-3 text-xs text-slate-500 max-w-xs truncate" title="${tx.notes || ''}">
+                        <td class="px-4 py-3 text-xs text-slate-500 dark:text-slate-400 max-w-xs truncate" title="${tx.notes || ''}">
                             ${tx.notes || '-'}
                         </td>
                         <td class="px-4 py-3 text-right whitespace-nowrap">
                             <div class="flex items-center justify-end gap-1">
-                                <button onclick="App.openBankTransferModal('${tx.id}')" class="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition text-xs font-bold flex items-center gap-1" title="Edit this transaction">
+                                <button onclick="App.openBankTransferModal('${tx.id}')" class="p-1.5 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/40 rounded-lg transition text-xs font-bold flex items-center gap-1" title="Edit this transaction">
                                     <i class="fa-solid fa-pen"></i>
                                     <span class="hidden sm:inline">Edit</span>
                                 </button>
-                                <button onclick="App.deleteBankTransfer('${tx.id}')" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-rose-50 rounded-lg transition text-xs" title="Delete this transaction">
+                                <button onclick="App.deleteBankTransfer('${tx.id}')" class="p-1.5 text-slate-400 dark:text-slate-400 hover:text-red-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-lg transition text-xs" title="Delete this transaction">
                                     <i class="fa-solid fa-trash-can"></i>
                                 </button>
                             </div>
@@ -5610,27 +5610,27 @@ const App = {
         const list = (this.data.walletAdjustments || []).sort((a, b) => new Date(b.date) - new Date(a.date));
 
         if (list.length === 0) {
-            container.innerHTML = `<p class="text-sm text-slate-400 text-center py-6">No owner capital adjustments recorded yet.</p>`;
+            container.innerHTML = `<p class="text-sm text-slate-400 dark:text-slate-500 text-center py-6">No owner capital adjustments recorded yet.</p>`;
             return;
         }
 
         list.forEach(adj => {
             const isDeposit = adj.type === 'deposit';
             html += `
-                <div class="flex items-center justify-between p-3 bg-white rounded-2xl border border-slate-200">
+                <div class="flex items-center justify-between p-3 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800">
                     <div class="flex items-center gap-3">
-                        <div class="w-9 h-9 rounded-xl ${isDeposit ? 'bg-purple-100 text-purple-700' : 'bg-slate-100 text-slate-700'} flex items-center justify-center font-bold">
+                        <div class="w-9 h-9 rounded-xl ${isDeposit ? 'bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'} flex items-center justify-center font-bold">
                             <i class="fa-solid ${isDeposit ? 'fa-plus' : 'fa-minus'}"></i>
                         </div>
                         <div>
-                            <div class="font-bold text-sm text-slate-900">${adj.ownerId === 'sajida' ? 'Sajida' : 'Jeelani'}: Capital ${isDeposit ? 'Deposit' : 'Withdrawal'}</div>
-                            <div class="text-xs text-slate-400">${adj.date} • ${adj.notes || 'No notes'}</div>
+                            <div class="font-bold text-sm text-slate-900 dark:text-white">${adj.ownerId === 'sajida' ? 'Sajida' : 'Jeelani'}: Capital ${isDeposit ? 'Deposit' : 'Withdrawal'}</div>
+                            <div class="text-xs text-slate-400 dark:text-slate-400">${adj.date} • ${adj.notes || 'No notes'}</div>
                         </div>
                     </div>
                     <div class="flex items-center gap-3">
-                        <span class="font-bold ${isDeposit ? 'text-emerald-600' : 'text-rose-600'} text-base">${isDeposit ? '+' : '-'}₹${parseFloat(adj.amount).toLocaleString('en-IN')}</span>
-                        <button onclick="App.editCapitalAdjustment('${adj.id}')" class="p-1.5 text-slate-400 hover:text-blue-600" title="Edit"><i class="fa-solid fa-pen"></i></button>
-                        <button onclick="App.deleteCapitalAdjustment('${adj.id}')" class="p-1.5 text-slate-400 hover:text-red-600" title="Delete"><i class="fa-solid fa-trash"></i></button>
+                        <span class="font-bold ${isDeposit ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'} text-base">${isDeposit ? '+' : '-'}₹${parseFloat(adj.amount).toLocaleString('en-IN')}</span>
+                        <button onclick="App.editCapitalAdjustment('${adj.id}')" class="p-1.5 text-slate-400 dark:text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 rounded-lg transition" title="Edit"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="App.deleteCapitalAdjustment('${adj.id}')" class="p-1.5 text-slate-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-rose-400 rounded-lg transition" title="Delete"><i class="fa-solid fa-trash"></i></button>
                     </div>
                 </div>
             `;
@@ -9387,6 +9387,17 @@ const App = {
 
             ActivityLogger.log('backup', 'Email Backup Dispatched', `File: ${filename} to ${recipients.join(', ')}`);
 
+            // Persist into email backup snapshots registry for 1-tap rollback
+            StorageManager.recordEmailBackup({
+                filename,
+                size: blob.size,
+                isEncrypted,
+                timestamp: new Date().toISOString(),
+                payload: isEncrypted ? null : this.data,
+                recipients,
+                source: 'Email Cloud Backup'
+            });
+
             // 1. If user configured an automated Google Apps Script Webhook, send email with attachment directly!
             if (settings.webhookUrl) {
                 this.showToast('Sending automated email with backup attachment...', 'info');
@@ -9483,13 +9494,99 @@ const App = {
     },
 
     triggerEmailFileRestore() {
+        this.browseEmailBackups();
+    },
+
+    browseEmailBackups() {
         this.hideModal('modal-restore-options');
-        this._restoreSource = 'email';
-        const input = document.getElementById('file-import-backup');
-        if (input) {
-            input.value = '';
-            input.click();
+        const container = document.getElementById('email-backups-container');
+        const emailFiles = StorageManager.getEmailBackups();
+
+        if (!container) return;
+        if (!emailFiles || emailFiles.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-8 text-slate-400">
+                    <div class="w-12 h-12 rounded-2xl bg-purple-50 dark:bg-purple-950/40 text-purple-500 flex items-center justify-center mx-auto text-xl mb-2">
+                        <i class="fa-solid fa-envelope-open-text"></i>
+                    </div>
+                    <p class="text-xs font-semibold text-slate-700 dark:text-slate-300">No Email Backups Found</p>
+                    <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Tap 'Email Backup' under Auto Backup to dispatch a snapshot to your inbox.</p>
+                </div>
+            `;
+        } else {
+            container.innerHTML = emailFiles.map(f => {
+                const dateStr = f.date ? new Date(f.date).toLocaleString('en-IN', {
+                    day: 'numeric', month: 'short', year: 'numeric',
+                    hour: '2-digit', minute: '2-digit', hour12: true
+                }) : 'Email Snapshot';
+                const sizeKb = f.size ? (f.size / 1024).toFixed(1) + ' KB' : 'Standard JSON';
+                const isEnc = !!f.isEncrypted;
+                const recip = f.recipient || 'mahaboob.1411ali@gmail.com';
+
+                return `
+                    <div class="p-3.5 bg-slate-50 dark:bg-slate-800/70 hover:bg-purple-50/40 dark:hover:bg-purple-950/20 rounded-2xl border border-slate-200 dark:border-slate-700/80 flex items-center justify-between gap-3 transition">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <div class="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center text-lg shrink-0">
+                                <i class="${isEnc ? 'fa-solid fa-lock' : 'fa-solid fa-envelope'}"></i>
+                            </div>
+                            <div class="min-w-0">
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <p class="text-xs font-bold text-slate-900 dark:text-white truncate">${App.escapeHtml(f.name || 'Email_Backup.json')}</p>
+                                    <span class="text-[9px] px-1.5 py-0.2 rounded bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300 font-extrabold uppercase">EMAIL</span>
+                                    ${isEnc ? '<span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 font-extrabold uppercase">AES</span>' : '<span class="text-[9px] px-1.5 py-0.2 rounded bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 font-extrabold uppercase">JSON</span>'}
+                                </div>
+                                <div class="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 flex-wrap">
+                                    <span><i class="fa-regular fa-clock mr-1 text-[10px]"></i>${dateStr}</span>
+                                    <span>•</span>
+                                    <span>${sizeKb}</span>
+                                    <span>•</span>
+                                    <span class="text-purple-600 dark:text-purple-400 font-medium truncate max-w-[170px]" title="${App.escapeHtml(recip)}">${App.escapeHtml(recip)}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <button onclick="App.restoreEmailFileRecord('${f.id}')" class="px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-bold transition shrink-0 cursor-pointer shadow-sm flex items-center gap-1.5 active:scale-95">
+                            <i class="fa-solid fa-rotate-left text-[11px]"></i>
+                            <span>Rollback</span>
+                        </button>
+                    </div>
+                `;
+            }).join('');
         }
+
+        this.showModal('modal-email-backups-list');
+    },
+
+    async restoreEmailFileRecord(id) {
+        const emailFiles = StorageManager.getEmailBackups();
+        const record = emailFiles.find(r => r.id === id);
+        if (!record) {
+            alert('Selected email backup snapshot could not be found.');
+            return;
+        }
+
+        let payloadData = record.payload;
+        if (!payloadData) {
+            alert('This email backup requires picking the downloaded .json file from your device.');
+            this.hideModal('modal-email-backups-list');
+            this.triggerOfflineFileRestore();
+            return;
+        }
+
+        const rawJson = (typeof payloadData === 'string') ? payloadData : JSON.stringify(payloadData);
+        const inspection = StorageManager.parseBackupSummary(rawJson);
+        if (!inspection.valid) {
+            alert(inspection.error || 'Backup content is corrupted or invalid.');
+            return;
+        }
+
+        this.hideModal('modal-email-backups-list');
+        this.inspectAndConfirmRestore({
+            data: inspection.data,
+            summary: inspection.summary,
+            fileName: record.name || 'Email_Backup.json',
+            fileSize: record.size || rawJson.length,
+            source: 'email'
+        });
     },
 
     triggerLocalRestorePicker() {

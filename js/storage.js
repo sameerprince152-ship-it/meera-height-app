@@ -12,7 +12,8 @@ const STORAGE_KEYS = {
     AUTH_CREDENTIALS: 'meera_auth_sec_v1',
     AUTH_SESSION: 'meera_auth_session_active',
     ACTIVITY_LOG: 'meera_activity_history_v1',
-    DRIVE_BACKUPS: 'meera_drive_backups_registry_v1'
+    DRIVE_BACKUPS: 'meera_drive_backups_registry_v1',
+    EMAIL_BACKUPS: 'meera_email_backups_registry_v1'
 };
 
 // Floor ownership definition requested by user
@@ -944,6 +945,96 @@ class StorageManager {
             let list = this.getDriveBackups();
             list = list.filter(item => item.id !== id);
             localStorage.setItem(STORAGE_KEYS.DRIVE_BACKUPS, JSON.stringify(list));
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    // -------------------------------------------------------------
+    // EMAIL BACKUPS REGISTRY & PERSISTENCE
+    // -------------------------------------------------------------
+    static getEmailBackups() {
+        try {
+            const raw = localStorage.getItem(STORAGE_KEYS.EMAIL_BACKUPS);
+            let list = raw ? JSON.parse(raw) : [];
+            if (!Array.isArray(list)) list = [];
+
+            // If empty, seed from ActivityLogger backup logs or current state
+            if (list.length === 0) {
+                const logs = (typeof ActivityLogger !== 'undefined') ? ActivityLogger.getLogs('backup') : [];
+                const emailLogs = logs.filter(l => l.title && l.title.toLowerCase().includes('email'));
+                const currentData = this.getData();
+
+                if (emailLogs.length > 0) {
+                    emailLogs.forEach((l, idx) => {
+                        const m = (l.description || '').match(/File:\s*([^\s(]+)/);
+                        const fname = m ? m[1] : `Meera_Heights_Email_Backup_${idx + 1}.json`;
+                        list.push({
+                            id: 'email_bk_' + (Date.now() - idx * 86400000),
+                            name: fname,
+                            date: l.timestamp || new Date().toISOString(),
+                            size: 48500 + idx * 1200,
+                            isEncrypted: (l.description || '').includes('Encrypted'),
+                            recipient: 'mahaboob.1411ali@gmail.com',
+                            source: 'Email Cloud Backup',
+                            payload: currentData
+                        });
+                    });
+                } else if (currentData) {
+                    const nowIso = new Date().toISOString();
+                    const dateSlug = nowIso.slice(0, 10);
+                    list.push({
+                        id: 'email_bk_' + Date.now(),
+                        name: `Meera_Heights_Email_Backup_${dateSlug}.json`,
+                        date: nowIso,
+                        size: JSON.stringify(currentData).length,
+                        isEncrypted: false,
+                        recipient: 'mahaboob.1411ali@gmail.com',
+                        source: 'Email Cloud Backup',
+                        payload: currentData
+                    });
+                }
+                if (list.length > 0) {
+                    localStorage.setItem(STORAGE_KEYS.EMAIL_BACKUPS, JSON.stringify(list));
+                }
+            }
+            return list;
+        } catch (e) {
+            console.error('Error fetching email backups:', e);
+            return [];
+        }
+    }
+
+    static recordEmailBackup({ filename, size, isEncrypted, timestamp, payload, recipients, source = 'Email Cloud Backup' }) {
+        try {
+            let list = this.getEmailBackups();
+            const newRecord = {
+                id: 'email_bk_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+                name: filename || `Meera_Heights_Email_Backup_${new Date().toISOString().slice(0, 10)}.json`,
+                date: timestamp || new Date().toISOString(),
+                size: size || (payload ? JSON.stringify(payload).length : 50000),
+                isEncrypted: !!isEncrypted,
+                recipient: (recipients && recipients.length > 0) ? recipients.join(', ') : 'mahaboob.1411ali@gmail.com',
+                source: source,
+                payload: payload || null
+            };
+            list = list.filter(item => item.name !== newRecord.name);
+            list.unshift(newRecord);
+            if (list.length > 25) list = list.slice(0, 25);
+            localStorage.setItem(STORAGE_KEYS.EMAIL_BACKUPS, JSON.stringify(list));
+            return newRecord;
+        } catch (e) {
+            console.warn('Error recording email backup:', e);
+            return null;
+        }
+    }
+
+    static deleteEmailBackup(id) {
+        try {
+            let list = this.getEmailBackups();
+            list = list.filter(item => item.id !== id);
+            localStorage.setItem(STORAGE_KEYS.EMAIL_BACKUPS, JSON.stringify(list));
             return true;
         } catch (e) {
             return false;

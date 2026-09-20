@@ -1177,14 +1177,392 @@ html.oled .wallet-card-jeelani-rent,
 
 /* Detailed Balance Cards in OLED */
 html.oled #view-wallets .bg-white,
-.oled #view-wallets .bg-white {
+.oled #view-wallets .bg-white,
+html.oled #view-floors .bg-white,
+.oled #view-floors .bg-white {
     background-color: #000000 !important;
     border-color: #27272a !important;
 }
+
 html.oled #view-wallets .bg-slate-100,
-.oled #view-wallets .bg-slate-100 {
+.oled #view-wallets .bg-slate-100,
+html.oled #view-floors .bg-slate-100,
+.oled #view-floors .bg-slate-100 {
     background-color: #121212 !important;
     border-color: #27272a !important;
     color: #ffffff !important;
 }
+
+/* ============================================================= */
+/* OLED TRUE BLACK: ZERO WASHED-OUT TEXT IN FLOORS & WALLETS     */
+/* Pure Obsidian Surfaces, Translucent Neon Tints & Vivid Tones  */
+/* ============================================================= */
+
+/* 1. Surfaces & Containers */
+html.oled #floor-kpi-cards > div,
+.oled #floor-kpi-cards > div,
+html.oled #floor-cost-structure-container > div,
+.oled #floor-cost-structure-container > div,
+html.oled #floor-ledger-container,
+.oled #floor-ledger-container,
+html.oled #wallet-subtab-container > div,
+.oled #wallet-subtab-container > div {
+    background-color: #000000 !important;
+    border-color: #262626 !important;
+    color: #ffffff !important;
+}
+
+/* Neutral Sub-Boxes inside Cards */
+html.oled #view-floors div.bg-slate-50,
+.oled #view-floors div.bg-slate-50,
+html.oled #view-wallets div.bg-slate-50,
+.oled #view-wallets div.bg-slate-50,
+html.oled #floor-kpi-cards .bg-slate-50,
+.oled #floor-kpi-cards .bg-slate-50,
+html.oled #floor-cost-structure-container .bg-slate-50,
+.oled #floor-cost-structure-container .bg-slate-50 {
+    background-color: #09090b !important;
+    border-color: #27272a !important;
+}
+
+/* 2. Translucent Neon Sub-Containers */
+html.oled [class*="bg-amber-50"],
+.oled [class*="bg-amber-50"] {
+    background-color: rgba(245, 158, 11, 0.12) !important;
+    border-color: rgba(245, 158, 11, 0.35) !important;
+}
+
+html.oled [class*="bg-emerald-50"],
+.oled [class*="bg-emerald-50"] {
+    background-color: rgba(16, 185, 129, 0.12) !important;
+    border-color: rgba(16, 185, 129, 0.35) !important;
+}
+
+html.oled [class*="bg-blue-50"],
+.oled [class*="bg-blue-50"],
+html.oled [class*="bg-sky-50"],
+.oled [class*="bg-sky-50"] {
+    background-color: rgba(59, 130, 246, 0.12) !important;
+    border-color: rgba(59, 130, 246, 0.35) !important;
+}
+
+html.oled [class*="bg-rose-50"],
+.oled [class*="bg-rose-50"] {
+    background-color: rgba(244, 63, 94, 0.12) !important;
+    border-color: rgba(244, 63, 94, 0.35) !important;
+}
+
+html.oled [class*="bg-teal-50"],
+.oled [class*="bg-teal-50"] {
+    background-color: rgba(20, 184, 166, 0.12) !important;
+    border-color: rgba(20, 184, 166, 0.35) !important;
+}
+
+html.oled [class*="bg-indigo-50"],
+.oled [class*="bg-indigo-50"] {
+    background-color: rgba(99, 102, 241, 0.12) !important;
+    border-color: rgba(99, 102, 241, 0.35) !important;
+}
+
+html.oled [class*="bg-purple-50"],
+.oled [class*="bg-purple-50"] {
+    background-color: rgba(168, 85, 247, 0.12) !important;
+    border-color: rgba(168, 85, 247, 0.35) !important;
+}
+
+/* 3. Razor-Sharp Text Contrast Overrides */
+html.oled #view-floors h2,
+html.oled #view-floors h3,
+html.oled #view-floors h4,
+html.oled #view-floors h5,
+html.oled #view-floors strong,
+html.oled #view-wallets h2,
+html.oled #view-wallets h3,
+html.oled #view-wallets h4,
+html.oled #view-wallets h5,
+html.oled #view-wallets strong,
+.oled #view-floors h2,
+.oled #view-floors h3,
+.oled #view-floors h4,
+.oled #view-floors h5,
+.oled #view-floors strong,
+.oled #view-wallets h2,
+.oled #view-wallets h3,
+.oled #view-wallets h4,
+.oled #view-wallets h5,
+.oled #view-wallets strong {
+    color: #ffffff !important;
+}
+
+html.oled .text-amber-950,
+html.oled .text-amber-900,
+html.oled .text-amber-800,
+html.oled .text-amber-700,
+.oled .text-amber-950,
+.oled .text-amber-900,
+.oled .text-amber-800,
+.oled .text-amber-700 {
+    color: #fbbf24 !important;
+}
+
+html.oled .text-emerald-950,
+html.oled .text-emerald-900,
+html.oled .text-emerald-800,
+html.oled .text-emerald-700,
+.oled .text-emerald-950,
+.oled .text-emerald-900,
+.oled .text-emerald-800,
+.oled .text-emerald-700 {
+    color: #34d399 !important;
+}
+
+html.oled .text-blue-950,
+html.oled .text-blue-900,
+html.oled .text-blue-800,
+html.oled .text-blue-700,
+html.oled .text-sky-800,
+html.oled .text-sky-700,
+.oled .text-blue-950,
+.oled .text-blue-900,
+.oled .text-blue-800,
+.oled .text-blue-700,
+.oled .text-sky-800,
+.oled .text-sky-700 {
+    color: #60a5fa !important;
+}
+
+html.oled .text-rose-950,
+html.oled .text-rose-900,
+html.oled .text-rose-800,
+html.oled .text-rose-700,
+.oled .text-rose-950,
+.oled .text-rose-900,
+.oled .text-rose-800,
+.oled .text-rose-700 {
+    color: #f87171 !important;
+}
+
+html.oled .text-teal-900,
+html.oled .text-teal-800,
+html.oled .text-teal-700,
+.oled .text-teal-900,
+.oled .text-teal-800,
+.oled .text-teal-700 {
+    color: #2dd4bf !important;
+}
+
+html.oled .text-indigo-900,
+html.oled .text-indigo-800,
+html.oled .text-indigo-700,
+.oled .text-indigo-900,
+.oled .text-indigo-800,
+.oled .text-indigo-700 {
+    color: #818cf8 !important;
+}
+
+html.oled .text-purple-900,
+html.oled .text-purple-800,
+html.oled .text-purple-700,
+.oled .text-purple-900,
+.oled .text-purple-800,
+.oled .text-purple-700 {
+    color: #c084fc !important;
+}
+
+/* Secondary & Muted Labels */
+html.oled #view-floors .text-slate-600,
+html.oled #view-floors .text-slate-500,
+html.oled #view-wallets .text-slate-600,
+html.oled #view-wallets .text-slate-500,
+.oled #view-floors .text-slate-600,
+.oled #view-floors .text-slate-500,
+.oled #view-wallets .text-slate-600,
+.oled #view-wallets .text-slate-500 {
+    color: #cbd5e1 !important;
+}
+
+html.oled #view-floors .text-slate-400,
+html.oled #view-wallets .text-slate-400,
+.oled #view-floors .text-slate-400,
+.oled #view-wallets .text-slate-400 {
+    color: #a1a1aa !important;
+}
+
+/* 4. Badges in OLED */
+html.oled .bg-emerald-100,
+.oled .bg-emerald-100 {
+    background-color: rgba(16, 185, 129, 0.2) !important;
+    color: #34d399 !important;
+    border: 1px solid rgba(16, 185, 129, 0.4) !important;
+}
+
+html.oled .bg-sky-100,
+.oled .bg-sky-100,
+html.oled .bg-blue-100,
+.oled .bg-blue-100 {
+    background-color: rgba(59, 130, 246, 0.2) !important;
+    color: #60a5fa !important;
+    border: 1px solid rgba(59, 130, 246, 0.4) !important;
+}
+
+html.oled .bg-amber-100,
+.oled .bg-amber-100 {
+    background-color: rgba(245, 158, 11, 0.2) !important;
+    color: #fbbf24 !important;
+    border: 1px solid rgba(245, 158, 11, 0.4) !important;
+}
+
+html.oled .bg-rose-100,
+.oled .bg-rose-100 {
+    background-color: rgba(244, 63, 94, 0.2) !important;
+    color: #f87171 !important;
+    border: 1px solid rgba(244, 63, 94, 0.4) !important;
+}
+
+html.oled .bg-purple-100,
+.oled .bg-purple-100 {
+    background-color: rgba(168, 85, 247, 0.2) !important;
+    color: #c084fc !important;
+    border: 1px solid rgba(168, 85, 247, 0.4) !important;
+}
+
+html.oled .bg-teal-100,
+.oled .bg-teal-100 {
+    background-color: rgba(20, 184, 166, 0.2) !important;
+    color: #2dd4bf !important;
+    border: 1px solid rgba(20, 184, 166, 0.4) !important;
+}
+
+/* 5. Navigation Pills & Sub-Tab Buttons */
+html.oled .floor-pill-btn,
+.oled .floor-pill-btn {
+    background-color: #121212 !important;
+    color: #cbd5e1 !important;
+    border: 1px solid #27272a !important;
+}
+
+html.oled .floor-pill-btn.bg-slate-900,
+.oled .floor-pill-btn.bg-slate-900 {
+    background-color: #10b981 !important;
+    color: #ffffff !important;
+    border-color: #059669 !important;
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.3) !important;
+}
+
+html.oled .wallet-tab-btn,
+.oled .wallet-tab-btn {
+    background-color: #121212 !important;
+    color: #cbd5e1 !important;
+    border: 1px solid #27272a !important;
+}
+
+html.oled .wallet-tab-btn.bg-slate-900,
+.oled .wallet-tab-btn.bg-slate-900,
+html.oled .wallet-tab-btn.dark\:bg-slate-100,
+.oled .wallet-tab-btn.dark\:bg-slate-100 {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    font-weight: 800 !important;
+    border-color: #ffffff !important;
+}
+
+html.oled .wallet-owner-filter-btn,
+.oled .wallet-owner-filter-btn {
+    background-color: #121212 !important;
+    color: #cbd5e1 !important;
+    border: 1px solid #27272a !important;
+}
+
+html.oled .wallet-owner-filter-btn.bg-emerald-600,
+.oled .wallet-owner-filter-btn.bg-emerald-600 {
+    background-color: #10b981 !important;
+    color: #ffffff !important;
+    border-color: #059669 !important;
+    font-weight: 800 !important;
+}
+
+/* 6. Tables & Ledger Rows in OLED */
+html.oled #floor-ledger-container table,
+.oled #floor-ledger-container table,
+html.oled #wallet-subtab-container table,
+.oled #wallet-subtab-container table {
+    background-color: #000000 !important;
+}
+
+html.oled #floor-ledger-container thead,
+.oled #floor-ledger-container thead,
+html.oled #floor-ledger-container thead th,
+.oled #floor-ledger-container thead th,
+html.oled #wallet-subtab-container thead,
+.oled #wallet-subtab-container thead,
+html.oled #wallet-subtab-container thead th,
+.oled #wallet-subtab-container thead th {
+    background-color: #0a0a0a !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    border-color: #222222 !important;
+}
+
+html.oled #floor-ledger-container tbody tr,
+.oled #floor-ledger-container tbody tr,
+html.oled #wallet-subtab-container tbody tr,
+.oled #wallet-subtab-container tbody tr {
+    background-color: #000000 !important;
+    border-color: #1c1c1e !important;
+}
+
+html.oled #floor-ledger-container tbody tr:hover,
+.oled #floor-ledger-container tbody tr:hover,
+html.oled #wallet-subtab-container tbody tr:hover,
+.oled #wallet-subtab-container tbody tr:hover {
+    background-color: #0d0d0d !important;
+}
+
+html.oled #floor-ledger-container td,
+.oled #floor-ledger-container td,
+html.oled #wallet-subtab-container td,
+.oled #wallet-subtab-container td {
+    border-color: #1c1c1e !important;
+    color: #e2e8f0 !important;
+}
+
+/* Mobile Ledger Cards */
+html.oled #floor-ledger-container .bg-slate-50\/70,
+.oled #floor-ledger-container .bg-slate-50\/70 {
+    background-color: #09090b !important;
+    border-color: #222222 !important;
+}
+
+/* 7. Action Icons & Interactive Buttons in Tables */
+html.oled #floor-ledger-container button i.fa-pen-to-square,
+html.oled #wallet-subtab-container button i.fa-pen,
+.oled #floor-ledger-container button i.fa-pen-to-square,
+.oled #wallet-subtab-container button i.fa-pen {
+    color: #38bdf8 !important;
+}
+
+html.oled #wallet-subtab-container button i.fa-trash-can,
+html.oled #wallet-subtab-container button i.fa-trash,
+.oled #wallet-subtab-container button i.fa-trash-can,
+.oled #wallet-subtab-container button i.fa-trash {
+    color: #f87171 !important;
+}
+
+html.oled #wallet-subtab-container button[title*="Refund"],
+html.oled #wallet-subtab-container button[title*="settlement"],
+.oled #wallet-subtab-container button[title*="Refund"],
+.oled #wallet-subtab-container button[title*="settlement"] {
+    background-color: rgba(245, 158, 11, 0.15) !important;
+    color: #fbbf24 !important;
+    border-color: rgba(245, 158, 11, 0.4) !important;
+}
+
+/* Progress Bars */
+html.oled #view-floors .bg-slate-200,
+.oled #view-floors .bg-slate-200,
+html.oled #view-floors .bg-slate-100,
+.oled #view-floors .bg-slate-100 {
+    background-color: #27272a !important;
+}
+
 

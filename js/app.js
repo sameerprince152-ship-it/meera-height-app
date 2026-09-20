@@ -8570,57 +8570,88 @@ const App = {
         if (now - this._lastThemeToggle < 350) return;
         this._lastThemeToggle = now;
 
-        const currentIsDark = document.documentElement.classList.contains('dark');
-        const nextMode = currentIsDark ? 'light' : 'dark';
-        this.setTheme(nextMode);
+        const isCurrentlyDark = document.documentElement.classList.contains('dark');
+        if (isCurrentlyDark) {
+            this.setTheme('light');
+        } else {
+            let preferredDark = 'oled';
+            try {
+                preferredDark = localStorage.getItem('mh_preferred_dark_mode') || 'oled';
+            } catch (e) {}
+            this.setTheme(preferredDark === 'dark' ? 'dark' : 'oled');
+        }
     },
 
     applyTheme(mode, showNotification = false) {
         let isDark = false;
-        if (mode === 'dark') {
+        let isOled = false;
+
+        if (mode === 'oled') {
             isDark = true;
+            isOled = true;
+            try { localStorage.setItem('mh_preferred_dark_mode', 'oled'); } catch (e) {}
+        } else if (mode === 'dark') {
+            isDark = true;
+            isOled = false;
+            try { localStorage.setItem('mh_preferred_dark_mode', 'dark'); } catch (e) {}
         } else if (mode === 'light') {
             isDark = false;
+            isOled = false;
         } else {
             // 'system'
             isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            let pref = 'oled';
+            try { pref = localStorage.getItem('mh_preferred_dark_mode') || 'oled'; } catch (e) {}
+            isOled = isDark && (pref === 'oled');
         }
 
         if (isDark) {
             document.documentElement.classList.add('dark');
             document.documentElement.classList.remove('light');
+            if (isOled) {
+                document.documentElement.classList.add('oled');
+            } else {
+                document.documentElement.classList.remove('oled');
+            }
+
             if (document.body) {
                 document.body.classList.add('dark');
                 document.body.classList.remove('light');
+                if (isOled) {
+                    document.body.classList.add('oled');
+                } else {
+                    document.body.classList.remove('oled');
+                }
             }
         } else {
-            document.documentElement.classList.remove('dark');
+            document.documentElement.classList.remove('dark', 'oled');
             document.documentElement.classList.add('light');
             if (document.body) {
-                document.body.classList.remove('dark');
+                document.body.classList.remove('dark', 'oled');
                 document.body.classList.add('light');
             }
         }
 
         // Update meta theme-color for native mobile status bar tinting
+        // Pure #000000 for OLED, #0b1329 for Dark Slate, #ffffff for Light
         const metaThemeColor = document.querySelector('meta[name="theme-color"]');
         if (metaThemeColor) {
-            metaThemeColor.setAttribute('content', isDark ? '#0b1329' : '#ffffff');
+            metaThemeColor.setAttribute('content', isOled ? '#000000' : (isDark ? '#0b1329' : '#ffffff'));
         }
 
         // Update desktop and mobile toggle icons
         const iconDesktop = document.getElementById('theme-toggle-icon-desktop');
         const iconMobile = document.getElementById('theme-toggle-icon-mobile');
         if (iconDesktop) {
-            iconDesktop.className = isDark ? 'fa-solid fa-sun text-amber-400 text-sm' : 'fa-solid fa-moon text-slate-700 text-sm';
+            iconDesktop.className = isDark ? (isOled ? 'fa-solid fa-bolt text-emerald-400 text-sm' : 'fa-solid fa-sun text-amber-400 text-sm') : 'fa-solid fa-moon text-slate-700 text-sm';
         }
         if (iconMobile) {
-            iconMobile.className = isDark ? 'fa-solid fa-sun text-amber-400' : 'fa-solid fa-moon text-slate-700';
+            iconMobile.className = isDark ? (isOled ? 'fa-solid fa-bolt text-emerald-400' : 'fa-solid fa-sun text-amber-400') : 'fa-solid fa-moon text-slate-700';
         }
 
         // Update settings appearance buttons
         const currentSetting = StorageManager.getTheme();
-        ['light', 'dark', 'system'].forEach(m => {
+        ['light', 'dark', 'oled', 'system'].forEach(m => {
             const btn = document.getElementById(`theme-btn-${m}`);
             if (btn) {
                 if (m === currentSetting) {
@@ -8632,7 +8663,11 @@ const App = {
         });
 
         if (showNotification) {
-            const label = mode === 'system' ? 'System theme applied' : (isDark ? 'Dark mode enabled' : 'Light mode enabled');
+            let label = 'Theme updated';
+            if (mode === 'system') label = 'System theme applied';
+            else if (mode === 'oled') label = 'OLED True Black enabled (0% Pixel Power Draw)';
+            else if (mode === 'dark') label = 'Dark Slate mode enabled';
+            else label = 'Light mode enabled';
             this.showToast(label, 'info');
         }
     },

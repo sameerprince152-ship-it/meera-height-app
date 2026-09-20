@@ -69,7 +69,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="css/styles.css?v=5.2.0">
+    <link rel="stylesheet" href="css/styles.css?v=5.3.0">
 </head>
 <body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 min-h-screen pb-28 sm:pb-32 md:pb-8 antialiased selection:bg-emerald-100 selection:text-emerald-900 transition-colors duration-200">
 
@@ -1750,16 +1750,20 @@
                             <p class="text-xs text-slate-500 dark:text-slate-400">Select your preferred color scheme across mobile, desktop, and tablets</p>
                         </div>
                     </div>
-                    <div class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-700/60 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-600">
-                        <button onclick="App.setTheme('light')" id="theme-btn-light" class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5">
+                    <div class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-700/60 p-1.5 rounded-2xl border border-slate-200 dark:border-slate-600 flex-wrap">
+                        <button onclick="App.setTheme('light')" id="theme-btn-light" class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer">
                             <i class="fa-solid fa-sun text-amber-500"></i>
                             <span>Light</span>
                         </button>
-                        <button onclick="App.setTheme('dark')" id="theme-btn-dark" class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5">
+                        <button onclick="App.setTheme('dark')" id="theme-btn-dark" class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer">
                             <i class="fa-solid fa-moon text-indigo-400"></i>
-                            <span>Dark</span>
+                            <span>Dark (Slate)</span>
                         </button>
-                        <button onclick="App.setTheme('system')" id="theme-btn-system" class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5">
+                        <button onclick="App.setTheme('oled')" id="theme-btn-oled" class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer">
+                            <i class="fa-solid fa-bolt text-emerald-400"></i>
+                            <span>OLED Black</span>
+                        </button>
+                        <button onclick="App.setTheme('system')" id="theme-btn-system" class="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer">
                             <i class="fa-solid fa-desktop text-slate-500 dark:text-slate-300"></i>
                             <span>System</span>
                         </button>
@@ -1771,12 +1775,12 @@
                         <span class="text-slate-600 dark:text-slate-300">Adaptive Status Bar for iOS & Android</span>
                     </div>
                     <div class="p-3 bg-slate-50 dark:bg-slate-700/30 rounded-2xl border border-slate-100 dark:border-slate-700 flex items-center gap-2.5">
-                        <i class="fa-solid fa-eye text-slate-400"></i>
-                        <span class="text-slate-600 dark:text-slate-300">OLED Dark Contrast for Low Eye Strain</span>
+                        <i class="fa-solid fa-bolt text-emerald-400"></i>
+                        <span class="text-slate-600 dark:text-slate-300 font-semibold">OLED Pure Black #000000 (0% Pixel Power Draw)</span>
                     </div>
                     <div class="p-3 bg-slate-50 dark:bg-slate-700/30 rounded-2xl border border-slate-100 dark:border-slate-700 flex items-center gap-2.5">
-                        <i class="fa-solid fa-floppy-disk text-slate-400"></i>
-                        <span class="text-slate-600 dark:text-slate-300">Saved to Local Preferences</span>
+                        <i class="fa-solid fa-eye text-indigo-400"></i>
+                        <span class="text-slate-600 dark:text-slate-300 font-semibold">Ultra-High Contrast Text (WCAG AAA Legibility)</span>
                     </div>
                 </div>
             </div>
@@ -4492,9 +4496,9 @@
     <div id="app-floating-toast" class="fixed top-5 right-5 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl shadow-2xl text-xs font-bold transition-all transform duration-300 pointer-events-none opacity-0 translate-y-[-10px]"></div>
 
     <!-- Application JavaScript Scripts -->
-    <script src="js/storage.js?v=5.2.0"></script>
-    <script src="js/excel-export.js?v=5.2.0"></script>
-    <script src="js/app.js?v=5.2.0"></script>
+    <script src="js/storage.js?v=5.3.0"></script>
+    <script src="js/excel-export.js?v=5.3.0"></script>
+    <script src="js/app.js?v=5.3.0"></script>
 
     <!-- Register Service Worker for PWA Offline Functionality -->
     <script>

@@ -493,26 +493,31 @@ html.dark .divide-slate-200 > :not([hidden]) ~ :not([hidden]) {
     border-color: #1e2e4a !important;
 }
 
-/* Typography */
+/* Typography - High Contrast & Enhanced Readability */
 html.dark .text-slate-900,
 html.dark .text-slate-800,
 html.dark .text-slate-700,
 .dark .text-slate-900,
 .dark .text-slate-800,
 .dark .text-slate-700 {
-    color: #f8fafc !important;
+    color: #ffffff !important;
 }
 
 html.dark .text-slate-600,
 html.dark .text-slate-500,
 .dark .text-slate-600,
 .dark .text-slate-500 {
-    color: #94a3b8 !important;
+    color: #cbd5e1 !important; /* Elevated to bright Slate-300 for crisp legibility */
 }
 
 html.dark .text-slate-400,
 .dark .text-slate-400 {
-    color: #64748b !important;
+    color: #94a3b8 !important; /* Elevated to Slate-400, eliminating muddy dark gray */
+}
+
+html.dark .text-slate-300,
+.dark .text-slate-300 {
+    color: #e2e8f0 !important;
 }
 
 /* Form Controls & Inputs */
@@ -531,14 +536,15 @@ html.dark input::placeholder,
 html.dark textarea::placeholder,
 .dark input::placeholder,
 .dark textarea::placeholder {
-    color: #64748b !important;
+    color: #94a3b8 !important; /* Readable placeholder contrast */
 }
 
 /* Table styling */
 html.dark table thead th,
 .dark table thead th {
     background-color: #0c1628 !important;
-    color: #94a3b8 !important;
+    color: #e2e8f0 !important;
+    font-weight: 700 !important;
     border-color: #1e2e4a !important;
 }
 
@@ -740,6 +746,167 @@ html.dark .border-indigo-200 {
 }
 
 /* ============================================================= */
+/* DEDICATED OLED TRUE BLACK (#000000) ULTRA-POWER SAVING THEME  */
+/* Shuts OFF pixels physically on iOS & Android OLED displays     */
+/* Infinite contrast, zero power draw for black subpixels         */
+/* ============================================================= */
+html.oled body,
+body.oled {
+    background-color: #000000 !important;
+    color: #ffffff !important;
+}
+
+/* Sticky App Header - Pure Black melting into status bar */
+html.oled header,
+.oled header,
+html.oled #app-header,
+.oled #app-header {
+    background-color: #000000 !important;
+    border-color: #1a2333 !important;
+}
+
+/* Mobile Bottom Navigation Bar - Pure Black with safe area inset */
+html.oled nav,
+.oled nav,
+html.oled #app-bottom-nav,
+.oled #app-bottom-nav {
+    background-color: #000000 !important;
+    border-color: #1a2333 !important;
+}
+
+/* Elevated Obsidian Containers & Cards */
+html.oled .bg-white,
+.oled .bg-white {
+    background-color: #080d1a !important;
+    border-color: #1a2333 !important;
+}
+
+html.oled .bg-slate-50,
+.oled .bg-slate-50 {
+    background-color: #04070e !important;
+}
+
+html.oled .bg-slate-100,
+.oled .bg-slate-100 {
+    background-color: #0c1322 !important;
+}
+
+html.oled .bg-slate-200,
+.oled .bg-slate-200 {
+    background-color: #121c30 !important;
+}
+
+/* Razor-sharp OLED Borders & Dividers */
+html.oled .border-slate-100,
+html.oled .border-slate-200,
+html.oled .border-slate-300,
+.oled .border-slate-100,
+.oled .border-slate-200,
+.oled .border-slate-300 {
+    border-color: #1a2333 !important;
+}
+
+html.oled .divide-slate-100 > :not([hidden]) ~ :not([hidden]),
+html.oled .divide-slate-200 > :not([hidden]) ~ :not([hidden]) {
+    border-color: #1a2333 !important;
+}
+
+/* Typography in OLED Mode - Ultra-High Contrast (WCAG AAA) */
+html.oled .text-slate-900,
+html.oled .text-slate-800,
+html.oled .text-slate-700,
+.oled .text-slate-900,
+.oled .text-slate-800,
+.oled .text-slate-700 {
+    color: #ffffff !important;
+}
+
+html.oled .text-slate-600,
+html.oled .text-slate-500,
+.oled .text-slate-600,
+.oled .text-slate-500 {
+    color: #cbd5e1 !important;
+}
+
+html.oled .text-slate-400,
+.oled .text-slate-400 {
+    color: #94a3b8 !important;
+}
+
+/* Form Controls & Inputs in OLED Mode */
+html.oled input:not([type="checkbox"]):not([type="radio"]),
+html.oled select,
+html.oled textarea,
+.oled input:not([type="checkbox"]):not([type="radio"]),
+.oled select,
+.oled textarea {
+    background-color: #04070e !important;
+    border-color: #243656 !important;
+    color: #ffffff !important;
+}
+
+html.oled input:focus,
+html.oled select:focus,
+html.oled textarea:focus {
+    border-color: #10b981 !important;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25) !important;
+}
+
+html.oled input::placeholder,
+html.oled textarea::placeholder,
+.oled input::placeholder,
+.oled textarea::placeholder {
+    color: #94a3b8 !important;
+}
+
+/* Tables in OLED Mode */
+html.oled table thead th,
+.oled table thead th {
+    background-color: #060a14 !important;
+    color: #f1f5f9 !important;
+    font-weight: 700 !important;
+    border-color: #1a2333 !important;
+}
+
+html.oled tr.hover\:bg-slate-50:hover,
+html.oled tr:hover,
+.oled tr.hover\:bg-slate-50:hover,
+.oled tr:hover {
+    background-color: #0c1322 !important;
+}
+
+/* Modals & Popups in OLED Mode */
+html.oled .modal-content,
+html.oled .fixed .bg-white,
+.oled .modal-content,
+.oled .fixed .bg-white {
+    background-color: #080d1a !important;
+    color: #ffffff !important;
+    border-color: #1e293b !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.95) !important;
+}
+
+/* Modal Backdrops - Deep OLED Dimming */
+html.oled .bg-black\/50,
+html.oled .bg-black\/60,
+html.oled .bg-slate-900\/50,
+html.oled .bg-slate-900\/60 {
+    background-color: rgba(0, 0, 0, 0.88) !important;
+}
+
+/* Scrollbars in OLED */
+html.oled ::-webkit-scrollbar-track {
+    background: #000000;
+}
+html.oled ::-webkit-scrollbar-thumb {
+    background: #1e293b;
+    border-radius: 4px;
+}
+html.oled ::-webkit-scrollbar-thumb:hover {
+    background: #334155;
+}
+
+/* ============================================================= */
 /* SECURE APP CONCEALMENT (Locked / Signed-Out Portal Guard)     */
 /* Completely hides all underlying data when portal is locked   */
 /* ============================================================= */
@@ -747,6 +914,15 @@ body.portal-locked {
     overflow: hidden !important;
     height: 100vh !important;
     background-color: #020617 !important; /* Solid bg-slate-950 */
+}
+
+body.oled.portal-locked {
+    background-color: #000000 !important; /* Pure black in OLED mode */
+}
+
+html.oled #auth-gate-overlay,
+body.oled #auth-gate-overlay {
+    background-color: #000000 !important;
 }
 
 body.portal-locked header,

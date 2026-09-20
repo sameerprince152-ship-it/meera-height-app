@@ -9682,8 +9682,13 @@ const App = {
     activityCategoryFilter: 'all',
 
     openActivityHistoryModal() {
-        this.renderActivityHistory();
-        this.showModal('modal-activity-history');
+        try {
+            this.showModal('modal-activity-history');
+            this.renderActivityHistory();
+        } catch (e) {
+            console.error('Error opening activity history modal:', e);
+            this.showModal('modal-activity-history');
+        }
     },
 
     setActivityCategoryFilter(cat) {
@@ -9723,6 +9728,7 @@ const App = {
             rent: { icon: 'fa-hand-holding-dollar', bg: 'bg-emerald-100 dark:bg-emerald-950/70', text: 'text-emerald-600 dark:text-emerald-400', label: 'Rent' },
             expense: { icon: 'fa-file-invoice-dollar', bg: 'bg-rose-100 dark:bg-rose-950/70', text: 'text-rose-600 dark:text-rose-400', label: 'Expense' },
             tenant: { icon: 'fa-user-group', bg: 'bg-purple-100 dark:bg-purple-950/70', text: 'text-purple-600 dark:text-purple-400', label: 'Tenant' },
+            transfer: { icon: 'fa-building-columns', bg: 'bg-sky-100 dark:bg-sky-950/70', text: 'text-sky-600 dark:text-sky-400', label: 'Transfer' },
             backup: { icon: 'fa-cloud-arrow-up', bg: 'bg-blue-100 dark:bg-blue-950/70', text: 'text-blue-600 dark:text-blue-400', label: 'Backup' },
             restore: { icon: 'fa-rotate-left', bg: 'bg-amber-100 dark:bg-amber-950/70', text: 'text-amber-600 dark:text-amber-400', label: 'Restore' },
             security: { icon: 'fa-shield-halved', bg: 'bg-indigo-100 dark:bg-indigo-950/70', text: 'text-indigo-600 dark:text-indigo-400', label: 'Security' },
@@ -9730,31 +9736,50 @@ const App = {
         };
 
         container.innerHTML = logs.map(l => {
-            const meta = categoryMeta[l.category] || { icon: 'fa-circle-check', bg: 'bg-slate-100 dark:bg-slate-800', text: 'text-slate-600 dark:text-slate-300', label: l.category || 'General' };
-            const timeAgo = ActivityLogger.formatRelativeTime(l.timestamp);
-            const fullDate = new Date(l.timestamp).toLocaleString('en-IN');
+            try {
+                const meta = categoryMeta[l.category] || { icon: 'fa-circle-check', bg: 'bg-slate-100 dark:bg-slate-800', text: 'text-slate-600 dark:text-slate-300', label: l.category || 'General' };
+                const timeAgo = ActivityLogger.formatRelativeTime(l.timestamp);
+                let fullDate = '';
+                let timeStr = '';
+                try {
+                    const d = new Date(l.timestamp);
+                    fullDate = d.toLocaleString('en-IN');
+                    timeStr = d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+                } catch(e) {
+                    fullDate = l.timestamp || '';
+                    timeStr = '';
+                }
 
-            return `
-                <div class="p-3 bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100/70 dark:hover:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 transition flex items-start gap-3">
-                    <div class="w-9 h-9 rounded-xl ${meta.bg} ${meta.text} flex items-center justify-center text-sm shrink-0 mt-0.5">
-                        <i class="fa-solid ${meta.icon}"></i>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <div class="flex items-center justify-between gap-2">
-                            <h4 class="font-extrabold text-xs text-slate-900 dark:text-white truncate">${App.escapeHtml(l.title)}</h4>
-                            <span class="text-[10px] text-slate-400 font-medium shrink-0" title="${fullDate}">${timeAgo}</span>
+                return `
+                    <div class="p-3 bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100/70 dark:hover:bg-slate-800 rounded-2xl border border-slate-200/80 dark:border-slate-700/80 transition flex items-start gap-3">
+                        <div class="w-9 h-9 rounded-xl ${meta.bg} ${meta.text} flex items-center justify-center text-sm shrink-0 mt-0.5">
+                            <i class="fa-solid ${meta.icon}"></i>
                         </div>
-                        <p class="text-[11px] text-slate-600 dark:text-slate-300 mt-0.5 leading-snug">${App.escapeHtml(l.description)}</p>
-                        <div class="flex items-center gap-2 mt-1.5">
-                            <span class="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded ${meta.bg} ${meta.text}">${meta.label}</span>
-                            <span class="text-[9px] text-slate-400 font-mono flex items-center gap-1">
-                                <i class="fa-solid fa-display text-[8px]"></i>
-                                <span>${App.escapeHtml(l.device || 'Web')}</span>
-                            </span>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center justify-between gap-2">
+                                <h4 class="font-extrabold text-xs text-slate-900 dark:text-white truncate">${App.escapeHtml(l.title)}</h4>
+                                <span class="text-[10px] text-slate-400 font-medium shrink-0" title="${fullDate}">${timeAgo}</span>
+                            </div>
+                            <p class="text-[11px] text-slate-600 dark:text-slate-300 mt-0.5 leading-snug">${App.escapeHtml(l.description)}</p>
+                            <div class="flex items-center gap-2 mt-1.5">
+                                <span class="text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded ${meta.bg} ${meta.text}">${meta.label}</span>
+                                ${timeStr ? `
+                                <span class="text-[9px] text-slate-400 font-mono flex items-center gap-1">
+                                    <i class="fa-regular fa-clock text-[8px]"></i>
+                                    <span>${timeStr}</span>
+                                </span>` : ''}
+                                <span class="text-[9px] text-slate-400 font-mono flex items-center gap-1">
+                                    <i class="fa-solid fa-display text-[8px]"></i>
+                                    <span>${App.escapeHtml(l.device || 'Web')}</span>
+                                </span>
+                            </div>
                         </div>
                     </div>
-                </div>
-            `;
+                `;
+            } catch (itemErr) {
+                console.warn('Error rendering activity item:', itemErr);
+                return '';
+            }
         }).join('');
     },
 

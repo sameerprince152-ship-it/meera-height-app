@@ -1034,11 +1034,132 @@ class AuthManager {
 class ActivityLogger {
     static MAX_RECORDS = 300;
 
+    static seedFromExistingData(data) {
+        if (!data) return [];
+        try {
+            const seeded = [];
+
+            // 1. Rent Collections
+            if (Array.isArray(data.rentCollections)) {
+                data.rentCollections.forEach(r => {
+                    if (!r) return;
+                    const rawDate = r.paymentDate || r.date || r.createdAt || new Date().toISOString();
+                    const amount = parseFloat(r.amount) || 0;
+                    const isoDate = rawDate.includes('T') ? rawDate : (new Date(rawDate).toISOString() || new Date().toISOString());
+                    seeded.push({
+                        id: 'act_rent_' + (r.id || Math.random().toString(36).substr(2, 6)),
+                        timestamp: isoDate,
+                        category: 'rent',
+                        title: `Rent Collected: ${r.tenantName || 'Tenant'}`,
+                        description: `Flat ${r.flat || 'N/A'} • ₹${amount.toLocaleString('en-IN')} received via ${r.paymentMethod || 'Cash/UPI'} (Credited: ${r.ownerCredited === 'sajida' ? 'Sajida' : 'Jeelani'})`,
+                        device: 'System'
+                    });
+                });
+            }
+
+            // 2. Expenses
+            if (Array.isArray(data.expenses)) {
+                const catMap = {};
+                if (Array.isArray(data.categories)) {
+                    data.categories.forEach(c => { catMap[c.id] = c.name; });
+                }
+                data.expenses.forEach(e => {
+                    if (!e) return;
+                    const rawDate = e.date || e.createdAt || new Date().toISOString();
+                    const amount = parseFloat(e.amount) || 0;
+                    const catName = catMap[e.categoryId] || 'Building Maintenance';
+                    const isoDate = rawDate.includes('T') ? rawDate : (new Date(rawDate).toISOString() || new Date().toISOString());
+                    seeded.push({
+                        id: 'act_exp_' + (e.id || Math.random().toString(36).substr(2, 6)),
+                        timestamp: isoDate,
+                        category: 'expense',
+                        title: `Expense: ${e.title || 'Building Maintenance'}`,
+                        description: `₹${amount.toLocaleString('en-IN')} • ${catName} • Paid to ${e.vendor || 'Vendor'} (${e.debitedWallet === 'sajida' ? 'Sajida' : (e.debitedWallet === 'jeelani' ? 'Jeelani' : 'Split')})`,
+                        device: 'System'
+                    });
+                });
+            }
+
+            // 3. Tenants
+            if (Array.isArray(data.tenants)) {
+                data.tenants.forEach(t => {
+                    if (!t) return;
+                    const rawDate = t.joiningDate || t.createdAt || new Date().toISOString();
+                    const rent = parseFloat(t.monthlyRent) || 0;
+                    const advance = parseFloat(t.advancePaid) || 0;
+                    const isoDate = rawDate.includes('T') ? rawDate : (new Date(rawDate).toISOString() || new Date().toISOString());
+                    seeded.push({
+                        id: 'act_tenant_' + (t.id || Math.random().toString(36).substr(2, 6)),
+                        timestamp: isoDate,
+                        category: 'tenant',
+                        title: `Tenant Registered: ${t.name || 'Tenant'}`,
+                        description: `Flat ${t.flat || 'N/A'} • Monthly Rent: ₹${rent.toLocaleString('en-IN')} • Deposit: ₹${advance.toLocaleString('en-IN')} • Status: ${t.status || 'Active'}`,
+                        device: 'System'
+                    });
+                });
+            }
+
+            // 4. Bank Transactions
+            if (Array.isArray(data.bankTransactions)) {
+                data.bankTransactions.forEach(bt => {
+                    if (!bt) return;
+                    const rawDate = bt.date || bt.createdAt || new Date().toISOString();
+                    const amount = parseFloat(bt.amount) || 0;
+                    const isoDate = rawDate.includes('T') ? rawDate : (new Date(rawDate).toISOString() || new Date().toISOString());
+                    seeded.push({
+                        id: 'act_bt_' + (bt.id || Math.random().toString(36).substr(2, 6)),
+                        timestamp: isoDate,
+                        category: 'transfer',
+                        title: `Bank Transfer: ₹${amount.toLocaleString('en-IN')}`,
+                        description: `${bt.bankName || 'Bank'} • ${bt.mode || 'Transfer'} • Ref: ${bt.reference || 'N/A'}`,
+                        device: 'System'
+                    });
+                });
+            }
+
+            // 5. Advance Settlements
+            if (Array.isArray(data.advanceSettlements)) {
+                data.advanceSettlements.forEach(as => {
+                    if (!as) return;
+                    const rawDate = as.settlementDate || as.date || as.createdAt || new Date().toISOString();
+                    const isoDate = rawDate.includes('T') ? rawDate : (new Date(rawDate).toISOString() || new Date().toISOString());
+                    seeded.push({
+                        id: 'act_settle_' + (as.id || Math.random().toString(36).substr(2, 6)),
+                        timestamp: isoDate,
+                        category: 'rent',
+                        title: `Advance Settled: ${as.tenantName || 'Tenant'}`,
+                        description: `Flat ${as.flat || 'N/A'} • Deductions: ₹${(as.totalDeductions || 0).toLocaleString('en-IN')} • Refund: ₹${(as.refundAmount || 0).toLocaleString('en-IN')}`,
+                        device: 'System'
+                    });
+                });
+            }
+
+            // Sort newest first
+            seeded.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            return seeded.slice(0, this.MAX_RECORDS);
+        } catch (err) {
+            console.warn('Error seeding activity logs from building data:', err);
+            return [];
+        }
+    }
+
     static getLogs(category = 'all', searchQuery = '') {
         try {
             const raw = localStorage.getItem(STORAGE_KEYS.ACTIVITY_LOG);
             let logs = raw ? JSON.parse(raw) : [];
             if (!Array.isArray(logs)) logs = [];
+
+            // If empty, auto-seed from building data so user immediately sees their complete history
+            if (logs.length === 0 && typeof StorageManager !== 'undefined' && StorageManager.getData) {
+                const buildingData = StorageManager.getData();
+                if (buildingData) {
+                    const seeded = this.seedFromExistingData(buildingData);
+                    if (seeded && seeded.length > 0) {
+                        logs = seeded;
+                        localStorage.setItem(STORAGE_KEYS.ACTIVITY_LOG, JSON.stringify(logs.slice(0, this.MAX_RECORDS)));
+                    }
+                }
+            }
 
             if (category && category !== 'all') {
                 logs = logs.filter(l => l.category === category);
